@@ -34,3 +34,5 @@ base44/.app.jsonc
 .vercel/
 .vercel
 .env*
+
+!.env.example
