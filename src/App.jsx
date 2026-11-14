@@ -15,6 +15,8 @@ function SignIn() {
   const [signup, setSignup] = useState(false);
   const [status, setStatus] = useState('');
   const [pending, setPending] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const emailOtpEnabled = import.meta.env.VITE_EMAIL_OTP_ENABLED === 'true';
   async function submit(event) {
     event.preventDefault();
     setPending(true);
@@ -26,13 +28,62 @@ function SignIn() {
         ? await supabase.auth.signUp({ ...credentials, options: { emailRedirectTo: window.location.origin } })
         : await supabase.auth.signInWithPassword(credentials);
       if (error) throw error;
-      if (signup) setStatus('Check your email to confirm your account');
+      if (signup && emailOtpEnabled) setVerificationEmail(credentials.email);
+      else if (signup) setStatus('Check your email to confirm your account');
     } catch (error) {
       setStatus(error.message || 'Unable to sign in');
     } finally {
       setPending(false);
     }
   }
+  async function verify(event) {
+    event.preventDefault();
+    setPending(true);
+    setStatus('');
+    const token = new FormData(event.currentTarget).get('code');
+    try {
+      const { error } = await supabase.auth.verifyOtp({ email: verificationEmail, token, type: 'email' });
+      if (error) throw error;
+    } catch {
+      setStatus('That code is invalid or has expired. Check it or request a new code.');
+    } finally { setPending(false); }
+  }
+
+  async function resend() {
+    setPending(true);
+    setStatus('');
+    try {
+      const { error } = await supabase.auth.resend({ type: 'signup', email: verificationEmail });
+      if (error) throw error;
+      setStatus('A new code was sent');
+    } catch {
+      setStatus('Could not send another code. Wait a minute and try again.');
+    } finally { setPending(false); }
+  }
+
+  if (verificationEmail) return <main className="min-h-screen grid place-items-center bg-background p-6">
+    <section className="w-full max-w-md rounded-xl border bg-card p-8">
+      <p className="text-sm font-medium text-primary">OPUS by Octapus</p>
+      <h1 className="mt-4 text-3xl font-semibold">Verify your email</h1>
+      <p className="mt-3 break-words text-muted-foreground">Enter the six-digit code sent to {verificationEmail}</p>
+      <form className="mt-6 space-y-4" onSubmit={verify}>
+        <label className="block text-sm">Verification code
+          <Input className="mt-2" name="code" autoComplete="one-time-code"
+            inputMode="numeric" pattern="[0-9]{6}" maxLength={6} required />
+        </label>
+        <Button className="w-full" disabled={pending}>Verify email</Button>
+      </form>
+      <div className="mt-4 flex flex-wrap gap-4 text-sm text-primary">
+        <button type="button" className="underline" onClick={resend} disabled={pending}>Resend code</button>
+        <button type="button" className="underline" disabled={pending} onClick={() => {
+          setVerificationEmail('');
+          setStatus('');
+        }}>Change email</button>
+      </div>
+      {status && <p role="status" className="mt-4 text-sm">{status}</p>}
+    </section>
+  </main>;
+
   return <main className="min-h-screen grid place-items-center bg-background p-6">
     <section className="w-full max-w-md rounded-xl border bg-card p-8">
       <p className="text-sm text-primary font-medium">OPUS by Octapus</p>
