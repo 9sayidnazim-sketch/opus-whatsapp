@@ -1,13 +1,13 @@
 import { db } from "@/api/client";
 
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, Receipt, AlertCircle, CheckCircle } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
-import { differenceInDays, isBefore, isToday, startOfDay } from "date-fns";
+import { differenceInDays, isBefore, startOfDay } from "date-fns";
 
 import TransactionForm from "../components/transactions/TransactionForm";
 import BillCard from "../components/bills/BillCard";

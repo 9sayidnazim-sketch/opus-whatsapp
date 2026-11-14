@@ -1,10 +1,10 @@
 import { db } from "@/api/client";
 
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Plus, TrendingDown, AlertTriangle } from "lucide-react";
+import { Plus, TrendingDown } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { startOfMonth, format } from "date-fns";
 import { enUS } from "date-fns/locale";

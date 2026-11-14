@@ -1,10 +1,10 @@
 import { db } from "@/api/client";
 
-import React, { useState, useMemo } from "react";
+import { useMemo } from "react";
 
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Wallet, Calendar, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Wallet, Calendar, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { enUS } from "date-fns/locale";

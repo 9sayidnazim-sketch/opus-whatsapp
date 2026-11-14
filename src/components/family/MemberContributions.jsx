@@ -1,8 +1,8 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { TrendingDown, Target, Wallet, TrendingUp } from "lucide-react";
+import { TrendingDown, Target, Wallet } from "lucide-react";
 import { startOfMonth } from "date-fns";
 
 const categoryLabels = {

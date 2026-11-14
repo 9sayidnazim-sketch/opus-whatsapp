@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,7 @@ const categoryOptions = {
 
 export default function TransactionForm({ transaction, onSubmit, onCancel, isBillMode = false }) {
   const [formData, setFormData] = useState({
-    type: isBillMode ? "despesa" : "despesa",
+    type: "despesa",
     amount: "",
     category: "",
     description: "",
@@ -119,9 +119,11 @@ export default function TransactionForm({ transaction, onSubmit, onCancel, isBil
               )}
 
               <div>
-                <Label>Valor</Label>
+                <Label htmlFor="transaction-amount">Amount</Label>
                 <Input
+                  id="transaction-amount"
                   type="number"
+                  min="0.01"
                   step="0.01"
                   value={formData.amount}
                   onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
@@ -137,7 +139,7 @@ export default function TransactionForm({ transaction, onSubmit, onCancel, isBil
                   onValueChange={(value) => setFormData({ ...formData, category: value })}
                   required
                 >
-                  <SelectTrigger>
+                  <SelectTrigger aria-label="Category">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                   <SelectContent>
@@ -240,8 +242,9 @@ export default function TransactionForm({ transaction, onSubmit, onCancel, isBil
             )}
 
             <div>
-              <Label>Description</Label>
+              <Label htmlFor="transaction-description">Description</Label>
               <Textarea
+                id="transaction-description"
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Add details about this transaction..."
@@ -253,7 +256,7 @@ export default function TransactionForm({ transaction, onSubmit, onCancel, isBil
               <Button type="button" variant="outline" onClick={onCancel}>
                 Cancel
               </Button>
-              <Button type="submit" className="bg-violet-600 hover:bg-violet-700">
+              <Button type="submit" >
                 {transaction ? "Update" : "Create"}
               </Button>
             </div>

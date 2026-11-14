@@ -1,10 +1,9 @@
-import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2, CheckCircle, Calendar, AlertCircle, Clock } from "lucide-react";
 import { motion } from "framer-motion";
-import { format, differenceInDays, isToday, isBefore, startOfDay } from "date-fns";
+import { format, differenceInDays, isToday, startOfDay } from "date-fns";
 import { enUS } from "date-fns/locale";
 
 const categoryLabels = {

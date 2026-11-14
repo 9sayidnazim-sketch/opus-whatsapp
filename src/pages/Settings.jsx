@@ -1,37 +1,18 @@
 import { db, whatsappURL } from "@/api/client";
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Bell, CheckCircle, ExternalLink, Save } from "lucide-react";
-import { toast } from "sonner";
+import { Bell, CheckCircle, Save } from "lucide-react";
+import toast from "react-hot-toast";
 
 import NotificationToggle from "../components/settings/NotificationToggle";
 import NotificationThreshold from "../components/settings/NotificationThreshold";
 import WhatsAppConnection from "../components/settings/WhatsAppConnection";
 
-export default function SettingsPage() {
-  const queryClient = useQueryClient();
-  const [settings, setSettings] = useState(null);
-
-  const { data: settingsList, isLoading } = useQuery({
-    queryKey: ['notification-settings'],
-    queryFn: async () => {
-      const result = await db.entities.NotificationSettings.list();
-      return result;
-    },
-    initialData: [],
-  });
-
-  useEffect(() => {
-    if (settingsList && settingsList.length > 0) {
-      setSettings(settingsList[0]);
-    } else if (!isLoading && settingsList.length === 0) {
-      // Criar configurações padrão
-      createMutation.mutate({
+const defaultSettings = {
         budget_alerts_enabled: true,
         budget_alert_threshold: 80,
         goal_deadline_alerts_enabled: true,
@@ -44,18 +25,28 @@ export default function SettingsPage() {
         weekly_summary_enabled: true,
         weekly_summary_day: "domingo",
         monthly_summary_enabled: true,
-        monthly_summary_day: 1,
-        whatsapp_connected: false,
-        notifications_channel: "whatsapp"
-      });
-    }
-  }, [settingsList, isLoading]);
+        monthly_summary_day: 1
+};
+
+export default function SettingsPage() {
+  const queryClient = useQueryClient();
+  const [settings, setSettings] = useState(null);
+
+  const { data: settingsList, isLoading, isError } = useQuery({
+    queryKey: ['notification-settings'],
+    queryFn: () => db.entities.NotificationSettings.list(),
+  });
+
+  useEffect(() => {
+    if (settingsList) setSettings(settingsList[0] ?? defaultSettings);
+  }, [settingsList]);
 
   const createMutation = useMutation({
     mutationFn: (data) => db.entities.NotificationSettings.create(data),
     onSuccess: (newSettings) => {
       queryClient.invalidateQueries({ queryKey: ['notification-settings'] });
       setSettings(newSettings);
+      toast.success("Settings saved");
     },
   });
 
@@ -63,14 +54,14 @@ export default function SettingsPage() {
     mutationFn: ({ id, data }) => db.entities.NotificationSettings.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notification-settings'] });
-      toast.success("Settings saved successfully!");
+      toast.success("Settings saved");
     },
   });
 
   const handleSave = () => {
-    if (settings?.id) {
-      updateMutation.mutate({ id: settings.id, data: settings });
-    }
+    if (!settings || updateMutation.isPending || createMutation.isPending) return;
+    if (settings.id) updateMutation.mutate({ id: settings.id, data: settings });
+    else createMutation.mutate(settings);
   };
 
   const handleChange = (field, value) => {
@@ -78,6 +69,8 @@ export default function SettingsPage() {
   };
 
 
+
+  if (isError) return <p className="p-8" role="alert">Could not load settings</p>;
 
   if (isLoading || !settings) {
     return (
@@ -355,7 +348,7 @@ export default function SettingsPage() {
             <Button
               onClick={handleSave}
               className="bg-emerald-600 hover:bg-emerald-700"
-              disabled={updateMutation.isPending}
+              disabled={updateMutation.isPending || createMutation.isPending}
             >
               <Save className="w-4 h-4 mr-2" />
               {updateMutation.isPending ? "Saving..." : "Save Settings"}

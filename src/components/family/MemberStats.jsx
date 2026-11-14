@@ -1,7 +1,6 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { TrendingUp, TrendingDown, Target, DollarSign } from "lucide-react";
+import { TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 
 export default function MemberStats({ members, transactions, budgets, goals }) {
   const memberContributions = useMemo(() => {
