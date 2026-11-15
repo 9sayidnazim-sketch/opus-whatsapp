@@ -10,6 +10,6 @@ Only the Supabase publishable key, Supabase URL and WhatsApp business number may
 
 ## WhatsApp
 
-Register a signed Kapso v2 `whatsapp.message.received` webhook at `/api/whatsapp` for the configured phone-number ID. Insert the SHA-256 hex digest of the webhook secret into `opus_private.whatsapp_config` through the Supabase SQL editor. Use a high-entropy secret. In OPUS, use Notifications → Link WhatsApp to send a one-time pairing code. Then send `OPUS expense 25 groceries`, `OPUS income 100 refund`, or prefix a finance question with `OPUS`.
+Register a signed Kapso v2 `whatsapp.message.received` webhook at `/api/whatsapp` for the configured phone-number ID. Insert the SHA-256 hex digest of the webhook secret into `opus_private.whatsapp_config` through the Supabase SQL editor. Use a high-entropy secret. In OPUS, select **Chat on WhatsApp** from Assistant or Notifications and send the prefilled greeting and 10-digit chat ID. New links must be confirmed within 10 minutes. After linking, ask finance questions or send `OPUS expense 25 groceries` or `OPUS income 100 refund`. Your latest 10 assistant exchanges across web and WhatsApp can inform replies across both channels.
 
 Transaction commands record against the linked user only. Claude answers text questions and does not perform account edits. Scheduled WhatsApp alerts and voice messages are not implemented.

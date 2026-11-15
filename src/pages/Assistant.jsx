@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ExternalLink, Plus, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { db, askAssistant, whatsappURL } from '@/api/client';
+import { db, askAssistant, whatsappURL, openWhatsAppChat } from '@/api/client';
 
 export default function Assistant() {
   const cache = useQueryClient();
@@ -38,7 +38,10 @@ export default function Assistant() {
   return <section className="mx-auto max-w-7xl p-4 md:p-8">
     <header className="mb-6 flex flex-wrap justify-between gap-4">
       <div><h1 className="text-3xl font-semibold">Finance assistant</h1><p className="mt-2 text-muted-foreground">Work through spending, bills and savings with Claude</p></div>
-      {whatsappURL && <Button asChild variant="outline"><a href={whatsappURL} target="_blank" rel="noreferrer">Open WhatsApp <ExternalLink className="ml-2 h-4 w-4" /></a></Button>}
+      {whatsappURL && <Button variant="outline" onClick={() => {
+        setError('');
+        openWhatsAppChat(window.open('about:blank', '_blank')).catch(() => setError('Could not open WhatsApp. Try again.'));
+      }}>Chat on WhatsApp <ExternalLink className="ml-2 h-4 w-4" /></Button>}
     </header>
     <div className="grid gap-4 md:grid-cols-[240px_minmax(0,1fr)]">
       <aside className="rounded-xl border bg-card p-4">

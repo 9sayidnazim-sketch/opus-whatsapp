@@ -55,3 +55,19 @@ export async function askAssistant(messages) {
   if (!response.ok) throw new Error('The assistant could not respond. Try again.');
   return (await response.json()).reply;
 }
+
+export async function openWhatsAppChat(windowHandle) {
+  try {
+    const chatId = unwrap(await supabase.rpc('opus_open_whatsapp'));
+    const url = `${whatsappURL}?text=${encodeURIComponent(`Hi Octapus ${chatId}`)}`;
+    if (windowHandle) {
+      windowHandle.opener = null;
+      windowHandle.location.replace(url);
+    } else {
+      window.location.assign(url);
+    }
+  } catch (error) {
+    windowHandle?.close();
+    throw error;
+  }
+}
