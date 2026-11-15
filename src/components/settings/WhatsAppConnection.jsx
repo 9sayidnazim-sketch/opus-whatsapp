@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MessageSquare, ExternalLink, CheckCircle, Smartphone } from 'lucide-react';
+import { MessageSquare, ExternalLink, Smartphone } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { supabase, openWhatsAppChat } from '@/api/client';
 import toast from 'react-hot-toast';

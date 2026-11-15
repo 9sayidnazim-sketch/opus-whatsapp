@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Target, ArrowRight, Palmtree, ShieldCheck, Car, Home, Sparkles } from "lucide-react";
+import { Target, ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import { createPageUrl, formatCurrency } from "@/utils";

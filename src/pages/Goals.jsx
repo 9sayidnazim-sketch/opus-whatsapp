@@ -1,8 +1,7 @@
 import { db } from "@/api/client";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Plus, Target, CheckCircle2, TrendingUp } from "lucide-react";
+import { Plus, Target } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import { formatCurrency } from "@/utils";

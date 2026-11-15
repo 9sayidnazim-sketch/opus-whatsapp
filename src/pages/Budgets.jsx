@@ -1,8 +1,7 @@
 import { db } from "@/api/client";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Plus, PiggyBank, AlertTriangle, CheckCircle } from "lucide-react";
+import { Plus, PiggyBank } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { startOfMonth, format } from "date-fns";
 import toast from "react-hot-toast";
@@ -24,7 +23,7 @@ export default function BudgetsPage() {
     queryFn: () => db.entities.Budget.list("-created_date"),
   });
 
-  const { data: transactions = [], isLoading: loadingTransactions } = useQuery({
+  const { data: transactions = [] } = useQuery({
     queryKey: ['transactions'],
     queryFn: () => db.entities.Transaction.list(),
   });

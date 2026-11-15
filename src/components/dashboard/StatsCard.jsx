@@ -1,6 +1,5 @@
-import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { TrendingUp, TrendingDown, Wallet, ArrowDownRight, ArrowUpRight } from 'lucide-react';
+import { Wallet, ArrowDownRight, ArrowUpRight } from 'lucide-react';
 
 export default function StatsCard({ title, value, trend, trendType = 'neutral', featured, icon: Icon }) {
   return (

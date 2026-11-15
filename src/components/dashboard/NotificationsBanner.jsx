@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { AlertTriangle, Target, Calendar, ChevronRight, Bell, BellRing, X } from "lucide-react";
+import { AlertTriangle, Target, Calendar, ChevronRight, BellRing, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl, getCategoryLabel, formatCurrency } from "@/utils";
 import { differenceInDays, startOfDay } from "date-fns";

@@ -34,7 +34,7 @@ export default function Dashboard() {
     queryFn: () => db.entities.Goal.list(),
   });
 
-  const { data: settingsList = [], isLoading: loadingSettings } = useQuery({
+  const { data: settingsList = [] } = useQuery({
     queryKey: ['notification-settings'],
     queryFn: () => db.entities.NotificationSettings.list(),
   });

@@ -1,12 +1,12 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Calendar, CheckCircle, Target, Sparkles, Plus } from "lucide-react";
+import { Pencil, Trash2, CheckCircle, Target } from "lucide-react";
 import { motion } from "framer-motion";
 import { format, differenceInDays } from "date-fns";
 import { formatCurrency } from "@/utils";
 
-export default function GoalCard({ goal, onEdit, onDelete, onClick, onAddSavings }) {
+export default function GoalCard({ goal, onEdit, onDelete, onClick }) {
   const current = Number(goal.current_amount || 0);
   const target = Number(goal.target_amount || 1);
   const percentage = Math.min(Math.round((current / target) * 100), 100);

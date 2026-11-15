@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Filter, Search } from "lucide-react";
-import { CATEGORY_LABELS } from "@/utils";
+import { Search } from "lucide-react";
 
 export default function TransactionFilters({ onFilterChange }) {
   const [type, setType] = useState("all");

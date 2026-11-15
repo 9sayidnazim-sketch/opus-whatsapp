@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUpRight, ArrowDownRight, Wallet } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { formatCurrency } from "@/utils";
 
 export default function MemberStats({ members = [], transactions = [] }) {

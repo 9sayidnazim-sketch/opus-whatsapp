@@ -1,11 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Shield, User, Clock, CheckCircle } from "lucide-react";
+import { Pencil, Trash2, Shield } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function MemberCard({ member, onEdit, onDelete }) {
-  const isPending = member.status === 'pending';
   const role = member.role || 'Member';
   const isAdmin = role.toLowerCase().includes('admin') || role.toLowerCase().includes('head');
 

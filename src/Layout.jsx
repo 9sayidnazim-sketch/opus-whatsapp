@@ -17,7 +17,6 @@ import {
   Bell,
   ShieldCheck,
 } from "lucide-react";
-import { getNotificationPermission } from "@/utils/notifications";
 
 import {
   Sidebar,
@@ -45,7 +44,7 @@ const navigationItems = [
   { title: "Admin", url: createPageUrl("Admin"), icon: ShieldCheck, badge: "Admin" },
 ];
 
-export default function Layout({ children, currentPageName }) {
+export default function Layout({ children }) {
   const location = useLocation();
   const session = useAuth();
   const user = session?.user;

@@ -1,5 +1,5 @@
 import { db } from "@/api/client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -31,8 +31,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { showBrowserNotification, getNotificationPermission } from "@/utils/notifications";
-import { formatCurrency } from "@/utils";
+import { showBrowserNotification, getNotificationPermission, requestNotificationPermission } from "@/utils/notifications";
 
 // Notification type config
 const NOTIF_TYPES = [
@@ -84,6 +83,16 @@ export default function AdminPage() {
   });
   const [sending, setSending] = useState(false);
   const [permState, setPermState] = useState(() => getNotificationPermission());
+
+  const handleRequestPermission = async () => {
+    const perm = await requestNotificationPermission();
+    setPermState(perm);
+    if (perm === 'granted') {
+      toast.success("Browser push notifications enabled!");
+    } else if (perm === 'denied') {
+      toast.error("Notifications are blocked in your browser settings");
+    }
+  };
 
   // Load notification history from local db
   const { data: history = [], isLoading } = useQuery({
@@ -138,8 +147,12 @@ export default function AdminPage() {
       return;
     }
     if (permState !== "granted") {
-      toast.error("Enable browser notifications in Settings first to deliver push alerts");
-      return;
+      const perm = await requestNotificationPermission();
+      setPermState(perm);
+      if (perm !== "granted") {
+        toast.error("Please allow browser notifications to deliver push alerts");
+        return;
+      }
     }
     setSending(true);
     try {
@@ -188,14 +201,23 @@ export default function AdminPage() {
       {/* Permission warning */}
       {permState !== "granted" && (
         <Card className="border-amber-900/40 bg-amber-950/20 shadow-none">
-          <CardContent className="p-4 flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-amber-300">Browser notifications are off</p>
-              <p className="text-xs text-amber-400/70 mt-0.5">
-                Go to <strong>Settings → Notifications</strong> and enable push alerts before sending.
-              </p>
+          <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-amber-300">Browser push notifications are currently off</p>
+                <p className="text-xs text-amber-400/70 mt-0.5">
+                  Enable browser notifications to deliver dedicated notifications directly to users.
+                </p>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={handleRequestPermission}
+              className="fuloozi-btn-primary px-3.5 py-1.5 text-xs font-semibold shrink-0"
+            >
+              Enable Now
+            </button>
           </CardContent>
         </Card>
       )}
@@ -471,3 +493,4 @@ export default function AdminPage() {
     </div>
   );
 }
+

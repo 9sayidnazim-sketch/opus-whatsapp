@@ -58,9 +58,10 @@ All user journeys have been fully verified and polished:
 ---
 
 ## 4. Verification Checklist (`octapus-master`)
-- [x] **Completeness:** Every page (`/`, `/transactions`, `/bills`, `/budgets`, `/goals`, `/family`, `/assistant`, `/settings`) renders without error.
+- [x] **Completeness:** Every page (`/`, `/transactions`, `/bills`, `/budgets`, `/goals`, `/family`, `/assistant`, `/settings`, `/admin`) renders without error.
 - [x] **Connected:** All cards and tables display real data from the mock provider or Supabase.
 - [x] **Configurable:** Currency, budget thresholds, bill alert lead times, and payment wall are editable in Settings.
+- [x] **Admin Dispatch:** Dedicated `/admin` route allows sending customized push notifications (with type, audience, live preview, quick templates, and history log) directly to household members.
 - [x] **Professional Look:** 0 raw IDs or technical stack traces on screen; 4/8px spacing; 44px+ touch targets; high contrast dark mode.
-- [x] **Build:** `npm run build` compiles with 0 errors in $\sim 2.3$ seconds.
+- [x] **Build:** `npm run build` compiles with 0 errors in ~2.0 seconds.
 - [x] **Dev Server:** Running live on `http://localhost:5173/`.

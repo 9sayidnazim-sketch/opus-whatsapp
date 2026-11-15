@@ -1,9 +1,8 @@
 import { db } from "@/api/client";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Receipt, AlertCircle, CheckCircle, Clock, Calendar } from "lucide-react";
+import { Plus, Receipt, CheckCircle } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { differenceInDays, isBefore, startOfDay } from "date-fns";
 import toast from "react-hot-toast";
@@ -154,7 +153,7 @@ export default function BillsPage() {
       {/* Stats row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
         <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border">
-          <p className="text-xs text-muted-foreground">Pending Bills</p>
+          <p className="text-xs text-muted-foreground">Unpaid Bills</p>
           <p className="text-2xl font-bold font-heading text-foreground mt-1 tabular-nums">
             {stats.total}
           </p>

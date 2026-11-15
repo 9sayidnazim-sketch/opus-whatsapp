@@ -1,9 +1,7 @@
 import { db } from "@/api/client";
 import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Users, TrendingUp, Wallet, Shield } from "lucide-react";
+import { Plus, Users } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { startOfMonth } from "date-fns";
 import toast from "react-hot-toast";
@@ -27,16 +25,6 @@ export default function FamilyPage() {
   const { data: transactions = [] } = useQuery({
     queryKey: ['transactions'],
     queryFn: () => db.entities.Transaction.list("-date"),
-  });
-
-  const { data: budgets = [] } = useQuery({
-    queryKey: ['budgets'],
-    queryFn: () => db.entities.Budget.list(),
-  });
-
-  const { data: goals = [] } = useQuery({
-    queryKey: ['goals'],
-    queryFn: () => db.entities.Goal.list(),
   });
 
   const createMutation = useMutation({

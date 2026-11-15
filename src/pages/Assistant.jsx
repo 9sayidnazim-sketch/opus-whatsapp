@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ExternalLink, Plus, Send, Sparkles, MessageSquare, Bot, User } from 'lucide-react';
+import { ExternalLink, Plus, Send, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { db, askAssistant, whatsappURL, openWhatsAppChat } from '@/api/client';

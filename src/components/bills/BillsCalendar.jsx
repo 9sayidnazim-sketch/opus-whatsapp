@@ -4,7 +4,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isBefore,
 import { enUS } from "date-fns/locale";
 import { formatCurrency, getCategoryLabel } from "@/utils";
 
-export default function BillsCalendar({ bills = [], onEdit, onMarkAsPaid }) {
+export default function BillsCalendar({ bills = [], onEdit }) {
   const today = new Date();
   const monthStart = startOfMonth(today);
   const monthEnd = endOfMonth(today);
@@ -53,7 +53,6 @@ export default function BillsCalendar({ bills = [], onEdit, onMarkAsPaid }) {
             const hasDueToday = dayBills.some(b =>
               b.payment_status === 'pendente' && isToday(new Date(b.due_date))
             );
-            const hasPending = dayBills.some(b => b.payment_status === 'pendente');
 
             return (
               <div

@@ -11,7 +11,7 @@ const isSupabaseConfigured = Boolean(
 
 export const whatsappURL = /^\d{8,15}$/.test(import.meta.env.VITE_WHATSAPP_NUMBER || '')
   ? `https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER}`
-  : 'https://wa.me/971500000000';
+  : 'https://wa.me/15557969980';
 
 /* -------------------------------------------------------------
  * Local Storage Mock Provider for Instant Local Development

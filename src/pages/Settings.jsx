@@ -2,15 +2,13 @@ import { db, whatsappURL } from "@/api/client";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Bell, CheckCircle, Save, ShieldCheck, Key, CreditCard, Sparkles, Sliders, Send, AlertTriangle } from "lucide-react";
+import { Bell, Save, ShieldCheck, Key, Sliders, Send } from "lucide-react";
 import toast from "react-hot-toast";
 
 import NotificationToggle from "../components/settings/NotificationToggle";
 import NotificationThreshold from "../components/settings/NotificationThreshold";
 import WhatsAppConnection from "../components/settings/WhatsAppConnection";
 import {
-  isNotificationSupported,
   getNotificationPermission,
   requestNotificationPermission,
   sendTestPushNotification
