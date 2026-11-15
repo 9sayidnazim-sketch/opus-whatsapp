@@ -86,7 +86,7 @@ export default function TransactionForm({ transaction, onSubmit, onCancel, isBil
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
     >
-      <Card className="mb-8 shadow-lg">
+      <Card className="mb-8 shadow-none">
         <CardHeader className="border-b">
           <div className="flex items-center justify-between">
             <CardTitle>
@@ -214,10 +214,10 @@ export default function TransactionForm({ transaction, onSubmit, onCancel, isBil
             </div>
 
             {formData.type === 'despesa' && (
-              <div className="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="flex items-center justify-between p-4 bg-[hsl(264_23%_22%)] rounded-lg border border-[hsl(264_23%_22%)]">
                 <div className="flex-1">
                   <Label className="text-base font-medium">Recurring Expense</Label>
-                  <p className="text-sm text-slate-500 mt-1">
+                  <p className="text-sm text-muted-foreground mt-1">
                     This bill repeats every month
                   </p>
                 </div>

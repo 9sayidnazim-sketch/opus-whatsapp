@@ -89,7 +89,7 @@ export default function SettingsPage() {
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="font-heading text-[32px] leading-tight font-semibold tracking-[-0.03em] text-foreground mb-2">Notification Settings</h1>
-          <p className="text-slate-500">
+          <p className="text-muted-foreground">
             Configure how and when you want to receive financial alerts
           </p>
         </div>
@@ -97,10 +97,10 @@ export default function SettingsPage() {
         <div className="space-y-6">
           <WhatsAppConnection whatsappURL={whatsappURL} />
 
-          <Card className="shadow-lg">
-            <CardHeader className="border-b bg-gradient-to-r from-blue-50 to-blue-100">
+          <Card className="shadow-none">
+            <CardHeader className="border-b bg-muted">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-600 rounded-lg">
+                <div className="p-2 bg-[hsl(216_24%_36%)] rounded-lg">
                   <Bell className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -134,10 +134,10 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-lg">
-            <CardHeader className="border-b bg-gradient-to-r from-purple-50 to-purple-100">
+          <Card className="shadow-none">
+            <CardHeader className="border-b bg-muted">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-600 rounded-lg">
+                <div className="p-2 bg-[hsl(264_23%_36%)] rounded-lg">
                   <Bell className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -171,10 +171,10 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-lg">
-            <CardHeader className="border-b bg-gradient-to-r from-orange-50 to-orange-100">
+          <Card className="shadow-none">
+            <CardHeader className="border-b bg-muted">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-orange-600 rounded-lg">
+                <div className="p-2 bg-[hsl(26_24%_36%)] rounded-lg">
                   <Bell className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -208,10 +208,10 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-lg">
-            <CardHeader className="border-b bg-gradient-to-r from-red-50 to-red-100">
+          <Card className="shadow-none">
+            <CardHeader className="border-b bg-muted">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-red-600 rounded-lg">
+                <div className="p-2 bg-[hsl(354_22%_36%)] rounded-lg">
                   <Bell className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -256,10 +256,10 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Card className="shadow-lg">
-            <CardHeader className="border-b bg-gradient-to-r from-green-50 to-green-100">
+          <Card className="shadow-none">
+            <CardHeader className="border-b bg-muted">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-600 rounded-lg">
+                <div className="p-2 bg-[hsl(151_20%_36%)] rounded-lg">
                   <Bell className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -280,13 +280,13 @@ export default function SettingsPage() {
               
               {settings.weekly_summary_enabled && (
                 <div className="pl-12">
-                  <label className="text-sm font-medium text-slate-700 mb-2 block">
+                  <label className="text-sm font-medium text-foreground mb-2 block">
                     Day of the Week
                   </label>
                   <select
                     value={settings.weekly_summary_day}
                     onChange={(e) => handleChange('weekly_summary_day', e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                    className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
                   >
                     <option value="segunda">Monday</option>
                     <option value="terca">Tuesday</option>
@@ -321,22 +321,22 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-emerald-200 bg-emerald-50">
+          <Card className="border-[hsl(151_20%_19%)] bg-[hsl(151_20%_19%)]">
             <CardContent className="p-6">
               <div className="flex items-start gap-3">
-                <CheckCircle className="w-5 h-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                <CheckCircle className="w-5 h-5 text-[hsl(151_31%_73%)] mt-0.5 flex-shrink-0" />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-emerald-900 mb-2">
+                  <h3 className="font-semibold text-[hsl(151_31%_73%)] mb-2">
                     How do notifications work?
                   </h3>
-                  <ul className="space-y-1 text-sm text-emerald-800">
+                  <ul className="space-y-1 text-sm text-[hsl(151_31%_73%)]">
                     <li>• <strong>Budgets:</strong> You'll be alerted when spending reaches the configured percentage</li>
                     <li>• <strong>Goals:</strong> You'll get reminders when the target date approaches</li>
                     <li>• <strong>Large Transactions:</strong> You'll be notified when an expense above the set amount is recorded</li>
                     <li>• <strong>Due Dates:</strong> You'll get alerts before and on the day bills are due</li>
                     <li>• <strong>Summaries:</strong> Automatic reports analyzing your finances</li>
                   </ul>
-                  <p className="text-sm text-emerald-700 mt-3">
+                  <p className="text-sm text-[hsl(151_31%_73%)] mt-3">
                     💡 Connect your WhatsApp above to start receiving notifications!
                   </p>
                 </div>
@@ -347,7 +347,7 @@ export default function SettingsPage() {
           <div className="flex justify-end gap-3 pt-4">
             <Button
               onClick={handleSave}
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-[hsl(151_20%_36%)] hover:bg-[hsl(151_20%_36%)]"
               disabled={updateMutation.isPending || createMutation.isPending}
             >
               <Save className="w-4 h-4 mr-2" />

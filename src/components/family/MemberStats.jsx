@@ -51,7 +51,7 @@ export default function MemberStats({ members, transactions, budgets, goals }) {
 
   return (
     <div className="mb-8">
-      <h2 className="text-xl font-semibold text-slate-900 mb-4">
+      <h2 className="text-xl font-semibold text-foreground mb-4">
         Individual Contributions (This Month)
       </h2>
       
@@ -72,7 +72,7 @@ export default function MemberStats({ members, transactions, budgets, goals }) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <CardTitle className="text-base truncate">{member.name}</CardTitle>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       {member.transactionCount} transactions
                     </p>
                   </div>
@@ -81,14 +81,14 @@ export default function MemberStats({ members, transactions, budgets, goals }) {
               <CardContent className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-slate-600">Income</span>
+                    <TrendingUp className="w-4 h-4 text-[hsl(151_31%_73%)]" />
+                    <span className="text-sm text-muted-foreground">Income</span>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-green-600">
+                    <p className="font-semibold text-[hsl(151_31%_73%)]">
                       {member.income.toFixed(2)}
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       {incomePercent.toFixed(1)}% of total
                     </p>
                   </div>
@@ -96,14 +96,14 @@ export default function MemberStats({ members, transactions, budgets, goals }) {
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <TrendingDown className="w-4 h-4 text-red-600" />
-                    <span className="text-sm text-slate-600">Expenses</span>
+                    <TrendingDown className="w-4 h-4 text-[hsl(354_42%_74%)]" />
+                    <span className="text-sm text-muted-foreground">Expenses</span>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-red-600">
+                    <p className="font-semibold text-[hsl(354_42%_74%)]">
                       -{member.expense.toFixed(2)}
                     </p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-muted-foreground">
                       {expensePercent.toFixed(1)}% of total
                     </p>
                   </div>
@@ -112,10 +112,10 @@ export default function MemberStats({ members, transactions, budgets, goals }) {
                 <div className="pt-3 border-t">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-blue-600" />
-                      <span className="text-sm font-medium text-slate-700">Contribution</span>
+                      <DollarSign className="w-4 h-4 text-[hsl(216_49%_76%)]" />
+                      <span className="text-sm font-medium text-foreground">Contribution</span>
                     </div>
-                    <p className={`font-bold ${member.contribution >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    <p className={`font-bold ${member.contribution >= 0 ? 'text-[hsl(151_31%_73%)]' : 'text-[hsl(354_42%_74%)]'}`}>
                       {member.contribution >= 0 ? '+' : ''}{member.contribution.toFixed(2)}
                     </p>
                   </div>
@@ -126,24 +126,24 @@ export default function MemberStats({ members, transactions, budgets, goals }) {
         })}
       </div>
 
-      <Card className="mt-6 bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+      <Card className="mt-6 bg-muted border-[hsl(264_23%_22%)]">
         <CardContent className="p-6">
           <div className="grid md:grid-cols-3 gap-6">
             <div>
-              <p className="text-sm text-slate-600 mb-1">Total Income</p>
-              <p className="text-2xl font-bold text-green-600">
+              <p className="text-sm text-muted-foreground mb-1">Total Income</p>
+              <p className="text-2xl font-bold text-[hsl(151_31%_73%)]">
                 {totalIncome.toFixed(2)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-slate-600 mb-1">Total Expenses</p>
-              <p className="text-2xl font-bold text-red-600">
+              <p className="text-sm text-muted-foreground mb-1">Total Expenses</p>
+              <p className="text-2xl font-bold text-[hsl(354_42%_74%)]">
                 -{totalExpense.toFixed(2)}
               </p>
             </div>
             <div>
-              <p className="text-sm text-slate-600 mb-1">Family Balance</p>
-              <p className={`text-2xl font-bold ${(totalIncome - totalExpense) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+              <p className="text-sm text-muted-foreground mb-1">Family Balance</p>
+              <p className={`text-2xl font-bold ${(totalIncome - totalExpense) >= 0 ? 'text-[hsl(151_31%_73%)]' : 'text-[hsl(354_42%_74%)]'}`}>
                 {(totalIncome - totalExpense).toFixed(2)}
               </p>
             </div>

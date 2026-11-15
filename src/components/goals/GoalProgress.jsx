@@ -40,7 +40,7 @@ export default function GoalProgress({ goal, onClose, onAddProgress }) {
         exit={{ scale: 0.9, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <Card className="w-full max-w-lg shadow-2xl">
+        <Card className="w-full max-w-lg shadow-none">
           <CardHeader className={`${goal.color} bg-opacity-10 border-b`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -50,7 +50,7 @@ export default function GoalProgress({ goal, onClose, onAddProgress }) {
                 <div>
                   <CardTitle className="text-xl">{goal.title}</CardTitle>
                   {goal.description && (
-                    <p className="text-sm text-slate-600 mt-1">{goal.description}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{goal.description}</p>
                   )}
                 </div>
               </div>
@@ -62,41 +62,41 @@ export default function GoalProgress({ goal, onClose, onAddProgress }) {
           <CardContent className="p-6 space-y-6">
             <div>
               <div className="flex justify-between items-baseline mb-3">
-                <span className="text-slate-600">Current Progress</span>
-                <span className="text-3xl font-bold text-purple-600">
+                <span className="text-muted-foreground">Current Progress</span>
+                <span className="text-3xl font-bold text-[hsl(264_40%_78%)]">
                   {percentage.toFixed(1)}%
                 </span>
               </div>
               <Progress 
                 value={Math.min(percentage, 100)} 
                 className="h-4"
-                indicatorClassName="bg-purple-500"
+                indicatorClassName="bg-[hsl(264_23%_30%)]"
               />
               <div className="flex justify-between items-center mt-3">
                 <div>
-                  <p className="text-sm text-slate-500">Saved</p>
-                  <p className="text-xl font-bold text-slate-900">
+                  <p className="text-sm text-muted-foreground">Saved</p>
+                  <p className="text-xl font-bold text-foreground">
                     {goal.current_amount.toFixed(2)}
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-slate-500">Target</p>
-                  <p className="text-xl font-bold text-slate-900">
+                  <p className="text-sm text-muted-foreground">Target</p>
+                  <p className="text-xl font-bold text-foreground">
                     {goal.target_amount.toFixed(2)}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 bg-slate-50 rounded-lg">
+            <div className="p-4 bg-muted rounded-lg">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-slate-600">Left to reach goal</span>
-                <span className="text-2xl font-bold text-slate-900">
+                <span className="text-sm text-muted-foreground">Left to reach goal</span>
+                <span className="text-2xl font-bold text-foreground">
                   {(goal.target_amount - goal.current_amount).toFixed(2)}
                 </span>
               </div>
               {goal.target_date && (
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   Target date: {format(new Date(goal.target_date), "MMMM d, yyyy", { locale: enUS })}
                 </p>
               )}
@@ -117,7 +117,7 @@ export default function GoalProgress({ goal, onClose, onAddProgress }) {
                     />
                     <Button 
                       type="submit"
-                      className="bg-purple-600 hover:bg-purple-700"
+                      className="bg-[hsl(264_23%_36%)] hover:bg-[hsl(264_23%_36%)]"
                       disabled={!amount || parseFloat(amount) <= 0}
                     >
                       <Plus className="w-4 h-4 mr-2" />

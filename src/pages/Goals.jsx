@@ -95,14 +95,14 @@ export default function GoalsPage() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="font-heading text-[32px] leading-tight font-semibold tracking-[-0.03em] text-foreground">Financial Goals</h1>
-            <p className="text-slate-500 mt-1">Set and track your savings goals</p>
+            <p className="text-muted-foreground mt-1">Set and track your savings goals</p>
           </div>
           <Button
             onClick={() => {
               setEditingGoal(null);
               setShowForm(!showForm);
             }}
-            className="bg-purple-600 hover:bg-purple-700"
+            className="bg-[hsl(264_23%_36%)] hover:bg-[hsl(264_23%_36%)]"
           >
             <Plus className="w-5 h-5 mr-2" />
             New Goal
@@ -133,13 +133,13 @@ export default function GoalsPage() {
         </AnimatePresence>
 
         {isLoading ? (
-          <div className="text-center py-12 text-slate-500">
+          <div className="text-center py-12 text-muted-foreground">
             Loading goals...
           </div>
         ) : goals.length === 0 ? (
           <div className="text-center py-12">
-            <Target className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-500 mb-4">
+            <Target className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground mb-4">
               You haven't set any financial goals yet
             </p>
             <Button onClick={() => setShowForm(true)}>
@@ -151,7 +151,7 @@ export default function GoalsPage() {
           <div className="space-y-8">
             {activeGoals.length > 0 && (
               <div>
-                <h2 className="text-xl font-semibold text-slate-900 mb-4">
+                <h2 className="text-xl font-semibold text-foreground mb-4">
                   Goals in Progress ({activeGoals.length})
                 </h2>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -170,7 +170,7 @@ export default function GoalsPage() {
 
             {completedGoals.length > 0 && (
               <div>
-                <h2 className="text-xl font-semibold text-slate-900 mb-4">
+                <h2 className="text-xl font-semibold text-foreground mb-4">
                   Completed Goals ({completedGoals.length})
                 </h2>
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

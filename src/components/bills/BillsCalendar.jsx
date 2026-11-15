@@ -36,17 +36,17 @@ export default function BillsCalendar({ bills, onBillClick }) {
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <Card className="shadow-lg">
+    <Card className="shadow-none">
       <CardContent className="p-6">
         <div className="mb-4">
-          <h2 className="text-2xl font-bold text-slate-900">
+          <h2 className="text-2xl font-bold text-foreground">
             {format(today, "MMMM yyyy", { locale: enUS })}
           </h2>
         </div>
 
         <div className="grid grid-cols-7 gap-2">
           {weekDays.map(day => (
-            <div key={day} className="text-center font-semibold text-slate-600 text-sm py-2">
+            <div key={day} className="text-center font-semibold text-muted-foreground text-sm py-2">
               {day}
             </div>
           ))}
@@ -71,11 +71,11 @@ export default function BillsCalendar({ bills, onBillClick }) {
                 key={dateKey}
                 className={`aspect-square border rounded-lg p-2 ${
                   isToday(day) 
-                    ? 'bg-blue-50 border-blue-500 border-2' 
-                    : 'bg-white border-slate-200'
+                    ? 'bg-[hsl(216_24%_21%)] border-blue-500 border-2' 
+                    : 'bg-card border-border'
                 } hover:shadow-md transition-shadow cursor-pointer`}
               >
-                <div className="text-sm font-medium text-slate-700 mb-1">
+                <div className="text-sm font-medium text-foreground mb-1">
                   {format(day, 'd')}
                 </div>
                 {dayBills.length > 0 && (
@@ -86,12 +86,12 @@ export default function BillsCalendar({ bills, onBillClick }) {
                         onClick={() => onBillClick(bill)}
                         className={`text-xs p-1 rounded truncate ${
                           bill.payment_status === 'pago'
-                            ? 'bg-green-100 text-green-700'
+                            ? 'bg-[hsl(151_20%_19%)] text-[hsl(151_31%_73%)]'
                             : hasOverdue
-                            ? 'bg-red-100 text-red-700'
+                            ? 'bg-[hsl(354_22%_21%)] text-[hsl(354_42%_74%)]'
                             : hasDueToday
-                            ? 'bg-orange-100 text-orange-700'
-                            : 'bg-blue-100 text-blue-700'
+                            ? 'bg-[hsl(26_24%_20%)] text-[hsl(26_53%_72%)]'
+                            : 'bg-[hsl(216_24%_21%)] text-[hsl(216_49%_76%)]'
                         }`}
                         title={bill.description || categoryLabels[bill.category]}
                       >
@@ -99,7 +99,7 @@ export default function BillsCalendar({ bills, onBillClick }) {
                       </div>
                     ))}
                     {dayBills.length > 2 && (
-                      <div className="text-xs text-slate-500 text-center">
+                      <div className="text-xs text-muted-foreground text-center">
                         +{dayBills.length - 2}
                       </div>
                     )}
@@ -112,20 +112,20 @@ export default function BillsCalendar({ bills, onBillClick }) {
 
         <div className="mt-6 flex flex-wrap gap-4 justify-center">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-red-100 border border-red-200 rounded" />
-            <span className="text-sm text-slate-600">Overdue</span>
+            <div className="w-4 h-4 bg-[hsl(354_22%_21%)] border border-[hsl(354_22%_21%)] rounded" />
+            <span className="text-sm text-muted-foreground">Overdue</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-orange-100 border border-orange-200 rounded" />
-            <span className="text-sm text-slate-600">Due Today</span>
+            <div className="w-4 h-4 bg-[hsl(26_24%_20%)] border border-[hsl(26_24%_20%)] rounded" />
+            <span className="text-sm text-muted-foreground">Due Today</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-blue-100 border border-blue-200 rounded" />
-            <span className="text-sm text-slate-600">To Pay</span>
+            <div className="w-4 h-4 bg-[hsl(216_24%_21%)] border border-[hsl(216_24%_21%)] rounded" />
+            <span className="text-sm text-muted-foreground">To Pay</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-green-100 border border-green-200 rounded" />
-            <span className="text-sm text-slate-600">Paid</span>
+            <div className="w-4 h-4 bg-[hsl(151_20%_19%)] border border-[hsl(151_20%_19%)] rounded" />
+            <span className="text-sm text-muted-foreground">Paid</span>
           </div>
         </div>
       </CardContent>

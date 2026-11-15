@@ -40,16 +40,16 @@ export default function MonthlyTrend({ transactions, isLoading }) {
   }, [transactions]);
 
   return (
-    <Card className="shadow-lg h-full">
+    <Card className="shadow-none h-full">
       <CardHeader className="border-b">
-        <CardTitle>Monthly Trend</CardTitle>
+        <CardTitle>Monthly trend</CardTitle>
       </CardHeader>
       <CardContent className="p-6">
         {isLoading ? (
           <Skeleton className="w-full h-64" />
         ) : (
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={chartData}>
+            <LineChart data={chartData} margin={{ top: 12, right: 12, bottom: 0, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="month" />
               <YAxis />
@@ -58,21 +58,21 @@ export default function MonthlyTrend({ transactions, isLoading }) {
               <Line 
                 type="monotone" 
                 dataKey="receitas" 
-                stroke="#22c55e" 
+                stroke="#8aba9f" 
                 strokeWidth={2}
                 name="Income"
               />
               <Line 
                 type="monotone" 
                 dataKey="despesas" 
-                stroke="#ef4444" 
+                stroke="#cf9189" 
                 strokeWidth={2}
                 name="Expenses"
               />
               <Line 
                 type="monotone" 
                 dataKey="saldo" 
-                stroke="#3b82f6" 
+                stroke="#a1ade0" 
                 strokeWidth={2}
                 name="Balance"
               />

@@ -9,14 +9,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { X, Plane, Car, Home, GraduationCap, Heart, ShoppingBag, Palmtree, Sparkles } from "lucide-react";
 
 const iconOptions = [
-  { value: "Plane", label: "Travel", icon: Plane, color: "bg-blue-500" },
-  { value: "Car", label: "Vehicle", icon: Car, color: "bg-orange-500" },
-  { value: "Home", label: "Home", icon: Home, color: "bg-green-500" },
-  { value: "GraduationCap", label: "Education", icon: GraduationCap, color: "bg-purple-500" },
-  { value: "Heart", label: "Health", icon: Heart, color: "bg-red-500" },
+  { value: "Plane", label: "Travel", icon: Plane, color: "bg-[hsl(216_24%_30%)]" },
+  { value: "Car", label: "Vehicle", icon: Car, color: "bg-[hsl(26_24%_30%)]" },
+  { value: "Home", label: "Home", icon: Home, color: "bg-[hsl(151_20%_30%)]" },
+  { value: "GraduationCap", label: "Education", icon: GraduationCap, color: "bg-[hsl(264_23%_30%)]" },
+  { value: "Heart", label: "Health", icon: Heart, color: "bg-[hsl(354_22%_30%)]" },
   { value: "ShoppingBag", label: "Shopping", icon: ShoppingBag, color: "bg-pink-500" },
   { value: "Palmtree", label: "Leisure", icon: Palmtree, color: "bg-teal-500" },
-  { value: "Sparkles", label: "Other", icon: Sparkles, color: "bg-yellow-500" }
+  { value: "Sparkles", label: "Other", icon: Sparkles, color: "bg-[hsl(48_24%_30%)]" }
 ];
 
 export default function GoalForm({ goal, onSubmit, onCancel }) {
@@ -27,7 +27,7 @@ export default function GoalForm({ goal, onSubmit, onCancel }) {
     current_amount: "0",
     target_date: "",
     icon: "Sparkles",
-    color: "bg-yellow-500",
+    color: "bg-[hsl(48_24%_30%)]",
     status: "em_progresso"
   });
 
@@ -40,7 +40,7 @@ export default function GoalForm({ goal, onSubmit, onCancel }) {
         current_amount: goal.current_amount?.toString() || "0",
         target_date: goal.target_date || "",
         icon: goal.icon || "Sparkles",
-        color: goal.color || "bg-yellow-500",
+        color: goal.color || "bg-[hsl(48_24%_30%)]",
         status: goal.status || "em_progresso"
       });
     }
@@ -63,10 +63,10 @@ export default function GoalForm({ goal, onSubmit, onCancel }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
     >
-      <Card className="mb-8 shadow-lg border-purple-200">
-        <CardHeader className="border-b bg-purple-50">
+      <Card className="mb-8 shadow-none border-[hsl(264_23%_22%)]">
+        <CardHeader className="border-b bg-[hsl(264_23%_22%)]">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-purple-900">
+            <CardTitle className="text-[hsl(264_40%_78%)]">
               {goal ? "Edit Goal" : "New Goal"}
             </CardTitle>
             <Button variant="ghost" size="icon" onClick={onCancel}>
@@ -138,7 +138,7 @@ export default function GoalForm({ goal, onSubmit, onCancel }) {
                     setFormData({ 
                       ...formData, 
                       icon: value,
-                      color: opt?.color || "bg-yellow-500"
+                      color: opt?.color || "bg-[hsl(48_24%_30%)]"
                     });
                   }}
                 >
@@ -163,7 +163,7 @@ export default function GoalForm({ goal, onSubmit, onCancel }) {
               <Button type="button" variant="outline" onClick={onCancel}>
                 Cancel
               </Button>
-              <Button type="submit" className="bg-purple-600 hover:bg-purple-700">
+              <Button type="submit" className="bg-[hsl(264_23%_36%)] hover:bg-[hsl(264_23%_36%)]">
                 {goal ? "Update" : "Create"}
               </Button>
             </div>

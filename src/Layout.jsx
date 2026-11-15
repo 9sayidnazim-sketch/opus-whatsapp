@@ -39,7 +39,7 @@ export default function Layout({ children, currentPageName }) {
           <SidebarHeader className="p-5 pb-3">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                <span className="font-display text-white text-lg font-semibold tracking-tight">O</span>
+                <span className="font-display text-primary-foreground text-lg font-semibold tracking-tight">O</span>
               </div>
               <div className="leading-none">
                 <h2 className="font-heading text-[17px] font-semibold tracking-[-0.02em] text-foreground">OPUS</h2>
@@ -80,7 +80,7 @@ export default function Layout({ children, currentPageName }) {
           <SidebarFooter className="p-3">
             <div className="flex items-center gap-3 rounded-2xl bg-secondary/70 px-3 py-2.5">
               <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                <span className="text-white font-medium text-xs">U</span>
+                <span className="text-primary-foreground font-medium text-xs">U</span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-foreground text-[13px] truncate tracking-tight">User</p>
@@ -88,7 +88,7 @@ export default function Layout({ children, currentPageName }) {
               </div>
               <button
                 onClick={() => db.auth.logout()}
-                className="p-2 rounded-full hover:bg-white/80 transition-colors duration-200"
+                className="p-2 rounded-full hover:bg-card transition-colors duration-200"
                 aria-label="Sign out" title="Sign out"
               >
                 <LogOut className="w-4 h-4 text-muted-foreground" />

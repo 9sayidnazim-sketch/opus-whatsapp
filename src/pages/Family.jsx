@@ -119,7 +119,7 @@ export default function FamilyPage() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="font-heading text-[32px] leading-tight font-semibold tracking-[-0.03em] text-foreground">Family</h1>
-            <p className="text-slate-500 mt-1">
+            <p className="text-muted-foreground mt-1">
               Manage members and share financial control
             </p>
           </div>
@@ -128,7 +128,7 @@ export default function FamilyPage() {
               setEditingMember(null);
               setShowForm(!showForm);
             }}
-            className="bg-purple-600 hover:bg-purple-700"
+            className="bg-[hsl(264_23%_36%)] hover:bg-[hsl(264_23%_36%)]"
           >
             <Plus className="w-5 h-5 mr-2" />
             Add Member
@@ -140,12 +140,12 @@ export default function FamilyPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-500">Active Members</p>
-                  <p className="text-3xl font-bold text-slate-900 mt-1">
+                  <p className="text-sm text-muted-foreground">Active Members</p>
+                  <p className="text-3xl font-bold text-foreground mt-1">
                     {activeMembers.length}
                   </p>
                 </div>
-                <Users className="w-12 h-12 text-blue-500 opacity-20" />
+                <Users className="w-12 h-12 text-[hsl(216_49%_76%)] opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -154,12 +154,12 @@ export default function FamilyPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-500">Family Balance</p>
-                  <p className="text-3xl font-bold text-green-600 mt-1">
+                  <p className="text-sm text-muted-foreground">Family Balance</p>
+                  <p className="text-3xl font-bold text-[hsl(151_31%_73%)] mt-1">
                     {familyStats.balance.toFixed(2)}
                   </p>
                 </div>
-                <Wallet className="w-12 h-12 text-green-500 opacity-20" />
+                <Wallet className="w-12 h-12 text-[hsl(151_31%_73%)] opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -168,12 +168,12 @@ export default function FamilyPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-500">Transactions (month)</p>
-                  <p className="text-3xl font-bold text-slate-900 mt-1">
+                  <p className="text-sm text-muted-foreground">Transactions (month)</p>
+                  <p className="text-3xl font-bold text-foreground mt-1">
                     {familyStats.transactionsCount}
                   </p>
                 </div>
-                <TrendingUp className="w-12 h-12 text-purple-500 opacity-20" />
+                <TrendingUp className="w-12 h-12 text-[hsl(264_40%_78%)] opacity-20" />
               </div>
             </CardContent>
           </Card>
@@ -194,7 +194,7 @@ export default function FamilyPage() {
 
         {pendingMembers.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-slate-900 mb-4">
+            <h2 className="text-xl font-semibold text-foreground mb-4">
               Pending Invites ({pendingMembers.length})
             </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -211,14 +211,14 @@ export default function FamilyPage() {
         )}
 
         <div className="mb-8">
-          <h2 className="text-xl font-semibold text-slate-900 mb-4">
+          <h2 className="text-xl font-semibold text-foreground mb-4">
             Active Members ({activeMembers.length})
           </h2>
           {activeMembers.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center">
-                <Users className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500 mb-4">
+                <Users className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground mb-4">
                   No active members yet
                 </p>
                 <Button onClick={() => setShowForm(true)}>

@@ -71,8 +71,8 @@ export default function AddMemberForm({ member, onSubmit, onCancel }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
     >
-      <Card className="mb-8 shadow-lg border-purple-200">
-        <CardHeader className="border-b bg-purple-50">
+      <Card className="mb-8 shadow-none border-[hsl(264_23%_22%)]">
+        <CardHeader className="border-b bg-[hsl(264_23%_22%)]">
           <div className="flex items-center justify-between">
             <CardTitle>
               {member ? "Edit Member" : "Add Family Member"}
@@ -156,7 +156,7 @@ export default function AddMemberForm({ member, onSubmit, onCancel }) {
                     type="button"
                     onClick={() => setFormData({ ...formData, avatar: emoji })}
                     className={`w-12 h-12 text-2xl rounded-lg border-2 hover:scale-110 transition-transform ${
-                      formData.avatar === emoji ? 'border-purple-500 bg-purple-50' : 'border-slate-200'
+                      formData.avatar === emoji ? 'border-purple-500 bg-[hsl(264_23%_22%)]' : 'border-border'
                     }`}
                   >
                     {emoji}
@@ -174,7 +174,7 @@ export default function AddMemberForm({ member, onSubmit, onCancel }) {
                     type="button"
                     onClick={() => setFormData({ ...formData, color })}
                     className={`w-10 h-10 rounded-lg border-2 hover:scale-110 transition-transform ${
-                      formData.color === color ? 'border-slate-900' : 'border-slate-200'
+                      formData.color === color ? 'border-slate-900' : 'border-border'
                     }`}
                     style={{ backgroundColor: color }}
                   />
@@ -182,8 +182,8 @@ export default function AddMemberForm({ member, onSubmit, onCancel }) {
               </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-medium text-blue-900 mb-2">Preview</h4>
+            <div className="bg-[hsl(216_24%_21%)] border border-[hsl(216_24%_21%)] rounded-lg p-4">
+              <h4 className="font-medium text-[hsl(216_49%_76%)] mb-2">Preview</h4>
               <div className="flex items-center gap-3">
                 <div 
                   className="w-12 h-12 rounded-full flex items-center justify-center text-xl text-white"
@@ -192,8 +192,8 @@ export default function AddMemberForm({ member, onSubmit, onCancel }) {
                   {formData.avatar}
                 </div>
                 <div>
-                  <p className="font-medium text-slate-900">{formData.name || "Name"}</p>
-                  <p className="text-sm text-slate-500">{formData.email || "email@example.com"}</p>
+                  <p className="font-medium text-foreground">{formData.name || "Name"}</p>
+                  <p className="text-sm text-muted-foreground">{formData.email || "email@example.com"}</p>
                 </div>
               </div>
             </div>
@@ -202,7 +202,7 @@ export default function AddMemberForm({ member, onSubmit, onCancel }) {
               <Button type="button" variant="outline" onClick={onCancel}>
                 Cancel
               </Button>
-              <Button type="submit" className="bg-purple-600 hover:bg-purple-700">
+              <Button type="submit" className="bg-[hsl(264_23%_36%)] hover:bg-[hsl(264_23%_36%)]">
                 {member ? "Update" : "Add Member"}
               </Button>
             </div>

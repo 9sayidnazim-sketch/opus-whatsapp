@@ -15,8 +15,8 @@ export default function GoalCard({ goal, onEdit, onDelete, onClick }) {
   const percentage = ((goal.current_amount || 0) / goal.target_amount) * 100;
   const Icon = iconMap[goal.icon] || Sparkles;
   const isCompleted = goal.status === 'concluida';
-  const colorClass = goal.color || 'bg-purple-500';
-  const textColorClass = colorClass.includes('bg-') ? colorClass.replace('bg-', 'text-') : 'text-purple-500';
+  const colorClass = goal.color || 'bg-[hsl(264_23%_30%)]';
+  const textColorClass = colorClass.includes('bg-') ? colorClass.replace('bg-', 'text-') : 'text-[hsl(264_40%_78%)]';
   
   const daysRemaining = goal.target_date 
     ? differenceInDays(new Date(goal.target_date), new Date())
@@ -29,7 +29,7 @@ export default function GoalCard({ goal, onEdit, onDelete, onClick }) {
       exit={{ opacity: 0, scale: 0.95 }}
     >
       <Card 
-        className="hover:shadow-lg transition-all cursor-pointer relative overflow-hidden"
+        className="hover:shadow-none transition-all cursor-pointer relative overflow-hidden"
         onClick={onClick}
       >
         <div className={`absolute top-0 right-0 w-32 h-32 ${colorClass} opacity-10 rounded-full transform translate-x-16 -translate-y-16`} />
@@ -41,11 +41,11 @@ export default function GoalCard({ goal, onEdit, onDelete, onClick }) {
                 <Icon className={`w-6 h-6 ${textColorClass}`} />
               </div>
               <div>
-                <h3 className="font-semibold text-lg text-slate-900">
+                <h3 className="font-semibold text-lg text-foreground">
                   {goal.title}
                 </h3>
                 {isCompleted && (
-                  <Badge className="mt-1 bg-green-100 text-green-700 border-green-200">
+                  <Badge className="mt-1 bg-[hsl(151_20%_19%)] text-[hsl(151_31%_73%)] border-[hsl(151_20%_19%)]">
                     <CheckCircle className="w-3 h-3 mr-1" />
                     Completed
                   </Badge>
@@ -58,14 +58,14 @@ export default function GoalCard({ goal, onEdit, onDelete, onClick }) {
                 size="icon"
                 onClick={() => onEdit(goal)}
               >
-                <Pencil className="w-4 h-4 text-slate-500" />
+                <Pencil className="w-4 h-4 text-muted-foreground" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => onDelete(goal.id)}
               >
-                <Trash2 className="w-4 h-4 text-red-500" />
+                <Trash2 className="w-4 h-4 text-[hsl(354_42%_74%)]" />
               </Button>
             </div>
           </div>
@@ -73,21 +73,21 @@ export default function GoalCard({ goal, onEdit, onDelete, onClick }) {
           <div className="space-y-3">
             <div>
               <div className="flex justify-between items-baseline mb-2">
-                <span className="text-sm text-slate-500">Progress</span>
-                <span className="text-2xl font-bold text-purple-600">
+                <span className="text-sm text-muted-foreground">Progress</span>
+                <span className="text-2xl font-bold text-[hsl(264_40%_78%)]">
                   {percentage.toFixed(0)}%
                 </span>
               </div>
               <Progress 
                 value={Math.min(percentage, 100)} 
                 className="h-3"
-                indicatorClassName={isCompleted ? "bg-green-500" : "bg-purple-500"}
+                indicatorClassName={isCompleted ? "bg-[hsl(151_20%_30%)]" : "bg-[hsl(264_23%_30%)]"}
               />
               <div className="flex justify-between items-center mt-2">
-                <span className="text-xs text-slate-700 font-medium">
+                <span className="text-xs text-foreground font-medium">
                   {(goal.current_amount || 0).toFixed(2)}
                 </span>
-                <span className="text-xs text-slate-500">
+                <span className="text-xs text-muted-foreground">
                   Target: {goal.target_amount.toFixed(2)}
                 </span>
               </div>
@@ -95,19 +95,19 @@ export default function GoalCard({ goal, onEdit, onDelete, onClick }) {
 
             <div className="pt-3 border-t space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-slate-500">Remaining</span>
-                <span className="text-lg font-semibold text-slate-900">
+                <span className="text-sm text-muted-foreground">Remaining</span>
+                <span className="text-lg font-semibold text-foreground">
                   {(goal.target_amount - (goal.current_amount || 0)).toFixed(2)}
                 </span>
               </div>
               
               {goal.target_date && daysRemaining !== null && !isCompleted && (
-                <div className="flex items-center gap-2 text-xs text-slate-500">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Calendar className="w-3 h-3" />
                   {daysRemaining > 0 ? (
                     <span>{daysRemaining} days left • {format(new Date(goal.target_date), "MMM d", { locale: enUS })}</span>
                   ) : (
-                    <span className="text-red-600">Target date passed</span>
+                    <span className="text-[hsl(354_42%_74%)]">Target date passed</span>
                   )}
                 </div>
               )}

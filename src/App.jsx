@@ -113,7 +113,7 @@ function SignIn() {
           {step === 'name' ? 'I already have a username' : step === 'confirm' ? 'Choose a different MPIN' : step === 'pin' ? 'Change name' : 'Create an account'}
         </button>
       </>}
-      {status && <p role="alert" className="mt-4 text-sm text-destructive">{status}</p>}
+      {status && <p role="alert" className="mt-4 text-sm text-[hsl(354_42%_74%)]">{status}</p>}
     </section>
   </main>;
 }

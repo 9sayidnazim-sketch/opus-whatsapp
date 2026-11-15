@@ -10,74 +10,40 @@
     --font-body: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", sans-serif;
     --font-display: "SF Pro Rounded", ui-rounded, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
 
-    --background: 45 15% 96%;
-    --foreground: 240 10% 8%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 8%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 8%;
-    --primary: 183 64% 25%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 12% 96%;
-    --secondary-foreground: 240 10% 12%;
-    --muted: 240 12% 96%;
-    --muted-foreground: 240 5% 45%;
-    --accent: 181 27% 93%;
-    --accent-foreground: 183 59% 23%;
-    --destructive: 356 75% 56%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 240 8% 91%;
-    --input: 240 8% 91%;
-    --ring: 183 64% 25%;
-    --radius: 0.625rem;
-    --chart-1: 183 64% 25%;
-    --chart-2: 224 76% 57%;
-    --chart-3: 172 66% 45%;
-    --chart-4: 43 96% 56%;
-    --chart-5: 340 82% 60%;
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 240 8% 20%;
-    --sidebar-primary: 183 64% 25%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 181 27% 93%;
-    --sidebar-accent-foreground: 183 59% 23%;
-    --sidebar-border: 240 8% 92%;
-    --sidebar-ring: 183 64% 25%;
-  }
-
-  .dark {
-    --background: 240 10% 7%;
-    --foreground: 240 10% 97%;
-    --card: 240 8% 11%;
-    --card-foreground: 240 10% 97%;
-    --popover: 240 8% 11%;
-    --popover-foreground: 240 10% 97%;
-    --primary: 262 88% 68%;
-    --primary-foreground: 240 10% 8%;
-    --secondary: 240 6% 17%;
-    --secondary-foreground: 240 10% 97%;
-    --muted: 240 6% 17%;
-    --muted-foreground: 240 6% 65%;
-    --accent: 262 40% 22%;
-    --accent-foreground: 262 90% 88%;
-    --destructive: 356 70% 48%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 240 5% 20%;
-    --input: 240 5% 20%;
-    --ring: 262 88% 68%;
-    --chart-1: 262 88% 68%;
-    --chart-2: 224 80% 66%;
-    --chart-3: 172 60% 52%;
-    --chart-4: 43 90% 62%;
-    --chart-5: 340 80% 66%;
-    --sidebar-background: 240 8% 10%;
-    --sidebar-foreground: 240 8% 92%;
-    --sidebar-primary: 262 88% 68%;
-    --sidebar-primary-foreground: 240 10% 8%;
-    --sidebar-accent: 262 40% 20%;
-    --sidebar-accent-foreground: 262 90% 88%;
-    --sidebar-border: 240 6% 18%;
-    --sidebar-ring: 262 88% 68%;
+    color-scheme: dark;
+    --background: 225 8% 8%;
+    --foreground: 225 9% 92%;
+    --card: 225 7% 13%;
+    --card-foreground: 225 9% 92%;
+    --popover: 225 7% 15%;
+    --popover-foreground: 225 9% 92%;
+    --primary: 220 10% 82%;
+    --primary-foreground: 225 9% 10%;
+    --secondary: 225 7% 19%;
+    --secondary-foreground: 225 9% 91%;
+    --muted: 225 7% 17%;
+    --muted-foreground: 220 8% 67%;
+    --accent: 229 19% 23%;
+    --accent-foreground: 228 55% 86%;
+    --destructive: 354 38% 36%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 225 6% 23%;
+    --input: 225 7% 25%;
+    --ring: 228 47% 73%;
+    --radius: 1rem;
+    --chart-1: 227 53% 72%;
+    --chart-2: 151 24% 63%;
+    --chart-3: 14 40% 65%;
+    --chart-4: 43 40% 65%;
+    --chart-5: 270 26% 69%;
+    --sidebar-background: 225 8% 10%;
+    --sidebar-foreground: 225 9% 86%;
+    --sidebar-primary: 220 10% 82%;
+    --sidebar-primary-foreground: 225 9% 10%;
+    --sidebar-accent: 229 19% 23%;
+    --sidebar-accent-foreground: 228 55% 86%;
+    --sidebar-border: 225 6% 21%;
+    --sidebar-ring: 228 47% 73%;
   }
 }
 
@@ -120,4 +86,18 @@
     font-family: var(--font-heading);
     letter-spacing: -0.022em;
   }
+}
+
+@layer base {
+  :focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; }
+  .recharts-cartesian-grid line { stroke: hsl(var(--border)); }
+  .recharts-cartesian-axis line { stroke: hsl(var(--border)); }
+  .recharts-cartesian-axis-tick text { fill: hsl(var(--muted-foreground)); }
+  .recharts-default-tooltip {
+    background: hsl(var(--popover)) !important;
+    border: 1px solid hsl(var(--border)) !important;
+    border-radius: 10px;
+    color: hsl(var(--foreground));
+  }
+  .recharts-tooltip-item { color: hsl(var(--foreground)) !important; }
 }

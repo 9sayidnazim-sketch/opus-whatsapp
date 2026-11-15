@@ -25,7 +25,7 @@ export default function RecentTransactions({ transactions, isLoading }) {
   const recentTransactions = transactions.slice(0, 10);
 
   return (
-    <Card className="shadow-lg">
+    <Card className="shadow-none">
       <CardHeader className="border-b">
         <CardTitle>Recent Transactions</CardTitle>
       </CardHeader>
@@ -44,7 +44,7 @@ export default function RecentTransactions({ transactions, isLoading }) {
             ))}
           </div>
         ) : recentTransactions.length === 0 ? (
-          <div className="p-8 text-center text-slate-500">
+          <div className="p-8 text-center text-muted-foreground">
             No transactions recorded yet
           </div>
         ) : (
@@ -52,36 +52,36 @@ export default function RecentTransactions({ transactions, isLoading }) {
             {recentTransactions.map((transaction) => (
               <div
                 key={transaction.id}
-                className="p-4 hover:bg-slate-50 transition-colors flex items-center gap-4"
+                className="p-4 hover:bg-muted transition-colors flex items-center gap-4"
               >
                 <div className={`p-2 rounded-full ${
                   transaction.type === 'receita' 
-                    ? 'bg-green-100' 
-                    : 'bg-red-100'
+                    ? 'bg-[hsl(151_20%_19%)]' 
+                    : 'bg-[hsl(354_22%_21%)]'
                 }`}>
                   {transaction.type === 'receita' ? (
-                    <ArrowUpCircle className="w-5 h-5 text-green-600" />
+                    <ArrowUpCircle className="w-5 h-5 text-[hsl(151_31%_73%)]" />
                   ) : (
-                    <ArrowDownCircle className="w-5 h-5 text-red-600" />
+                    <ArrowDownCircle className="w-5 h-5 text-[hsl(354_42%_74%)]" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-slate-900 truncate">
+                  <p className="font-medium text-foreground truncate">
                     {transaction.description}
                   </p>
                   <div className="flex items-center gap-2 mt-1">
                     <Badge variant="secondary" className="text-xs">
                       {categoryLabels[transaction.category]}
                     </Badge>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-muted-foreground">
                       {format(new Date(transaction.date), "MMM d", { locale: enUS })}
                     </span>
                   </div>
                 </div>
                 <div className={`font-bold ${
                   transaction.type === 'receita' 
-                    ? 'text-green-600' 
-                    : 'text-red-600'
+                    ? 'text-[hsl(151_31%_73%)]' 
+                    : 'text-[hsl(354_42%_74%)]'
                 }`}>
                   {transaction.type === 'receita' ? '+' : '-'}{transaction.amount.toFixed(2)}
                 </div>

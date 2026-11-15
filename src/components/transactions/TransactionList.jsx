@@ -56,7 +56,7 @@ export default function TransactionList({ transactions, isLoading, onEdit, onDel
   if (transactions.length === 0) {
     return (
       <Card>
-        <CardContent className="p-8 text-center text-slate-500">
+        <CardContent className="p-8 text-center text-muted-foreground">
           No transactions found
         </CardContent>
       </Card>
@@ -78,18 +78,18 @@ export default function TransactionList({ transactions, isLoading, onEdit, onDel
                 <div className="flex items-center gap-4">
                   <div className={`p-3 rounded-full ${
                     transaction.type === 'receita' 
-                      ? 'bg-green-100' 
-                      : 'bg-red-100'
+                      ? 'bg-[hsl(151_20%_19%)]' 
+                      : 'bg-[hsl(354_22%_21%)]'
                   }`}>
                     {transaction.type === 'receita' ? (
-                      <ArrowUpCircle className="w-6 h-6 text-green-600" />
+                      <ArrowUpCircle className="w-6 h-6 text-[hsl(151_31%_73%)]" />
                     ) : (
-                      <ArrowDownCircle className="w-6 h-6 text-red-600" />
+                      <ArrowDownCircle className="w-6 h-6 text-[hsl(354_42%_74%)]" />
                     )}
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="font-medium text-slate-900 mb-1">
+                    <p className="font-medium text-foreground mb-1">
                       {transaction.description || "No description"}
                     </p>
                     <div className="flex flex-wrap items-center gap-2">
@@ -101,7 +101,7 @@ export default function TransactionList({ transactions, isLoading, onEdit, onDel
                           {paymentLabels[transaction.payment_method]}
                         </Badge>
                       )}
-                      <span className="text-xs text-slate-500">
+                      <span className="text-xs text-muted-foreground">
                         {format(new Date(transaction.date), "MMMM d, yyyy", { locale: enUS })}
                       </span>
                     </div>
@@ -110,8 +110,8 @@ export default function TransactionList({ transactions, isLoading, onEdit, onDel
                   <div className="flex items-center gap-3">
                     <div className={`text-xl font-bold ${
                       transaction.type === 'receita' 
-                        ? 'text-green-600' 
-                        : 'text-red-600'
+                        ? 'text-[hsl(151_31%_73%)]' 
+                        : 'text-[hsl(354_42%_74%)]'
                     }`}>
                       {transaction.type === 'receita' ? '+' : '-'}{transaction.amount.toFixed(2)}
                     </div>
@@ -121,14 +121,14 @@ export default function TransactionList({ transactions, isLoading, onEdit, onDel
                         size="icon"
                         onClick={() => onEdit(transaction)}
                       >
-                        <Pencil className="w-4 h-4 text-slate-500" />
+                        <Pencil className="w-4 h-4 text-muted-foreground" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => onDelete(transaction.id)}
                       >
-                        <Trash2 className="w-4 h-4 text-red-500" />
+                        <Trash2 className="w-4 h-4 text-[hsl(354_42%_74%)]" />
                       </Button>
                     </div>
                   </div>

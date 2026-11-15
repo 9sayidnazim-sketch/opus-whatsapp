@@ -52,13 +52,13 @@ export default function Assistant() {
       <section className="rounded-xl border bg-card p-4 md:p-6">
         <div className="min-h-60 space-y-4" aria-live="polite">
           {!messages.length && <p className="text-muted-foreground">Ask for help setting up a budget or planning for your next bill.</p>}
-          {messages.map((message, index) => <div key={index} className={`whitespace-pre-wrap break-words rounded-lg p-3 text-sm ${message.role === 'user' ? 'ml-auto max-w-[85%] bg-accent' : 'max-w-[95%] bg-muted'}`}>{message.content}</div>)}
+          {messages.map((message, index) => <div key={index} className={`whitespace-pre-wrap break-words rounded-lg p-3 text-sm ${message.role === 'user' ? 'ml-auto max-w-[85%] border border-[hsl(229_22%_32%)] bg-accent text-accent-foreground' : 'max-w-[95%] border border-[hsl(154_14%_28%)] bg-[hsl(154_13%_18%)] text-[hsl(155_19%_87%)]'}`}>{message.content}</div>)}
         </div>
         <form onSubmit={send} className="mt-4 flex gap-2">
           <Input aria-label="Message" value={text} onChange={event => setText(event.target.value)} maxLength={2000} placeholder="Ask OPUS" disabled={busy} />
           <Button disabled={busy || !text.trim()}><Send className="mr-2 h-4 w-4" />{busy ? 'Sending' : 'Send'}</Button>
         </form>
-        {error && <p role="alert" className="mt-3 text-sm text-destructive">{error}</p>}
+        {error && <p role="alert" className="mt-3 text-sm text-[hsl(354_42%_74%)]">{error}</p>}
       </section>
     </div>
   </section>;

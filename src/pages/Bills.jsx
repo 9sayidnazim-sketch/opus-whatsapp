@@ -121,14 +121,14 @@ export default function BillsPage() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="font-heading text-[32px] leading-tight font-semibold tracking-[-0.03em] text-foreground">Bills</h1>
-            <p className="text-slate-500 mt-1">Manage your payments and due dates</p>
+            <p className="text-muted-foreground mt-1">Manage your payments and due dates</p>
           </div>
           <Button
             onClick={() => {
               setEditingBill(null);
               setShowForm(!showForm);
             }}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-[hsl(216_24%_36%)] hover:bg-[hsl(216_24%_36%)]"
           >
             <Plus className="w-5 h-5 mr-2" />
             New Bill
@@ -136,51 +136,51 @@ export default function BillsPage() {
         </div>
 
         <div className="grid md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+          <div className="bg-card rounded-lg shadow-md p-6 border-l-4 border-blue-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">Total Pending</p>
-                <p className="text-2xl font-bold text-slate-900 mt-1">
+                <p className="text-sm text-muted-foreground">Total Pending</p>
+                <p className="text-2xl font-bold text-foreground mt-1">
                   {stats.total}
                 </p>
               </div>
-              <Receipt className="w-10 h-10 text-blue-500 opacity-20" />
+              <Receipt className="w-10 h-10 text-[hsl(216_49%_76%)] opacity-20" />
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
+          <div className="bg-card rounded-lg shadow-md p-6 border-l-4 border-red-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">Overdue</p>
-                <p className="text-2xl font-bold text-red-600 mt-1">
+                <p className="text-sm text-muted-foreground">Overdue</p>
+                <p className="text-2xl font-bold text-[hsl(354_42%_74%)] mt-1">
                   {stats.overdue}
                 </p>
               </div>
-              <AlertCircle className="w-10 h-10 text-red-500 opacity-20" />
+              <AlertCircle className="w-10 h-10 text-[hsl(354_42%_74%)] opacity-20" />
             </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
+          <div className="bg-card rounded-lg shadow-md p-6 border-l-4 border-orange-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">Next 7 Days</p>
-                <p className="text-2xl font-bold text-orange-600 mt-1">
+                <p className="text-sm text-muted-foreground">Next 7 Days</p>
+                <p className="text-2xl font-bold text-[hsl(26_53%_72%)] mt-1">
                   {stats.upcoming}
                 </p>
               </div>
-              <AlertCircle className="w-10 h-10 text-orange-500 opacity-20" />
+              <AlertCircle className="w-10 h-10 text-[hsl(26_53%_72%)] opacity-20" />
             </div>
           </div>
 
           <div className="bg-card rounded-2xl shadow-card p-6 border-l-4 border-violet-500">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-slate-500">Total Amount</p>
+                <p className="text-sm text-muted-foreground">Total Amount</p>
                 <p className="text-2xl font-bold text-primary mt-1">
                   {stats.totalAmount.toFixed(2)}
                 </p>
               </div>
-              <Receipt className="w-10 h-10 text-violet-500 opacity-20" />
+              <Receipt className="w-10 h-10 text-[hsl(253_40%_78%)] opacity-20" />
             </div>
           </div>
         </div>
@@ -201,16 +201,16 @@ export default function BillsPage() {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full md:w-auto grid-cols-4 gap-2">
-            <TabsTrigger value="pending" className="data-[state=active]:bg-blue-500 data-[state=active]:text-white">
+            <TabsTrigger value="pending" className="data-[state=active]:bg-[hsl(216_24%_30%)] data-[state=active]:text-white">
               Pending ({pending.length})
             </TabsTrigger>
-            <TabsTrigger value="overdue" className="data-[state=active]:bg-red-500 data-[state=active]:text-white">
+            <TabsTrigger value="overdue" className="data-[state=active]:bg-[hsl(354_22%_30%)] data-[state=active]:text-white">
               Overdue ({overdue.length})
             </TabsTrigger>
-            <TabsTrigger value="paid" className="data-[state=active]:bg-green-500 data-[state=active]:text-white">
+            <TabsTrigger value="paid" className="data-[state=active]:bg-[hsl(151_20%_30%)] data-[state=active]:text-white">
               Paid ({paid.length})
             </TabsTrigger>
-            <TabsTrigger value="calendar" className="data-[state=active]:bg-purple-500 data-[state=active]:text-white">
+            <TabsTrigger value="calendar" className="data-[state=active]:bg-[hsl(264_23%_30%)] data-[state=active]:text-white">
               Calendar
             </TabsTrigger>
           </TabsList>
@@ -220,8 +220,8 @@ export default function BillsPage() {
               <div className="text-center py-12">Loading...</div>
             ) : pending.length === 0 ? (
               <div className="text-center py-12">
-                <CheckCircle className="w-16 h-16 text-green-300 mx-auto mb-4" />
-                <p className="text-slate-500">No pending bills</p>
+                <CheckCircle className="w-16 h-16 text-[hsl(151_31%_73%)] mx-auto mb-4" />
+                <p className="text-muted-foreground">No pending bills</p>
               </div>
             ) : (
               <div className="grid md:grid-cols-2 gap-4">
@@ -241,8 +241,8 @@ export default function BillsPage() {
           <TabsContent value="overdue" className="space-y-4">
             {overdue.length === 0 ? (
               <div className="text-center py-12">
-                <CheckCircle className="w-16 h-16 text-green-300 mx-auto mb-4" />
-                <p className="text-slate-500">No overdue bills</p>
+                <CheckCircle className="w-16 h-16 text-[hsl(151_31%_73%)] mx-auto mb-4" />
+                <p className="text-muted-foreground">No overdue bills</p>
               </div>
             ) : (
               <div className="grid md:grid-cols-2 gap-4">
@@ -263,8 +263,8 @@ export default function BillsPage() {
           <TabsContent value="paid" className="space-y-4">
             {paid.length === 0 ? (
               <div className="text-center py-12">
-                <Receipt className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                <p className="text-slate-500">No paid bills recorded</p>
+                <Receipt className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No paid bills recorded</p>
               </div>
             ) : (
               <div className="grid md:grid-cols-2 gap-4">

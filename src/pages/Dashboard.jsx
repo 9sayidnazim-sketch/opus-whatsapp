@@ -182,21 +182,21 @@ export default function Dashboard() {
               title="Income"
               value={`+${stats.totalReceitas.toFixed(2)}`}
               icon={ArrowUpCircle}
-              bgColor="bg-green-500"
+              bgColor="bg-[hsl(151_20%_30%)]"
               trend={`${stats.transactionsCount} transactions`}
             />
             <StatsCard
               title="Expenses"
               value={`-${stats.totalDespesas.toFixed(2)}`}
               icon={ArrowDownCircle}
-              bgColor="bg-rose-500"
+              bgColor="bg-[hsl(354_22%_30%)]"
               trend={`${stats.despesasChange}% vs last month`}
             />
             <StatsCard
               title="Transactions"
               value={transactions.length}
               icon={Calendar}
-              bgColor="bg-violet-400"
+              bgColor="bg-[hsl(253_23%_30%)]"
               trend="All recorded"
             />
           </div>

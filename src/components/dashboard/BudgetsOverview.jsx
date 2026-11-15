@@ -21,7 +21,7 @@ const categoryLabels = {
 export default function BudgetsOverview({ budgetsWithSpent, isLoading }) {
   if (isLoading) {
     return (
-      <Card className="shadow-lg">
+      <Card className="shadow-none">
         <CardHeader className="border-b">
           <CardTitle>Monthly Budgets</CardTitle>
         </CardHeader>
@@ -38,13 +38,13 @@ export default function BudgetsOverview({ budgetsWithSpent, isLoading }) {
 
   if (budgetsWithSpent.length === 0) {
     return (
-      <Card className="shadow-lg">
+      <Card className="shadow-none">
         <CardHeader className="border-b">
           <CardTitle>Monthly Budgets</CardTitle>
         </CardHeader>
         <CardContent className="p-8 text-center">
-          <TrendingDown className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-          <p className="text-slate-500 mb-4">No budgets set</p>
+          <TrendingDown className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+          <p className="text-muted-foreground mb-4">No budgets set</p>
           <Link to={createPageUrl("Budgets")}>
             <Button variant="outline" size="sm">
               Create Budgets
@@ -60,7 +60,7 @@ export default function BudgetsOverview({ budgetsWithSpent, isLoading }) {
     .slice(0, 5);
 
   return (
-    <Card className="shadow-lg">
+    <Card className="shadow-none">
       <CardHeader className="border-b">
         <div className="flex items-center justify-between">
           <CardTitle>Monthly Budgets</CardTitle>
@@ -77,19 +77,19 @@ export default function BudgetsOverview({ budgetsWithSpent, isLoading }) {
             <div key={budget.id} className="space-y-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-slate-900">
+                  <span className="text-sm font-medium text-foreground">
                     {categoryLabels[budget.category]}
                   </span>
                   {(budget.isExceeded || budget.isWarning) && (
                     <AlertTriangle className={`w-3 h-3 ${
-                      budget.isExceeded ? 'text-red-500' : 'text-orange-500'
+                      budget.isExceeded ? 'text-[hsl(354_42%_74%)]' : 'text-[hsl(26_53%_72%)]'
                     }`} />
                   )}
                 </div>
                 <span className={`text-sm font-semibold ${
-                  budget.isExceeded ? 'text-red-600' : 
-                  budget.isWarning ? 'text-orange-600' : 
-                  'text-slate-600'
+                  budget.isExceeded ? 'text-[hsl(354_42%_74%)]' : 
+                  budget.isWarning ? 'text-[hsl(26_53%_72%)]' : 
+                  'text-muted-foreground'
                 }`}>
                   {budget.percentage.toFixed(0)}%
                 </span>
@@ -98,12 +98,12 @@ export default function BudgetsOverview({ budgetsWithSpent, isLoading }) {
                 value={Math.min(budget.percentage, 100)} 
                 className="h-2"
                 indicatorClassName={
-                  budget.isExceeded ? 'bg-red-500' : 
-                  budget.isWarning ? 'bg-orange-500' : 
-                  'bg-blue-500'
+                  budget.isExceeded ? 'bg-[hsl(354_22%_30%)]' : 
+                  budget.isWarning ? 'bg-[hsl(26_24%_30%)]' : 
+                  'bg-[hsl(216_24%_30%)]'
                 }
               />
-              <div className="flex justify-between text-xs text-slate-500">
+              <div className="flex justify-between text-xs text-muted-foreground">
                 <span>-{budget.spent.toFixed(2)}</span>
                 <span>of {budget.amount.toFixed(2)}</span>
               </div>

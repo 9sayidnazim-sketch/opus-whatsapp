@@ -29,9 +29,9 @@ export default function NotificationsBanner({
             title: 'Budget nearing its limit',
             message: `You've already spent ${budget.percentage.toFixed(0)}% of the ${budget.category} budget`,
             icon: AlertTriangle,
-            color: 'text-orange-600',
-            bgColor: 'bg-orange-50',
-            borderColor: 'border-orange-200',
+            color: 'text-[hsl(26_53%_72%)]',
+            bgColor: 'bg-[hsl(26_24%_20%)]',
+            borderColor: 'border-[hsl(26_24%_20%)]',
             link: createPageUrl("Budgets")
           });
         }
@@ -42,9 +42,9 @@ export default function NotificationsBanner({
             title: 'Budget exceeded',
             message: `You exceeded the ${budget.category} budget by ${Math.abs(budget.remaining).toFixed(2)}`,
             icon: AlertTriangle,
-            color: 'text-red-600',
-            bgColor: 'bg-red-50',
-            borderColor: 'border-red-200',
+            color: 'text-[hsl(354_42%_74%)]',
+            bgColor: 'bg-[hsl(354_22%_21%)]',
+            borderColor: 'border-[hsl(354_22%_21%)]',
             link: createPageUrl("Budgets")
           });
         }
@@ -66,9 +66,9 @@ export default function NotificationsBanner({
               title: 'Goal deadline approaching',
               message: `${daysRemaining} days left for the goal "${goal.title}" (${percentage.toFixed(0)}% complete)`,
               icon: Target,
-              color: 'text-purple-600',
-              bgColor: 'bg-purple-50',
-              borderColor: 'border-purple-200',
+              color: 'text-[hsl(264_40%_78%)]',
+              bgColor: 'bg-[hsl(264_23%_22%)]',
+              borderColor: 'border-[hsl(264_23%_22%)]',
               link: createPageUrl("Goals")
             });
           }
@@ -98,9 +98,9 @@ export default function NotificationsBanner({
           title: 'Large expense detected',
           message: `Expense of ${transaction.amount.toFixed(2)} on ${transaction.description || transaction.category || 'unspecified category'}`,
           icon: TrendingUp,
-          color: 'text-blue-600',
-          bgColor: 'bg-blue-50',
-          borderColor: 'border-blue-200',
+          color: 'text-[hsl(216_49%_76%)]',
+          bgColor: 'bg-[hsl(216_24%_21%)]',
+          borderColor: 'border-[hsl(216_24%_21%)]',
           link: createPageUrl("Transactions")
         });
       });
@@ -131,9 +131,9 @@ export default function NotificationsBanner({
               title: 'Bill due today',
               message: `${billLabel}: -${bill.amount.toFixed(2)}`,
               icon: AlertTriangle,
-              color: 'text-orange-600',
-              bgColor: 'bg-orange-50',
-              borderColor: 'border-orange-200',
+              color: 'text-[hsl(26_53%_72%)]',
+              bgColor: 'bg-[hsl(26_24%_20%)]',
+              borderColor: 'border-[hsl(26_24%_20%)]',
               link: createPageUrl("Bills")
             });
           }
@@ -146,9 +146,9 @@ export default function NotificationsBanner({
               title: `Bill due in ${daysUntilDue} ${daysUntilDue === 1 ? 'day' : 'days'}`,
               message: `${billLabel}: -${bill.amount.toFixed(2)}`,
               icon: Calendar,
-              color: 'text-yellow-600',
-              bgColor: 'bg-yellow-50',
-              borderColor: 'border-yellow-200',
+              color: 'text-[hsl(48_42%_73%)]',
+              bgColor: 'bg-[hsl(48_24%_20%)]',
+              borderColor: 'border-[hsl(48_24%_20%)]',
               link: createPageUrl("Bills")
             });
           }
@@ -161,9 +161,9 @@ export default function NotificationsBanner({
               title: 'Overdue bill',
               message: `${billLabel}: -${bill.amount.toFixed(2)} - Overdue by ${Math.abs(daysUntilDue)} days`,
               icon: AlertTriangle,
-              color: 'text-red-600',
-              bgColor: 'bg-red-50',
-              borderColor: 'border-red-200',
+              color: 'text-[hsl(354_42%_74%)]',
+              bgColor: 'bg-[hsl(354_22%_21%)]',
+              borderColor: 'border-[hsl(354_22%_21%)]',
               link: createPageUrl("Bills")
             });
           }
@@ -176,12 +176,12 @@ export default function NotificationsBanner({
   if (!notifications || notifications.length === 0) return null;
 
   return (
-    <Card className="shadow-lg border-2 border-slate-200 mb-6">
+    <Card className="shadow-none border-2 border-border mb-6">
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <Bell className="w-5 h-5 text-slate-700" />
-            <h3 className="font-semibold text-slate-900">
+            <Bell className="w-5 h-5 text-foreground" />
+            <h3 className="font-semibold text-foreground">
               Notifications ({notifications.length})
             </h3>
           </div>
@@ -209,14 +209,14 @@ export default function NotificationsBanner({
                       <div className="flex items-start gap-3">
                         <Icon className={`w-5 h-5 ${notification.color} mt-0.5 flex-shrink-0`} />
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-slate-900 text-sm">
+                          <p className="font-medium text-foreground text-sm">
                             {notification.title}
                           </p>
-                          <p className="text-xs text-slate-600 mt-0.5">
+                          <p className="text-xs text-muted-foreground mt-0.5">
                             {notification.message}
                           </p>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0" />
+                        <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                       </div>
                     </div>
                   </Link>

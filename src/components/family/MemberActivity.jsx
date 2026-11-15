@@ -66,7 +66,7 @@ export default function MemberActivity({ members, transactions }) {
         <CardContent className="p-0">
           <div className="divide-y">
             {recentTransactions.length === 0 ? (
-              <div className="p-12 text-center text-slate-500">
+              <div className="p-12 text-center text-muted-foreground">
                 No recent activity
               </div>
             ) : (
@@ -75,7 +75,7 @@ export default function MemberActivity({ members, transactions }) {
                 const isIncome = transaction.type === 'receita';
 
                 return (
-                  <div key={transaction.id} className="p-4 hover:bg-slate-50 transition-colors">
+                  <div key={transaction.id} className="p-4 hover:bg-muted transition-colors">
                     <div className="flex items-center gap-4">
                       {member && (
                         <div 
@@ -88,16 +88,16 @@ export default function MemberActivity({ members, transactions }) {
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <p className="font-medium text-slate-900 truncate">
+                          <p className="font-medium text-foreground truncate">
                             {transaction.description || categoryLabels[transaction.category]}
                           </p>
                           {member && (
-                            <span className="text-xs text-slate-500">
+                            <span className="text-xs text-muted-foreground">
                               by {member.name}
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-3 text-sm text-slate-500">
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
                           <Badge variant="outline" className="text-xs">
                             {categoryLabels[transaction.category]}
                           </Badge>
@@ -110,11 +110,11 @@ export default function MemberActivity({ members, transactions }) {
 
                       <div className="flex items-center gap-2 flex-shrink-0">
                         {isIncome ? (
-                          <ArrowUpCircle className="w-5 h-5 text-green-600" />
+                          <ArrowUpCircle className="w-5 h-5 text-[hsl(151_31%_73%)]" />
                         ) : (
-                          <ArrowDownCircle className="w-5 h-5 text-red-600" />
+                          <ArrowDownCircle className="w-5 h-5 text-[hsl(354_42%_74%)]" />
                         )}
-                        <span className={`font-bold ${isIncome ? 'text-green-600' : 'text-red-600'}`}>
+                        <span className={`font-bold ${isIncome ? 'text-[hsl(151_31%_73%)]' : 'text-[hsl(354_42%_74%)]'}`}>
                           {isIncome ? '+' : '-'}{transaction.amount.toFixed(2)}
                         </span>
                       </div>

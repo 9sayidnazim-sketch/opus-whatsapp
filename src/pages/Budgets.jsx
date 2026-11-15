@@ -116,7 +116,7 @@ export default function BudgetsPage() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="font-heading text-[32px] leading-tight font-semibold tracking-[-0.03em] text-foreground">Budgets</h1>
-            <p className="text-slate-500 mt-1">
+            <p className="text-muted-foreground mt-1">
               Set monthly limits by category - {format(new Date(), "MMMM yyyy", { locale: enUS })}
             </p>
           </div>
@@ -125,7 +125,7 @@ export default function BudgetsPage() {
               setEditingBudget(null);
               setShowForm(!showForm);
             }}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-[hsl(216_24%_36%)] hover:bg-[hsl(216_24%_36%)]"
           >
             <Plus className="w-5 h-5 mr-2" />
             New Budget
@@ -151,13 +151,13 @@ export default function BudgetsPage() {
         </AnimatePresence>
 
         {loadingBudgets || loadingTransactions ? (
-          <div className="text-center py-12 text-slate-500">
+          <div className="text-center py-12 text-muted-foreground">
             Loading budgets...
           </div>
         ) : budgetsWithSpent.length === 0 ? (
           <div className="text-center py-12">
-            <TrendingDown className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-            <p className="text-slate-500 mb-4">
+            <TrendingDown className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground mb-4">
               You haven't set any budgets for this month yet
             </p>
             <Button onClick={() => setShowForm(true)}>

@@ -68,39 +68,39 @@ export default function MemberContributions({ member, transactions, goals, budge
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader className="border-b bg-gradient-to-r from-purple-50 to-purple-100">
+        <CardHeader className="border-b bg-muted">
           <CardTitle className="flex items-center gap-2">
-            <Wallet className="w-5 h-5 text-purple-600" />
+            <Wallet className="w-5 h-5 text-[hsl(264_40%_78%)]" />
             {member.name}'s Contributions - {new Date().toLocaleDateString('en-US', { month: 'long' })}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-slate-50 rounded-lg p-4">
-              <p className="text-sm text-slate-600 mb-1">Transactions This Month</p>
-              <p className="text-2xl font-bold text-slate-900">
+            <div className="bg-muted rounded-lg p-4">
+              <p className="text-sm text-muted-foreground mb-1">Transactions This Month</p>
+              <p className="text-2xl font-bold text-foreground">
                 {contributions.monthTransactions}
               </p>
             </div>
 
-            <div className="bg-red-50 rounded-lg p-4">
-              <p className="text-sm text-red-600 mb-1">Total Expenses</p>
-              <p className="text-2xl font-bold text-red-700">
+            <div className="bg-[hsl(354_22%_21%)] rounded-lg p-4">
+              <p className="text-sm text-[hsl(354_42%_74%)] mb-1">Total Expenses</p>
+              <p className="text-2xl font-bold text-[hsl(354_42%_74%)]">
                 -{contributions.totalSpent.toFixed(2)}
               </p>
             </div>
 
-            <div className="bg-green-50 rounded-lg p-4">
-              <p className="text-sm text-green-600 mb-1">Total Income</p>
-              <p className="text-2xl font-bold text-green-700">
+            <div className="bg-[hsl(151_20%_19%)] rounded-lg p-4">
+              <p className="text-sm text-[hsl(151_31%_73%)] mb-1">Total Income</p>
+              <p className="text-2xl font-bold text-[hsl(151_31%_73%)]">
                 {contributions.totalIncome.toFixed(2)}
               </p>
             </div>
 
-            <div className="bg-purple-50 rounded-lg p-4">
-              <p className="text-sm text-purple-600 mb-1">Balance</p>
+            <div className="bg-[hsl(264_23%_22%)] rounded-lg p-4">
+              <p className="text-sm text-[hsl(264_40%_78%)] mb-1">Balance</p>
               <p className={`text-2xl font-bold ${
-                contributions.totalIncome - contributions.totalSpent >= 0 ? 'text-green-700' : 'text-red-700'
+                contributions.totalIncome - contributions.totalSpent >= 0 ? 'text-[hsl(151_31%_73%)]' : 'text-[hsl(354_42%_74%)]'
               }`}>
                 {(contributions.totalIncome - contributions.totalSpent).toFixed(2)}
               </p>
@@ -109,24 +109,24 @@ export default function MemberContributions({ member, transactions, goals, budge
 
           {contributions.budgetContributions.length > 0 && (
             <div>
-              <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
                 <TrendingDown className="w-4 h-4" />
                 Budget Contribution
               </h3>
               <div className="space-y-3">
                 {contributions.budgetContributions.map((contrib, idx) => (
-                  <div key={idx} className="bg-slate-50 rounded-lg p-4">
+                  <div key={idx} className="bg-muted rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium text-slate-900">
+                      <span className="font-medium text-foreground">
                         {categoryLabels[contrib.category]}
                       </span>
                       <Badge variant="outline">{contrib.percentage}% of total</Badge>
                     </div>
                     <div className="flex items-center justify-between text-sm mb-2">
-                      <span className="text-slate-600">
+                      <span className="text-muted-foreground">
                         -{contrib.memberSpent.toFixed(2)} of {contrib.totalSpent.toFixed(2)}
                       </span>
-                      <span className="text-slate-500">
+                      <span className="text-muted-foreground">
                         Budget: {contrib.budgetAmount.toFixed(2)}
                       </span>
                     </div>
@@ -142,21 +142,21 @@ export default function MemberContributions({ member, transactions, goals, budge
 
           {contributions.totalGoalContribution > 0 && (
             <div className="mt-6">
-              <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
                 <Target className="w-4 h-4" />
                 Goal Contribution
               </h3>
-              <div className="bg-emerald-50 rounded-lg p-4">
+              <div className="bg-[hsl(151_20%_19%)] rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-emerald-600">Total Saved in Goals</p>
-                    <p className="text-2xl font-bold text-emerald-700 mt-1">
+                    <p className="text-sm text-[hsl(151_31%_73%)]">Total Saved in Goals</p>
+                    <p className="text-2xl font-bold text-[hsl(151_31%_73%)] mt-1">
                       {contributions.totalGoalContribution.toFixed(2)}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-emerald-600">Active Goals</p>
-                    <p className="text-2xl font-bold text-emerald-700 mt-1">
+                    <p className="text-sm text-[hsl(151_31%_73%)]">Active Goals</p>
+                    <p className="text-2xl font-bold text-[hsl(151_31%_73%)] mt-1">
                       {contributions.goalsCount}
                     </p>
                   </div>

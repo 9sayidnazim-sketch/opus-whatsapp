@@ -51,7 +51,7 @@ export default function AudioRecorder({ onAudioRecorded, disabled }) {
 
   if (isProcessing) {
     return (
-      <Button disabled className="bg-violet-600">
+      <Button disabled className="bg-[hsl(253_23%_36%)]">
         <Loader2 className="w-4 h-4 animate-spin" />
       </Button>
     );
@@ -61,7 +61,7 @@ export default function AudioRecorder({ onAudioRecorded, disabled }) {
     return (
       <Button 
         onClick={stopRecording}
-        className="bg-red-600 hover:bg-red-700 animate-pulse"
+        className="bg-[hsl(354_22%_36%)] hover:bg-[hsl(354_22%_36%)] animate-pulse"
       >
         <Square className="w-4 h-4" />
       </Button>

@@ -54,7 +54,7 @@ export default function FamilyMemberForm({ member, onSubmit, onCancel }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
     >
-      <Card className="mb-8 shadow-lg">
+      <Card className="mb-8 shadow-none">
         <CardHeader className="border-b">
           <div className="flex items-center justify-between">
             <CardTitle>
@@ -152,9 +152,9 @@ export default function FamilyMemberForm({ member, onSubmit, onCancel }) {
               </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-semibold text-blue-900 mb-2">About Permissions:</h4>
-              <ul className="space-y-1 text-sm text-blue-800">
+            <div className="bg-[hsl(216_24%_21%)] border border-[hsl(216_24%_21%)] rounded-lg p-4">
+              <h4 className="font-semibold text-[hsl(216_49%_76%)] mb-2">About Permissions:</h4>
+              <ul className="space-y-1 text-sm text-[hsl(216_49%_76%)]">
                 <li>• <strong>Admin:</strong> Can manage members and create, edit and delete everything</li>
                 <li>• <strong>Editor:</strong> Can create and edit transactions, goals and budgets</li>
                 <li>• <strong>Viewer:</strong> Can only view data, without editing</li>
@@ -165,7 +165,7 @@ export default function FamilyMemberForm({ member, onSubmit, onCancel }) {
               <Button type="button" variant="outline" onClick={onCancel}>
                 Cancel
               </Button>
-              <Button type="submit" className="bg-purple-600 hover:bg-purple-700">
+              <Button type="submit" className="bg-[hsl(264_23%_36%)] hover:bg-[hsl(264_23%_36%)]">
                 {member ? "Update" : "Add Member"}
               </Button>
             </div>

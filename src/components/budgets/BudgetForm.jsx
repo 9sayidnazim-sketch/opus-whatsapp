@@ -55,10 +55,10 @@ export default function BudgetForm({ budget, onSubmit, onCancel, currentMonth })
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
     >
-      <Card className="mb-8 shadow-lg border-blue-200">
-        <CardHeader className="border-b bg-blue-50">
+      <Card className="mb-8 shadow-none border-[hsl(216_24%_21%)]">
+        <CardHeader className="border-b bg-[hsl(216_24%_21%)]">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-blue-900">
+            <CardTitle className="text-[hsl(216_49%_76%)]">
               {budget ? "Edit Budget" : "New Budget"}
             </CardTitle>
             <Button variant="ghost" size="icon" onClick={onCancel}>
@@ -114,7 +114,7 @@ export default function BudgetForm({ budget, onSubmit, onCancel, currentMonth })
                 step={5}
                 className="w-full"
               />
-              <p className="text-sm text-slate-500 mt-2">
+              <p className="text-sm text-muted-foreground mt-2">
                 You'll be alerted when you reach {formData.alert_threshold}% of the limit
               </p>
             </div>
@@ -123,7 +123,7 @@ export default function BudgetForm({ budget, onSubmit, onCancel, currentMonth })
               <Button type="button" variant="outline" onClick={onCancel}>
                 Cancel
               </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+              <Button type="submit" className="bg-[hsl(216_24%_36%)] hover:bg-[hsl(216_24%_36%)]">
                 {budget ? "Update" : "Create"}
               </Button>
             </div>

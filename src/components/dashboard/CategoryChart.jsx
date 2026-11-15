@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Skeleton } from "@/components/ui/skeleton";
 
-const COLORS = ['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16', '#22c55e', '#10b981', '#14b8a6'];
+const COLORS = ['#a1ade0', '#8aba9f', '#cf9189', '#c7ae79', '#ae9ac4', '#83afb7', '#c592a8', '#a5ad87'];
 
 const categoryLabels = {
   alimentacao: "Food",
@@ -23,7 +23,7 @@ export default function CategoryChart({ data, isLoading }) {
   }));
 
   return (
-    <Card className="shadow-lg h-full">
+    <Card className="shadow-none h-full">
       <CardHeader className="border-b">
         <CardTitle>Expenses by Category</CardTitle>
       </CardHeader>
@@ -31,7 +31,7 @@ export default function CategoryChart({ data, isLoading }) {
         {isLoading ? (
           <Skeleton className="w-full h-64" />
         ) : data.length === 0 ? (
-          <div className="h-64 flex items-center justify-center text-slate-500">
+          <div className="h-64 flex items-center justify-center text-muted-foreground">
             No expenses this month
           </div>
         ) : (
@@ -43,7 +43,7 @@ export default function CategoryChart({ data, isLoading }) {
                 cy="50%"
                 labelLine={false}
                 outerRadius={80}
-                fill="#8884d8"
+                fill="#a1ade0"
                 dataKey="value"
                 label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
               >

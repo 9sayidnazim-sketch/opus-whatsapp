@@ -14,10 +14,10 @@ export default function NotificationThreshold({
   return (
     <div className="pl-12 space-y-3">
       <div className="flex items-baseline justify-between">
-        <Label className="text-sm font-medium text-slate-700">
+        <Label className="text-sm font-medium text-foreground">
           {label}
         </Label>
-        <span className="text-lg font-bold text-emerald-600">
+        <span className="text-lg font-bold text-[hsl(151_31%_73%)]">
           {value}{suffix}
         </span>
       </div>
@@ -32,7 +32,7 @@ export default function NotificationThreshold({
       />
       
       {description && (
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-muted-foreground">
           {description}
         </p>
       )}

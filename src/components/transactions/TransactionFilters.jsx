@@ -18,7 +18,7 @@ export default function TransactionFilters({ onFilterChange }) {
   return (
     <div className="flex flex-wrap gap-4 mb-6">
       <div className="flex items-center gap-2">
-        <Filter className="w-4 h-4 text-slate-500" />
+        <Filter className="w-4 h-4 text-muted-foreground" />
         <Select value={type} onValueChange={(value) => handleFilterChange("type", value)}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Type" />
@@ -32,7 +32,7 @@ export default function TransactionFilters({ onFilterChange }) {
       </div>
 
       <div className="flex items-center gap-2">
-        <Filter className="w-4 h-4 text-slate-500" />
+        <Filter className="w-4 h-4 text-muted-foreground" />
         <Select value={category} onValueChange={(value) => handleFilterChange("category", value)}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Category" />

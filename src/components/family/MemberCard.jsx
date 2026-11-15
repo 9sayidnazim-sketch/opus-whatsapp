@@ -10,17 +10,17 @@ const roleConfig = {
   admin: {
     label: "Admin",
     icon: Shield,
-    color: "bg-red-100 text-red-700 border-red-200"
+    color: "bg-[hsl(354_22%_21%)] text-[hsl(354_42%_74%)] border-[hsl(354_22%_21%)]"
   },
   editor: {
     label: "Editor",
     icon: Edit,
-    color: "bg-blue-100 text-blue-700 border-blue-200"
+    color: "bg-[hsl(216_24%_21%)] text-[hsl(216_49%_76%)] border-[hsl(216_24%_21%)]"
   },
   viewer: {
     label: "Viewer",
     icon: Eye,
-    color: "bg-slate-100 text-slate-700 border-slate-200"
+    color: "bg-muted text-foreground border-border"
   }
 };
 
@@ -35,7 +35,7 @@ export default function MemberCard({ member, onEdit, onDelete }) {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
     >
-      <Card className={`hover:shadow-lg transition-all ${isPending ? 'border-orange-200 bg-orange-50' : 'border-slate-200'}`}>
+      <Card className={`hover:shadow-none transition-all ${isPending ? 'border-[hsl(26_24%_20%)] bg-[hsl(26_24%_20%)]' : 'border-border'}`}>
         <CardContent className="p-5">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -46,10 +46,10 @@ export default function MemberCard({ member, onEdit, onDelete }) {
                 {member.avatar || member.name.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-slate-900 truncate">
+                <h3 className="font-semibold text-foreground truncate">
                   {member.name}
                 </h3>
-                <p className="text-sm text-slate-500 truncate">
+                <p className="text-sm text-muted-foreground truncate">
                   {member.email}
                 </p>
               </div>
@@ -61,7 +61,7 @@ export default function MemberCard({ member, onEdit, onDelete }) {
                 onClick={() => onEdit(member)}
                 className="flex-shrink-0"
               >
-                <Pencil className="w-4 h-4 text-slate-500" />
+                <Pencil className="w-4 h-4 text-muted-foreground" />
               </Button>
               <Button
                 variant="ghost"
@@ -69,7 +69,7 @@ export default function MemberCard({ member, onEdit, onDelete }) {
                 onClick={() => onDelete(member.id)}
                 className="flex-shrink-0"
               >
-                <Trash2 className="w-4 h-4 text-red-500" />
+                <Trash2 className="w-4 h-4 text-[hsl(354_42%_74%)]" />
               </Button>
             </div>
           </div>
@@ -82,12 +82,12 @@ export default function MemberCard({ member, onEdit, onDelete }) {
               </Badge>
               
               {isPending ? (
-                <Badge className="bg-orange-100 text-orange-700 border-orange-200">
+                <Badge className="bg-[hsl(26_24%_20%)] text-[hsl(26_53%_72%)] border-[hsl(26_24%_20%)]">
                   <Clock className="w-3 h-3 mr-1" />
                   Pending
                 </Badge>
               ) : (
-                <Badge className="bg-green-100 text-green-700 border-green-200">
+                <Badge className="bg-[hsl(151_20%_19%)] text-[hsl(151_31%_73%)] border-[hsl(151_20%_19%)]">
                   <CheckCircle className="w-3 h-3 mr-1" />
                   Active
                 </Badge>
@@ -95,22 +95,22 @@ export default function MemberCard({ member, onEdit, onDelete }) {
             </div>
 
             {member.joined_date && (
-              <div className="text-xs text-slate-500 flex items-center gap-1">
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
                 <CheckCircle className="w-3 h-3" />
                 Joined {format(new Date(member.joined_date), "MMM d", { locale: enUS })}
               </div>
             )}
 
             {isPending && member.invited_by && (
-              <div className="text-xs text-slate-500 flex items-center gap-1">
+              <div className="text-xs text-muted-foreground flex items-center gap-1">
                 <Mail className="w-3 h-3" />
                 Invited by {member.invited_by}
               </div>
             )}
           </div>
 
-          <div className="mt-4 pt-4 border-t border-slate-200">
-            <div className="text-xs text-slate-600">
+          <div className="mt-4 pt-4 border-t border-border">
+            <div className="text-xs text-muted-foreground">
               <strong>Permissions:</strong>
               <ul className="mt-1 space-y-1">
                 {member.role === 'admin' && (

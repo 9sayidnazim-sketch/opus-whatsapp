@@ -25,17 +25,17 @@ export default function BudgetAlerts({ alerts }) {
       className="mb-6"
     >
       {exceeded.length > 0 && (
-        <Card className="mb-4 border-red-200 bg-red-50">
+        <Card className="mb-4 border-[hsl(354_22%_21%)] bg-[hsl(354_22%_21%)]">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+              <AlertCircle className="w-5 h-5 text-[hsl(354_42%_74%)] mt-0.5 flex-shrink-0" />
               <div className="flex-1">
-                <h3 className="font-semibold text-red-900 mb-1">
+                <h3 className="font-semibold text-[hsl(354_42%_74%)] mb-1">
                   Exceeded Budgets ({exceeded.length})
                 </h3>
                 <div className="space-y-1">
                   {exceeded.map((alert) => (
-                    <p key={alert.id} className="text-sm text-red-700">
+                    <p key={alert.id} className="text-sm text-[hsl(354_42%_74%)]">
                       <strong>{categoryLabels[alert.category]}:</strong> -{alert.spent.toFixed(2)} of {alert.amount.toFixed(2)} 
                       <span className="ml-1">({alert.percentage.toFixed(0)}%)</span>
                     </p>
@@ -48,17 +48,17 @@ export default function BudgetAlerts({ alerts }) {
       )}
 
       {warnings.length > 0 && (
-        <Card className="border-orange-200 bg-orange-50">
+        <Card className="border-[hsl(26_24%_20%)] bg-[hsl(26_24%_20%)]">
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+              <AlertTriangle className="w-5 h-5 text-[hsl(26_53%_72%)] mt-0.5 flex-shrink-0" />
               <div className="flex-1">
-                <h3 className="font-semibold text-orange-900 mb-1">
+                <h3 className="font-semibold text-[hsl(26_53%_72%)] mb-1">
                   Budget Warnings ({warnings.length})
                 </h3>
                 <div className="space-y-1">
                   {warnings.map((alert) => (
-                    <p key={alert.id} className="text-sm text-orange-700">
+                    <p key={alert.id} className="text-sm text-[hsl(26_53%_72%)]">
                       <strong>{categoryLabels[alert.category]}:</strong> -{alert.spent.toFixed(2)} of {alert.amount.toFixed(2)}
                       <span className="ml-1">({alert.percentage.toFixed(0)}%)</span>
                     </p>
