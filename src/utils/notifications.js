@@ -182,3 +182,4 @@ export function checkAndTriggerDueAlerts({ transactions = [], budgets = [], goal
     sessionStorage.setItem(NOTIFIED_CACHE_KEY, JSON.stringify([...notifiedSet]));
   } catch {}
 }
+

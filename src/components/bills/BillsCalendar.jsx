@@ -2,20 +2,9 @@ import { useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isBefore, startOfDay } from "date-fns";
 import { enUS } from "date-fns/locale";
+import { formatCurrency, getCategoryLabel } from "@/utils";
 
-const categoryLabels = {
-  alimentacao: "Food",
-  transporte: "Transport",
-  moradia: "Housing",
-  contas: "Bills",
-  saude: "Health",
-  educacao: "Education",
-  lazer: "Leisure",
-  compras: "Shopping",
-  outros_gastos: "Other"
-};
-
-export default function BillsCalendar({ bills, onBillClick }) {
+export default function BillsCalendar({ bills = [], onEdit, onMarkAsPaid }) {
   const today = new Date();
   const monthStart = startOfMonth(today);
   const monthEnd = endOfMonth(today);
@@ -58,44 +47,44 @@ export default function BillsCalendar({ bills, onBillClick }) {
           {daysInMonth.map(day => {
             const dateKey = format(day, 'yyyy-MM-dd');
             const dayBills = billsByDate[dateKey] || [];
-            const hasOverdue = dayBills.some(b => 
-              b.payment_status === 'a_pagar' && isBefore(new Date(b.due_date), startOfDay(new Date()))
+            const hasOverdue = dayBills.some(b =>
+              b.payment_status === 'pendente' && isBefore(new Date(b.due_date), startOfDay(new Date()))
             );
-            const hasDueToday = dayBills.some(b => 
-              b.payment_status === 'a_pagar' && isToday(new Date(b.due_date))
+            const hasDueToday = dayBills.some(b =>
+              b.payment_status === 'pendente' && isToday(new Date(b.due_date))
             );
-            const hasPending = dayBills.some(b => b.payment_status === 'a_pagar');
+            const hasPending = dayBills.some(b => b.payment_status === 'pendente');
 
             return (
               <div
                 key={dateKey}
-                className={`aspect-square border rounded-lg p-2 ${
-                  isToday(day) 
-                    ? 'bg-[hsl(216_24%_21%)] border-blue-500 border-2' 
+                className={`aspect-square border rounded-lg p-1.5 ${
+                  isToday(day)
+                    ? 'bg-[#B5F13E]/10 border-[#B5F13E] border-2'
                     : 'bg-card border-border'
-                } hover:shadow-md transition-shadow cursor-pointer`}
+                } hover:shadow-md transition-shadow`}
               >
-                <div className="text-sm font-medium text-foreground mb-1">
+                <div className={`text-sm font-medium mb-1 ${isToday(day) ? 'text-[#B5F13E]' : 'text-foreground'}`}>
                   {format(day, 'd')}
                 </div>
                 {dayBills.length > 0 && (
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     {dayBills.slice(0, 2).map((bill, idx) => (
                       <div
                         key={idx}
-                        onClick={() => onBillClick(bill)}
-                        className={`text-xs p-1 rounded truncate ${
+                        onClick={() => onEdit && onEdit(bill)}
+                        className={`text-xs p-0.5 rounded truncate cursor-pointer ${
                           bill.payment_status === 'pago'
-                            ? 'bg-[hsl(151_20%_19%)] text-[hsl(151_31%_73%)]'
+                            ? 'bg-emerald-950/60 text-emerald-400'
                             : hasOverdue
-                            ? 'bg-[hsl(354_22%_21%)] text-[hsl(354_42%_74%)]'
+                            ? 'bg-red-950/60 text-red-400'
                             : hasDueToday
-                            ? 'bg-[hsl(26_24%_20%)] text-[hsl(26_53%_72%)]'
-                            : 'bg-[hsl(216_24%_21%)] text-[hsl(216_49%_76%)]'
+                            ? 'bg-amber-950/60 text-amber-400'
+                            : 'bg-secondary text-muted-foreground'
                         }`}
-                        title={bill.description || categoryLabels[bill.category]}
+                        title={bill.description || getCategoryLabel(bill.category)}
                       >
-                        -{bill.amount.toFixed(0)}
+                        {formatCurrency(bill.amount, { compact: true })}
                       </div>
                     ))}
                     {dayBills.length > 2 && (
@@ -110,22 +99,23 @@ export default function BillsCalendar({ bills, onBillClick }) {
           })}
         </div>
 
+        {/* Legend */}
         <div className="mt-6 flex flex-wrap gap-4 justify-center">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-[hsl(354_22%_21%)] border border-[hsl(354_22%_21%)] rounded" />
-            <span className="text-sm text-muted-foreground">Overdue</span>
+            <div className="w-3 h-3 bg-red-950/60 border border-red-800 rounded" />
+            <span className="text-xs text-muted-foreground">Overdue</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-[hsl(26_24%_20%)] border border-[hsl(26_24%_20%)] rounded" />
-            <span className="text-sm text-muted-foreground">Due Today</span>
+            <div className="w-3 h-3 bg-amber-950/60 border border-amber-800 rounded" />
+            <span className="text-xs text-muted-foreground">Due Today</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-[hsl(216_24%_21%)] border border-[hsl(216_24%_21%)] rounded" />
-            <span className="text-sm text-muted-foreground">To Pay</span>
+            <div className="w-3 h-3 bg-secondary border border-border rounded" />
+            <span className="text-xs text-muted-foreground">Upcoming</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-[hsl(151_20%_19%)] border border-[hsl(151_20%_19%)] rounded" />
-            <span className="text-sm text-muted-foreground">Paid</span>
+            <div className="w-3 h-3 bg-emerald-950/60 border border-emerald-800 rounded" />
+            <span className="text-xs text-muted-foreground">Paid</span>
           </div>
         </div>
       </CardContent>

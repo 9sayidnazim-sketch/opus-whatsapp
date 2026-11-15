@@ -57,11 +57,11 @@ export default function AddMemberForm({ member, onSubmit, onCancel }) {
       ...formData,
       invited_by: currentUser?.email || "system"
     };
-    
+
     if (!member) {
       submitData.joined_date = new Date().toISOString().split('T')[0];
     }
-    
+
     onSubmit(submitData);
   };
 
@@ -71,8 +71,8 @@ export default function AddMemberForm({ member, onSubmit, onCancel }) {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
     >
-      <Card className="mb-8 shadow-none border-[hsl(264_23%_22%)]">
-        <CardHeader className="border-b bg-[hsl(264_23%_22%)]">
+      <Card className="mb-8 shadow-none border-border">
+        <CardHeader className="border-b bg-secondary/60">
           <div className="flex items-center justify-between">
             <CardTitle>
               {member ? "Edit Member" : "Add Family Member"}
@@ -156,7 +156,9 @@ export default function AddMemberForm({ member, onSubmit, onCancel }) {
                     type="button"
                     onClick={() => setFormData({ ...formData, avatar: emoji })}
                     className={`w-12 h-12 text-2xl rounded-lg border-2 hover:scale-110 transition-transform ${
-                      formData.avatar === emoji ? 'border-purple-500 bg-[hsl(264_23%_22%)]' : 'border-border'
+                      formData.avatar === emoji
+                        ? 'border-[#B5F13E] bg-[#B5F13E]/10'
+                        : 'border-border bg-secondary/40'
                     }`}
                   >
                     {emoji}
@@ -174,7 +176,7 @@ export default function AddMemberForm({ member, onSubmit, onCancel }) {
                     type="button"
                     onClick={() => setFormData({ ...formData, color })}
                     className={`w-10 h-10 rounded-lg border-2 hover:scale-110 transition-transform ${
-                      formData.color === color ? 'border-slate-900' : 'border-border'
+                      formData.color === color ? 'border-[#B5F13E] scale-110' : 'border-border'
                     }`}
                     style={{ backgroundColor: color }}
                   />
@@ -182,11 +184,12 @@ export default function AddMemberForm({ member, onSubmit, onCancel }) {
               </div>
             </div>
 
-            <div className="bg-[hsl(216_24%_21%)] border border-[hsl(216_24%_21%)] rounded-lg p-4">
-              <h4 className="font-medium text-[hsl(216_49%_76%)] mb-2">Preview</h4>
+            {/* Preview */}
+            <div className="bg-secondary/40 border border-border/60 rounded-lg p-4">
+              <h4 className="font-medium text-muted-foreground text-sm mb-3">Preview</h4>
               <div className="flex items-center gap-3">
-                <div 
-                  className="w-12 h-12 rounded-full flex items-center justify-center text-xl text-white"
+                <div
+                  className="w-12 h-12 rounded-full flex items-center justify-center text-xl"
                   style={{ backgroundColor: formData.color }}
                 >
                   {formData.avatar}
@@ -198,12 +201,15 @@ export default function AddMemberForm({ member, onSubmit, onCancel }) {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4">
+            <div className="flex justify-end gap-3 pt-2">
               <Button type="button" variant="outline" onClick={onCancel}>
                 Cancel
               </Button>
-              <Button type="submit" className="bg-[hsl(264_23%_36%)] hover:bg-[hsl(264_23%_36%)]">
-                {member ? "Update" : "Add Member"}
+              <Button
+                type="submit"
+                className="bg-[#B5F13E] text-[#121417] hover:bg-[#a3d937] font-semibold"
+              >
+                {member ? "Update Member" : "Add Member"}
               </Button>
             </div>
           </form>
