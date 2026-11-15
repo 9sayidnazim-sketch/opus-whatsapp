@@ -40,19 +40,19 @@ export default function MonthlyTrend({ transactions, isLoading }) {
   }, [transactions]);
 
   return (
-    <Card className="shadow-none h-full">
+    <Card className="min-w-0">
       <CardHeader className="border-b">
         <CardTitle>Monthly trend</CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
+      <CardContent className="min-w-0 p-4 sm:p-6">
         {isLoading ? (
           <Skeleton className="w-full h-64" />
         ) : (
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={260}>
             <LineChart data={chartData} margin={{ top: 12, right: 12, bottom: 0, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
+              <XAxis dataKey="month" tick={{ fontSize: 12 }} tickMargin={8} />
+              <YAxis width={48} tick={{ fontSize: 12 }} />
               <Tooltip formatter={(value) => `${value.toFixed(2)}`} />
               <Legend />
               <Line 

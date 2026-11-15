@@ -23,11 +23,11 @@ export default function CategoryChart({ data, isLoading }) {
   }));
 
   return (
-    <Card className="shadow-none h-full">
+    <Card className="min-w-0">
       <CardHeader className="border-b">
         <CardTitle>Expenses by Category</CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
+      <CardContent className="min-w-0 p-4 sm:p-6">
         {isLoading ? (
           <Skeleton className="w-full h-64" />
         ) : data.length === 0 ? (
@@ -35,7 +35,7 @@ export default function CategoryChart({ data, isLoading }) {
             No expenses this month
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={260}>
             <PieChart>
               <Pie
                 data={chartData}

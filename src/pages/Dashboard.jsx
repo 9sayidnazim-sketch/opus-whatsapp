@@ -4,7 +4,6 @@ import { useMemo } from "react";
 
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Wallet, Calendar, ArrowUpCircle, ArrowDownCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { enUS } from "date-fns/locale";
@@ -140,10 +139,9 @@ export default function Dashboard() {
   }, [budgets, transactions, currentMonth]);
 
   return (
-    <div className="p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="font-heading text-[34px] leading-tight font-semibold tracking-[-0.03em] text-foreground mb-1.5">Household ledger</h1>
+    <section className="opus-dashboard mx-auto w-full min-w-0 max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <div className="mb-6">
+          <h1 className="font-heading text-3xl md:text-[36px] leading-tight font-semibold tracking-[-0.03em] text-foreground mb-1.5">Household ledger</h1>
           <p className="text-muted-foreground capitalize text-[15px]">
             {format(new Date(), "MMMM yyyy", { locale: enUS })}
           </p>
@@ -157,58 +155,51 @@ export default function Dashboard() {
         />
 
         {loadingTransactions ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
             {[...Array(4)].map((_, i) => (
               <Card key={i}>
                 <CardHeader className="pb-2">
-                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-4 w-16 max-w-full" />
                 </CardHeader>
                 <CardContent>
-                  <Skeleton className="h-8 w-32" />
+                  <Skeleton className="h-8 w-20 max-w-full" />
                 </CardContent>
               </Card>
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
             <StatsCard
               title="Monthly balance"
               value={`${stats.saldo.toFixed(2)}`}
-              icon={Wallet}
               featured
               trend={stats.saldo >= 0 ? "Positive" : "Negative"}
             />
             <StatsCard
               title="Income"
               value={`+${stats.totalReceitas.toFixed(2)}`}
-              icon={ArrowUpCircle}
-              bgColor="bg-[hsl(151_20%_30%)]"
               trend={`${stats.transactionsCount} transactions`}
             />
             <StatsCard
               title="Expenses"
               value={`-${stats.totalDespesas.toFixed(2)}`}
-              icon={ArrowDownCircle}
-              bgColor="bg-[hsl(354_22%_30%)]"
               trend={`${stats.despesasChange}% vs last month`}
             />
             <StatsCard
               title="Transactions"
               value={transactions.length}
-              icon={Calendar}
-              bgColor="bg-[hsl(253_23%_30%)]"
               trend="All recorded"
             />
           </div>
         )}
 
-        <div className="grid lg:grid-cols-3 gap-6 mb-6">
-          <div className="lg:col-span-2 space-y-6">
+        <div className="grid min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:gap-6">
+          <div className="grid min-w-0 content-start gap-4 lg:gap-6">
             <MonthlyTrend transactions={transactions} isLoading={loadingTransactions} />
             <RecentTransactions transactions={transactions} isLoading={loadingTransactions} />
           </div>
 
-          <div className="space-y-6">
+          <div className="grid min-w-0 content-start gap-4 lg:gap-6">
             <CategoryChart data={categoryData} isLoading={loadingTransactions} />
             <BudgetsOverview 
               budgetsWithSpent={budgetsWithSpent} 
@@ -220,7 +211,6 @@ export default function Dashboard() {
             />
           </div>
         </div>
-      </div>
-    </div>
+    </section>
   );
 }

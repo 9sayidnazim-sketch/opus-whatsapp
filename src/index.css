@@ -60,8 +60,7 @@
     
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
-    overscroll-behavior: none;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
   body {
     @apply bg-background text-foreground;
@@ -69,14 +68,13 @@
     letter-spacing: -0.011em;
     min-height: 100vh;
     min-height: 100dvh;
-    overscroll-behavior: none;
-    overflow-x: hidden;
+    overflow-x: clip;
     -webkit-tap-highlight-color: transparent;
   }
   #root {
     min-height: 100vh;
     min-height: 100dvh;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
   input, textarea, select {
     /* Keeps iOS from zooming into a focused field and shifting the screen */
@@ -153,4 +151,19 @@
       animation: none;
     }
   }
+}
+
+
+@layer components {
+  .opus-dashboard .opus-silver-panel {
+    background: linear-gradient(150deg, #454a53, #32363d 48%, #292d33);
+    border-color: #565c66;
+    box-shadow: inset 0 1px 0 #c7cbd41f;
+  }
+  .opus-dashboard .opus-dashboard-balance {
+    background: linear-gradient(145deg, #d9dde4, #aeb6c1);
+    border-color: #dbe0e8;
+    color: #1b2028;
+  }
+  .opus-dashboard .opus-dashboard-balance .text-muted-foreground { color: #394353; }
 }
