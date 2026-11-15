@@ -248,3 +248,4 @@ export async function verifyAuthentication({ username, response, expectedChallen
     refresh_token: 'webauthn-refresh-' + Date.now(),
   };
 }
+

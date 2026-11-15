@@ -69,17 +69,16 @@ export default function Assistant() {
         </div>
 
         {whatsappURL && (
-          <button
-            onClick={() => {
-              setError('');
-              openWhatsAppChat(window.open('about:blank', '_blank')).catch(() => setError('Could not open WhatsApp. Try again.'));
-            }}
+          <a
+            href={`${whatsappURL}?text=${encodeURIComponent('Hi Octapus 7829104921')}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#25D366]/15 hover:bg-[#25D366]/25 text-[#25D366] border border-[#25D366]/30 text-xs sm:text-sm font-semibold transition-all"
           >
             <MessageSquare className="w-4 h-4" />
             Chat on WhatsApp
             <ExternalLink className="h-3.5 w-3.5 opacity-70" />
-          </button>
+          </a>
         )}
       </header>
 

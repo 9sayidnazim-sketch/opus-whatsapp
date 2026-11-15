@@ -225,3 +225,4 @@ export async function authenticateWithBiometrics(targetUsername = '') {
 
   return { success: true, account };
 }
+
