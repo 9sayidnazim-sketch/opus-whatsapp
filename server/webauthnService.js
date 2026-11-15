@@ -37,6 +37,31 @@ function saveStore() {
   } catch {}
 }
 
+const CHALLENGE_TTL_MS = 5 * 60 * 1000;
+
+function issueChallenge(challenge, type, username) {
+  const now = Date.now();
+  for (const [key, entry] of Object.entries(store.challenges)) {
+    if (now - (entry.created_at || 0) > CHALLENGE_TTL_MS) delete store.challenges[key];
+  }
+  store.challenges[challenge] = { type, username, created_at: now };
+  saveStore();
+}
+
+/**
+ * Only accept challenges this server issued, once, for the same ceremony type,
+ * within the TTL. Never trust a challenge just because the client sent it.
+ */
+function consumeChallenge(challenge, type) {
+  const entry = challenge ? store.challenges[challenge] : undefined;
+  if (challenge) delete store.challenges[challenge];
+  if (!entry || entry.type !== type || Date.now() - entry.created_at > CHALLENGE_TTL_MS) {
+    saveStore();
+    throw new Error('This passkey request has expired. Please try again.');
+  }
+  return entry;
+}
+
 export function getExpectedRP(originHeader) {
   let origin = 'http://localhost:5173';
   let rpID = 'localhost';
@@ -85,11 +110,7 @@ export async function getRegistrationOptions({ username, displayName, originHead
     },
   });
 
-  store.challenges[options.challenge] = {
-    username: normalizedUser,
-    created_at: Date.now(),
-  };
-  saveStore();
+  issueChallenge(options.challenge, 'registration', normalizedUser);
 
   return options;
 }
@@ -100,6 +121,11 @@ export async function getRegistrationOptions({ username, displayName, originHead
 export async function verifyRegistration({ username, response, expectedChallenge, originHeader, deviceName }) {
   const { origin, rpID } = getExpectedRP(originHeader);
   const normalizedUser = (username || 'owner').toLowerCase().trim();
+
+  const issued = consumeChallenge(expectedChallenge, 'registration');
+  if (issued.username !== normalizedUser) {
+    throw new Error('This passkey request was issued for a different account.');
+  }
 
   let verification;
   try {
@@ -142,7 +168,6 @@ export async function verifyRegistration({ username, response, expectedChallenge
     ...store.users[normalizedUser].credentials.filter(c => c.id !== newCredential.id),
   ];
 
-  delete store.challenges[expectedChallenge];
   saveStore();
 
   return { verified: true, credential: newCredential };
@@ -169,11 +194,7 @@ export async function getAuthenticationOptions({ username, originHeader }) {
     userVerification: 'preferred',
   });
 
-  store.challenges[options.challenge] = {
-    username: normalizedUser,
-    created_at: Date.now(),
-  };
-  saveStore();
+  issueChallenge(options.challenge, 'authentication', normalizedUser);
 
   return options;
 }
@@ -181,64 +202,55 @@ export async function getAuthenticationOptions({ username, originHeader }) {
 /**
  * 4. Verify Authentication Response
  */
-export async function verifyAuthentication({ username, response, expectedChallenge, originHeader }) {
+// The client's `username` field is only a hint (on the sign-in screen it holds
+// the passkey's userHandle), so identity comes from the stored credential and
+// the user the challenge was issued for.
+export async function verifyAuthentication({ response, expectedChallenge, originHeader }) {
   const { origin, rpID } = getExpectedRP(originHeader);
-  const normalizedUser = username ? username.toLowerCase().trim() : null;
+  const issued = consumeChallenge(expectedChallenge, 'authentication');
 
-  // Find user by credential ID if username was not provided (discoverable / resident key)
-  let matchedUser = normalizedUser ? store.users[normalizedUser] : null;
+  let matchedUser = null;
   let matchedCredential = null;
-
-  if (matchedUser) {
-    matchedCredential = matchedUser.credentials.find(c => c.id === response.id);
-  } else {
-    for (const u of Object.values(store.users)) {
-      const found = (u.credentials || []).find(c => c.id === response.id);
-      if (found) {
-        matchedUser = u;
-        matchedCredential = found;
-        break;
-      }
+  for (const u of Object.values(store.users)) {
+    const found = (u.credentials || []).find(c => c.id === response?.id);
+    if (found) {
+      matchedUser = u;
+      matchedCredential = found;
+      break;
     }
   }
 
-  // Fallback to owner if credential was created in client
-  if (!matchedCredential) {
-    matchedCredential = {
-      id: response.id,
-      publicKey: '',
-      counter: 0,
-    };
-    matchedUser = matchedUser || { username: 'owner', displayName: 'Household Owner' };
+  // Fail closed: an unknown passkey never signs anyone in.
+  if (!matchedCredential?.publicKey || (issued.username && matchedUser.username !== issued.username)) {
+    throw new Error('This passkey is not enrolled for Fuloozi. Sign in with your MPIN, then enroll it in Admin.');
   }
 
   let verification;
   try {
-    if (matchedCredential.publicKey) {
-      verification = await verifyAuthenticationResponse({
-        response,
-        expectedChallenge,
-        expectedOrigin: origin,
-        expectedRPID: rpID,
-        authenticator: {
-          credentialID: matchedCredential.id,
-          credentialPublicKey: Buffer.from(matchedCredential.publicKey, 'base64'),
-          counter: matchedCredential.counter || 0,
-        },
-        requireUserVerification: false,
-      });
-
-      if (!verification.verified) {
-        throw new Error('Authentication challenge signature mismatch');
-      }
-
-      matchedCredential.counter = verification.authenticationInfo.newCounter;
-    }
+    verification = await verifyAuthenticationResponse({
+      response,
+      expectedChallenge,
+      expectedOrigin: origin,
+      expectedRPID: rpID,
+      // @simplewebauthn/server v11+ takes `credential` (v9 used `authenticator`)
+      credential: {
+        id: matchedCredential.id,
+        publicKey: new Uint8Array(Buffer.from(matchedCredential.publicKey, 'base64')),
+        counter: matchedCredential.counter || 0,
+        transports: matchedCredential.transports,
+      },
+      requireUserVerification: false,
+    });
   } catch (err) {
-    console.warn('Verification note:', err.message);
+    console.error('Authentication verification error:', err);
+    throw new Error('Passkey verification failed. Please try again or use your MPIN.');
   }
 
-  delete store.challenges[expectedChallenge];
+  if (!verification.verified) {
+    throw new Error('Passkey verification failed. Please try again or use your MPIN.');
+  }
+
+  matchedCredential.counter = verification.authenticationInfo.newCounter;
   saveStore();
 
   return {

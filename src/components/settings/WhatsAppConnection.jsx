@@ -4,13 +4,12 @@ import {
   ExternalLink,
   Smartphone,
   CheckCircle,
+  AlertCircle,
   Copy,
   QrCode,
   Send,
   Sparkles,
   RefreshCw,
-  Receipt,
-  HelpCircle,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
@@ -18,15 +17,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import toast from 'react-hot-toast';
+import { supabase, openWhatsAppChat } from '@/api/client';
 
 export default function WhatsAppConnection({ whatsappURL }) {
-  const [kapsoInfo, setKapsoInfo] = useState({
-    connected: true,
-    verified_name: 'Mr.Octapus',
-    display_phone_number: '+1 555-796-9980',
-    code_verification_status: 'VERIFIED',
-    loading: true,
-  });
+  // Start unknown, not "connected": the badge must reflect the real status check.
+  const [kapsoInfo, setKapsoInfo] = useState({ connected: false, loading: true });
 
   const [showQr, setShowQr] = useState(false);
   const [showTester, setShowTester] = useState(false);
@@ -40,24 +35,45 @@ export default function WhatsAppConnection({ whatsappURL }) {
   const [outboundSending, setOutboundSending] = useState(false);
   const [outboundResult, setOutboundResult] = useState(null);
 
-  const phoneRaw = '15557969980';
-  const connectUrl = `https://wa.me/${phoneRaw}?text=${encodeURIComponent('Hi Octapus 7829104921')}`;
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data=${encodeURIComponent(connectUrl)}`;
+  const botNumber = (whatsappURL || '').replace(/^https:\/\/wa\.me\//, '');
+  // The QR is drawn by a third-party service, so it must not carry this user's
+  // pairing code (any holder can link a phone during the 10-minute window).
+  // It keeps the shared dev placeholder until QR codes are rendered locally.
+  const qrConnectUrl = `${whatsappURL}?text=${encodeURIComponent('Hi Octapus 7829104921')}`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data=${encodeURIComponent(qrConnectUrl)}`;
 
   useEffect(() => {
     fetch('/api/kapso/status')
       .then((r) => r.json())
       .then((data) => {
-        setKapsoInfo((prev) => ({ ...prev, ...data, loading: false }));
+        setKapsoInfo({ ...data, connected: Boolean(data.connected), loading: false });
       })
       .catch(() => {
-        setKapsoInfo((prev) => ({ ...prev, loading: false }));
+        setKapsoInfo({ connected: false, error: 'Could not reach the status service', loading: false });
       });
   }, []);
 
-  function handleCopy() {
-    navigator.clipboard.writeText(connectUrl);
-    toast.success('WhatsApp connection link copied to clipboard!');
+  const statusLabel = kapsoInfo.loading
+    ? 'Checking...'
+    : kapsoInfo.connected
+      ? (kapsoInfo.code_verification_status === 'VERIFIED' ? 'Verified & Active' : 'Connected')
+      : 'Not Connected';
+
+  function handleOpen() {
+    // Open synchronously (avoids popup blockers), then load this user's chat code.
+    openWhatsAppChat(window.open('about:blank', '_blank'))
+      .catch(() => toast.error('Could not open WhatsApp. Try again.'));
+  }
+
+  async function handleCopy() {
+    try {
+      const { data: chatId, error } = await supabase.rpc('opus_open_whatsapp');
+      if (error) throw error;
+      await navigator.clipboard.writeText(`${whatsappURL}?text=${encodeURIComponent(`Hi Octapus ${chatId}`)}`);
+      toast.success('WhatsApp connection link copied');
+    } catch {
+      toast.error('Could not copy your WhatsApp link. Use Open in WhatsApp instead.');
+    }
   }
 
   async function handleSimulate(customText) {
@@ -128,30 +144,43 @@ export default function WhatsAppConnection({ whatsappURL }) {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="font-semibold text-base text-foreground">WhatsApp Finance Bot</h2>
-              <span className="px-2 py-0.5 rounded-full bg-[#25D366]/15 text-[#25D366] border border-[#25D366]/30 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1">
-                <CheckCircle className="w-3 h-3" />
-                {kapsoInfo.code_verification_status === 'VERIFIED' ? 'Verified & Active' : 'Connected'}
+              <span className={`px-2 py-0.5 rounded-full border text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 ${
+                kapsoInfo.loading
+                  ? 'bg-secondary text-muted-foreground border-border'
+                  : kapsoInfo.connected
+                    ? 'bg-[#25D366]/15 text-[#25D366] border-[#25D366]/30'
+                    : 'bg-rose-500/15 text-rose-400 border-rose-500/30'
+              }`}>
+                {kapsoInfo.loading
+                  ? <RefreshCw className="w-3 h-3 animate-spin" />
+                  : kapsoInfo.connected
+                    ? <CheckCircle className="w-3 h-3" />
+                    : <AlertCircle className="w-3 h-3" />}
+                {statusLabel}
               </span>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
               Official Meta Cloud API via Kapso · Dedicated Number:{' '}
-              <strong className="text-foreground">{kapsoInfo.display_phone_number}</strong> ({kapsoInfo.verified_name})
+              <strong className="text-foreground">{kapsoInfo.display_phone_number || `+${botNumber}`}</strong>
+              {kapsoInfo.verified_name && <> ({kapsoInfo.verified_name})</>}
             </p>
+            {!kapsoInfo.loading && !kapsoInfo.connected && kapsoInfo.error && (
+              <p role="alert" className="mt-1 text-xs text-rose-400">Kapso: {kapsoInfo.error}</p>
+            )}
           </div>
         </div>
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 shrink-0">
-          <a
-            href={connectUrl}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={handleOpen}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20ba5a] text-black text-xs font-semibold shadow-sm transition-all"
           >
             <Smartphone className="w-4 h-4" />
             Open in WhatsApp
             <ExternalLink className="w-3.5 h-3.5 opacity-80" />
-          </a>
+          </button>
 
           <button
             type="button"
@@ -192,7 +221,7 @@ export default function WhatsAppConnection({ whatsappURL }) {
               </p>
             </div>
             <div className="p-3 rounded-lg bg-card border border-border/80 text-xs text-muted-foreground font-mono select-all break-all">
-              {connectUrl}
+              {qrConnectUrl}
             </div>
             <p className="text-[11px] text-[#B5F13E]">
               ✓ Pre-filled greeting: "Hi Octapus 7829104921"

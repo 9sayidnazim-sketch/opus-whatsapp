@@ -1,17 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   Fingerprint,
-  ScanFace,
   ShieldCheck,
   Trash2,
-  Smartphone,
   Laptop,
-  Lock,
   Sliders,
-  CheckCircle,
-  AlertCircle,
   RotateCcw,
 } from "lucide-react";
 import toast from "react-hot-toast";

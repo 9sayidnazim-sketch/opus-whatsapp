@@ -217,10 +217,14 @@ export default function TransactionForm({ transaction, onSubmit, onCancel, isBil
             {(isBillMode || formData.type === 'despesa') && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                 <div className="space-y-1.5">
-                  <Label htmlFor="due_date" className="text-xs font-medium text-foreground">Due Date (Optional bill date)</Label>
+                  <Label htmlFor="due_date" className="text-xs font-medium text-foreground">
+                    {/* The Bills page lists only entries with a due date */}
+                    {isBillMode ? 'Due Date *' : 'Due Date (Optional bill date)'}
+                  </Label>
                   <Input
                     id="due_date"
                     type="date"
+                    required={isBillMode}
                     value={formData.due_date}
                     onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
                     className="h-11 rounded-xl bg-secondary/40 border-border text-sm"

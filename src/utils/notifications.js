@@ -1,5 +1,5 @@
 import { formatCurrency, getCategoryLabel } from './index';
-import { differenceInDays, startOfDay } from 'date-fns';
+import { differenceInDays, startOfDay, startOfMonth, format } from 'date-fns';
 
 const NOTIFIED_CACHE_KEY = 'fuloozi_notified_alerts';
 
@@ -153,14 +153,19 @@ export function checkAndTriggerDueAlerts({ transactions = [], budgets = [], goal
       });
   }
 
-  // 2. Check budget limits
+  // 2. Check budget limits (same rule as the Dashboard and Budgets pages:
+  // this month's active budgets against this month's spending only)
   if (settings.budget_alerts_enabled !== false) {
     const threshold = settings.budget_alert_threshold || 80;
-    const currentMonth = new Date().toISOString().slice(0, 7);
+    const monthStart = startOfMonth(new Date());
+    const currentMonth = format(monthStart, 'yyyy-MM');
+    const currentMonthKey = format(monthStart, 'yyyy-MM-dd');
 
-    budgets.forEach(budget => {
+    const activeBudgets = budgets.filter(b => (!b.month || b.month === currentMonthKey) && b.active !== false);
+
+    activeBudgets.forEach(budget => {
       const spent = transactions
-        .filter(t => t.type === 'despesa' && t.category === budget.category)
+        .filter(t => t.type === 'despesa' && t.category === budget.category && new Date(t.date) >= monthStart)
         .reduce((sum, t) => sum + (t.amount || 0), 0);
 
       const pct = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;

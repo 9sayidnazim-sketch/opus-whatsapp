@@ -81,13 +81,13 @@ Engineered per the user request using `@simplewebauthn/browser` and `@simpleweba
   - Connects to Kapso WhatsApp Meta proxy (`https://api.kapso.ai/meta/whatsapp/v24.0/${phone_number_id}/messages`).
   - Validated with active verified number `+1 555-796-9980` (`Mr.Octapus`).
   - Processes financial actions: logs expenses (`expense 45 lunch`), income (`income 2000 consulting`), and responds with formatted ledger summaries.
-  - Handles inbound webhooks at `/api/whatsapp` with challenge verification and signature checking.
+  - Handles inbound webhooks at `/api/whatsapp` with challenge verification. Signature checking in `api/whatsapp.js` is not yet enforced (see section 7, pending).
 
 ---
 
 ## 6. Verification Checklist (`octapus-master`)
 - [x] **Completeness:** Every page (`/`, `/transactions`, `/bills`, `/budgets`, `/goals`, `/family`, `/assistant`, `/settings`, `/admin`) renders without error.
-- [x] **Biometrics:** SimpleWebAuthn Face ID / Touch ID sign-in and device registration fully functional with MPIN fallback.
+- [~] **Biometrics:** Passkey registration and verification work against the local dev store (fixed in section 7). Production sign-in is not functional yet: tokens are placeholders, not Supabase sessions.
 - [x] **Kapso WhatsApp:** Webhook and outbound messaging connected to Kapso Meta API.
 - [x] **Connected:** All cards and tables display real data from the mock provider or Supabase.
 - [x] **Configurable:** Currency, budget thresholds, bill alert lead times, and payment wall are editable in Settings.
@@ -95,3 +95,38 @@ Engineered per the user request using `@simplewebauthn/browser` and `@simpleweba
 - [x] **Professional Look:** 0 raw IDs or technical stack traces on screen; 4/8px spacing; 44px+ touch targets; high contrast dark mode.
 - [x] **Build:** `npm run build` compiles with 0 errors.
 - [x] **Dev Server:** Running live on `http://localhost:5173/`.
+
+---
+
+## 7. Fix Pass: `npm run dev` audit (2026-11-15, Claude Code)
+Starting point: commit `4eda6cb`. The dev server started cleanly and every page rendered, but the audit found the bugs below. All fixes are uncommitted in the working tree.
+
+**Fixed**
+1. **Hardcoded Kapso API key removed** (`server/kapsoAgent.js`). The key and phone-number ID were committed as fallbacks in unpushed commit `b8745ae`, and the GitHub repo is public. Credentials are now read at call time from the environment, and a clear "not configured" status is returned when they are missing.
+2. **`.env.local` now reaches the dev API** (`vite.config.js`). Vite only exposed it to client code, so the Node middleware silently used the hardcoded key. It now loads env files into `process.env`; variables already set in the shell still take priority.
+3. **Passkey sign-in no longer accepts everything** (`server/webauthnService.js`). Before the fix, unknown credentials, forged signatures, made-up or replayed challenges and other users' passkeys all signed in, because `@simplewebauthn/server` v14 expects `credential:` (the code passed the v9 `authenticator:`) and failures were swallowed. Challenges are now server-issued, single-use, typed and expire after 5 minutes.
+4. **WhatsApp linking regression reverted** (`src/pages/Assistant.jsx`, `src/components/settings/WhatsAppConnection.jsx`). Commit `0b5f348` replaced each user's pairing code with the mock `7829104921`. "Chat on WhatsApp", "Open in WhatsApp" and "Copy link" now use `opus_open_whatsapp()` again. The bot number comes from `VITE_WHATSAPP_NUMBER`.
+5. **WhatsApp status badge tells the truth.** It started as "Verified & Active" and stayed that way when the status check failed. It now shows Checking / Verified / Not Connected, with the error message.
+6. **Sign-out sticks in dev mode** (`src/api/client.js`). Before, a reload signed you back in as the demo owner.
+7. **Budget push alerts use this month's spending** (`src/utils/notifications.js`). They summed all-time spending, so a monthly budget eventually showed as permanently "exceeded". The rule now matches the Dashboard and Budgets pages.
+8. **Bills require a due date** (`TransactionForm.jsx`, bill mode). Bills saved without one were confirmed with a toast and then never listed.
+9. **Lint and console cleaned up:** ESLint went from 10 errors and 1 warning to 0, and the React Router v7 future-flag warnings are gone (opted in on `BrowserRouter`).
+
+**Verified**
+- `npm run lint`: 0 problems. `vite build`: passes.
+- In the in-app browser against the user's dev server (5173): all 9 routes render with no bad values (NaN, undefined, Invalid Date) and no app console errors. Admin "Passkeys & Biometrics" tab renders. Sign-out survives reloads and deep links. Bills without a due date are blocked; with one they appear under Pending.
+- Budget alerts, using the real module with a stubbed `Notification`: last month's spending doesn't trigger an alert, 86% gives a warning, 114% gives "exceeded", inactive budgets stay quiet.
+- Passkeys, using a software ES256 authenticator against the real `@simplewebauthn/server` code: the committed version signed in all 6 cases, including 5 attacks. The fixed version signs in only the genuine passkey.
+- Kapso, using the real API: still connected on the user's server; a clean start with no shell key reads `.env.local`; with no credentials it reports "not configured" without crashing.
+- Not verified here: service-worker registration. The in-app browser refuses to fetch service-worker scripts, even though the server serves `/sw.js` correctly. Check it in Chrome.
+
+**Pending (needs a decision or more work)**
+- **Before any `git push`:** the Kapso key is still in the history of unpushed commit `b8745ae`. Rotate it in Kapso, or rewrite the unpushed commits, before pushing to the public repo.
+- **Production passkey sign-in:** it returns placeholder tokens rather than real Supabase sessions; registration is unauthenticated; credentials live in a JSON file that won't persist on Vercel.
+- **WhatsApp QR code:** still encodes the shared placeholder code, because it is drawn by `api.qrserver.com` and a real pairing code must not go to a third party. Render it locally (e.g. `qrcode.react`); the install was blocked by permissions in this session.
+- **Webhook signatures (`api/whatsapp.js`):** only checked when the header is present, and Vercel's parsed JSON body skips the check entirely. Make it fail closed and read the raw body.
+- **Dev API exposure:** `host: true` plus unauthenticated `/api/kapso/send` lets anyone on the same network send WhatsApp messages from the business number.
+- **Emoji** in notification titles, WhatsApp replies, avatars and role labels conflicts with the no-emoji preference.
+- **`npm run typecheck`:** 459 errors, mostly from untyped shadcn wrappers under `checkJs`; this was already failing before the fix pass.
+
+**Next action:** review and commit this fix pass, then rotate the Kapso key before the next push.

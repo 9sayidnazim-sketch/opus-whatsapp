@@ -3,19 +3,32 @@
  * Connects the Fuloozi Household Ledger with Kapso's WhatsApp Cloud API & Kapso Agent
  */
 
-const KAPSO_API_KEY = process.env.KAPSO_API_KEY || '27c8bfa5bf9955fd16038d198068b6b37cf62db8cb6af6e2af81048dde73f1f2';
-const KAPSO_PHONE_NUMBER_ID = process.env.KAPSO_PHONE_NUMBER_ID || '1390375357501064';
 const KAPSO_BASE_URL = 'https://api.kapso.ai';
+const NOT_CONFIGURED = 'Kapso is not configured. Set KAPSO_API_KEY and KAPSO_PHONE_NUMBER_ID in .env.local.';
+
+/**
+ * Credentials are read at call time, never hardcoded: this file is committed.
+ * Locally they come from .env.local (loaded in vite.config.js); on Vercel from
+ * the project's environment variables.
+ */
+function kapsoConfig() {
+  const apiKey = process.env.KAPSO_API_KEY;
+  const phoneNumberId = process.env.KAPSO_PHONE_NUMBER_ID;
+  return { apiKey, phoneNumberId, configured: Boolean(apiKey && phoneNumberId) };
+}
 
 /**
  * Check Kapso WhatsApp Phone Number & Agent connection status
  */
 export async function getKapsoStatus() {
+  const { apiKey, phoneNumberId, configured } = kapsoConfig();
+  if (!configured) return { connected: false, error: NOT_CONFIGURED };
+
   try {
-    const res = await fetch(`${KAPSO_BASE_URL}/meta/whatsapp/v24.0/${KAPSO_PHONE_NUMBER_ID}`, {
+    const res = await fetch(`${KAPSO_BASE_URL}/meta/whatsapp/v24.0/${phoneNumberId}`, {
       method: 'GET',
       headers: {
-        'X-API-Key': KAPSO_API_KEY,
+        'X-API-Key': apiKey,
         'Content-Type': 'application/json',
       },
     });
@@ -33,7 +46,7 @@ export async function getKapsoStatus() {
       code_verification_status: data.code_verification_status || 'VERIFIED',
       platform_type: data.platform_type || 'CLOUD_API',
       throughput: data.throughput?.level || 'STANDARD',
-      phone_number_id: KAPSO_PHONE_NUMBER_ID,
+      phone_number_id: phoneNumberId,
     };
   } catch (err) {
     return { connected: false, error: err.message };
@@ -48,6 +61,9 @@ export async function sendWhatsAppMessage({ to, text }) {
     throw new Error('Recipient number ("to") and message text are required');
   }
 
+  const { apiKey, phoneNumberId, configured } = kapsoConfig();
+  if (!configured) return { ok: false, error: NOT_CONFIGURED };
+
   const cleanRecipient = String(to).replace(/\D/g, '');
   const body = {
     messaging_product: 'whatsapp',
@@ -57,11 +73,11 @@ export async function sendWhatsAppMessage({ to, text }) {
   };
 
   try {
-    const res = await fetch(`${KAPSO_BASE_URL}/meta/whatsapp/v24.0/${KAPSO_PHONE_NUMBER_ID}/messages`, {
+    const res = await fetch(`${KAPSO_BASE_URL}/meta/whatsapp/v24.0/${phoneNumberId}/messages`, {
       method: 'POST',
       signal: AbortSignal.timeout(12000),
       headers: {
-        'X-API-Key': KAPSO_API_KEY,
+        'X-API-Key': apiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
@@ -99,13 +115,16 @@ export async function askKapsoAgent(prompt, systemContext = '') {
     ? `${systemContext}\n\nUser Question: ${prompt}`
     : prompt;
 
+  const { apiKey, configured } = kapsoConfig();
+  if (!configured) return null;
+
   try {
     // 1. Trigger agent run
     const res = await fetch(`${KAPSO_BASE_URL}/platform/v1/kapso_agent/runs`, {
       method: 'POST',
       signal: AbortSignal.timeout(10000),
       headers: {
-        'X-API-Key': KAPSO_API_KEY,
+        'X-API-Key': apiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -128,7 +147,7 @@ export async function askKapsoAgent(prompt, systemContext = '') {
     for (let i = 0; i < 8; i++) {
       await new Promise(r => setTimeout(r, 1000));
       const pollRes = await fetch(`${KAPSO_BASE_URL}${statusUrl}`, {
-        headers: { 'X-API-Key': KAPSO_API_KEY },
+        headers: { 'X-API-Key': apiKey },
       });
       if (pollRes.ok) {
         const { data: current } = await pollRes.json();

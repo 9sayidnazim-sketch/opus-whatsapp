@@ -150,7 +150,10 @@ function createLocalMockSupabase() {
       },
       async signOut() {
         try {
-          localStorage.removeItem(DEV_STORAGE_PREFIX + 'session');
+          // Store an explicit null rather than removing the key: getSession()
+          // only falls back to the zero-config demo session on a first visit,
+          // so a reload after signing out stays signed out.
+          localStorage.setItem(DEV_STORAGE_PREFIX + 'session', 'null');
         } catch {}
         authListeners.forEach(listener => listener('SIGNED_OUT', null));
         return { error: null };

@@ -32,7 +32,6 @@ import {
   Gift,
   TrendingUp,
   RefreshCw,
-  ShieldCheck,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { showBrowserNotification, getNotificationPermission, requestNotificationPermission } from "@/utils/notifications";
