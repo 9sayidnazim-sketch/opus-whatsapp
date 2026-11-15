@@ -81,7 +81,7 @@ function SignIn() {
   }
 
   return <main className="min-h-screen grid place-items-center bg-background p-6">
-    <section className="w-full max-w-md rounded-xl border bg-card p-8">
+    <section className="w-full max-w-md opus-silver-panel rounded-xl border bg-card p-8">
       <p className="text-sm font-medium text-primary">OPUS by Octapus</p>
       <h1 className="mt-4 text-3xl font-semibold">{titles[step]}</h1>
       {step === 'created' ? <>

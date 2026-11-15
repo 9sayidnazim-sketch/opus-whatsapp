@@ -44,12 +44,12 @@ export default function Assistant() {
       }}>Chat on WhatsApp <ExternalLink className="ml-2 h-4 w-4" /></Button>}
     </header>
     <div className="grid gap-4 md:grid-cols-[240px_minmax(0,1fr)]">
-      <aside className="rounded-xl border bg-card p-4">
+      <aside className="opus-silver-panel rounded-xl border bg-card p-4">
         <Button variant="outline" className="w-full justify-start" disabled={busy} onClick={() => { setSelected(null); setText(''); setError(''); }}><Plus className="mr-2 h-4 w-4" />New conversation</Button>
         <ul className="mt-3 space-y-1">{threads.map(item => <li key={item.id}><button type="button" disabled={busy} onClick={() => setSelected(item.id)} className={`w-full truncate rounded-md p-2 text-left text-sm ${selected === item.id ? 'bg-accent' : 'hover:bg-muted'}`}>{item.name}</button></li>)}</ul>
         {isError && <p role="alert" className="mt-3 text-sm">Could not load conversations</p>}
       </aside>
-      <section className="rounded-xl border bg-card p-4 md:p-6">
+      <section className="opus-silver-panel rounded-xl border bg-card p-4 md:p-6">
         <div className="min-h-60 space-y-4" aria-live="polite">
           {!messages.length && <p className="text-muted-foreground">Ask for help setting up a budget or planning for your next bill.</p>}
           {messages.map((message, index) => <div key={index} className={`whitespace-pre-wrap break-words rounded-lg p-3 text-sm ${message.role === 'user' ? 'ml-auto max-w-[85%] border border-[hsl(229_22%_32%)] bg-accent text-accent-foreground' : 'max-w-[95%] border border-[hsl(154_14%_28%)] bg-[hsl(154_13%_18%)] text-[hsl(155_19%_87%)]'}`}>{message.content}</div>)}
