@@ -1,141 +1,75 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Mail, CheckCircle, Clock, Shield, Edit, Eye } from "lucide-react";
+import { Pencil, Trash2, Shield, User, Clock, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
-
-const roleConfig = {
-  admin: {
-    label: "Admin",
-    icon: Shield,
-    color: "bg-[hsl(354_22%_21%)] text-[hsl(354_42%_74%)] border-[hsl(354_22%_21%)]"
-  },
-  editor: {
-    label: "Editor",
-    icon: Edit,
-    color: "bg-[hsl(216_24%_21%)] text-[hsl(216_49%_76%)] border-[hsl(216_24%_21%)]"
-  },
-  viewer: {
-    label: "Viewer",
-    icon: Eye,
-    color: "bg-muted text-foreground border-border"
-  }
-};
 
 export default function MemberCard({ member, onEdit, onDelete }) {
   const isPending = member.status === 'pending';
-  const roleInfo = roleConfig[member.role] || roleConfig.editor;
-  const RoleIcon = roleInfo.icon;
+  const role = member.role || 'Member';
+  const isAdmin = role.toLowerCase().includes('admin') || role.toLowerCase().includes('head');
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
+      initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
+      exit={{ opacity: 0, scale: 0.98 }}
     >
-      <Card className={`hover:shadow-none transition-all ${isPending ? 'border-[hsl(26_24%_20%)] bg-[hsl(26_24%_20%)]' : 'border-border'}`}>
-        <CardContent className="p-5">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
+      <Card className="rounded-2xl border-border bg-card hover:border-border/90 transition-all">
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div className="flex items-center gap-3 min-w-0">
               <div 
-                className="w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold text-white flex-shrink-0"
-                style={{ backgroundColor: member.color || '#6366f1' }}
+                className="w-11 h-11 rounded-2xl flex items-center justify-center text-sm font-bold text-black font-heading shrink-0 shadow-sm"
+                style={{ backgroundColor: member.color || '#B5F13E' }}
               >
                 {member.avatar || member.name.charAt(0).toUpperCase()}
               </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-foreground truncate">
+              <div className="min-w-0">
+                <h3 className="font-semibold text-base text-foreground truncate">
                   {member.name}
                 </h3>
-                <p className="text-sm text-muted-foreground truncate">
-                  {member.email}
+                <p className="text-xs text-muted-foreground truncate">
+                  {member.email || '@household'}
                 </p>
               </div>
             </div>
-            <div className="flex gap-1 ml-2">
+
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => onEdit(member)}
-                className="flex-shrink-0"
+                className="w-8 h-8 rounded-lg hover:bg-secondary text-muted-foreground hover:text-foreground"
               >
-                <Pencil className="w-4 h-4 text-muted-foreground" />
+                <Pencil className="w-3.5 h-3.5" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => onDelete(member.id)}
-                className="flex-shrink-0"
+                className="w-8 h-8 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
               >
-                <Trash2 className="w-4 h-4 text-[hsl(354_42%_74%)]" />
+                <Trash2 className="w-3.5 h-3.5" />
               </Button>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge className={roleInfo.color}>
-                <RoleIcon className="w-3 h-3 mr-1" />
-                {roleInfo.label}
-              </Badge>
-              
-              {isPending ? (
-                <Badge className="bg-[hsl(26_24%_20%)] text-[hsl(26_53%_72%)] border-[hsl(26_24%_20%)]">
-                  <Clock className="w-3 h-3 mr-1" />
-                  Pending
-                </Badge>
-              ) : (
-                <Badge className="bg-[hsl(151_20%_19%)] text-[hsl(151_31%_73%)] border-[hsl(151_20%_19%)]">
-                  <CheckCircle className="w-3 h-3 mr-1" />
-                  Active
-                </Badge>
-              )}
-            </div>
+          <div className="flex items-center justify-between pt-3 border-t border-border/60 text-xs">
+            <Badge className={`text-[10px] font-semibold border ${
+              isAdmin 
+                ? 'bg-[#B5F13E]/15 text-[#B5F13E] border-[#B5F13E]/30' 
+                : 'bg-secondary text-muted-foreground border-border'
+            }`}>
+              <Shield className="w-3 h-3 mr-1" />
+              {role}
+            </Badge>
 
-            {member.joined_date && (
-              <div className="text-xs text-muted-foreground flex items-center gap-1">
-                <CheckCircle className="w-3 h-3" />
-                Joined {format(new Date(member.joined_date), "MMM d", { locale: enUS })}
-              </div>
+            {member.share && (
+              <span className="text-xs text-muted-foreground font-medium">
+                {member.share}% allocation
+              </span>
             )}
-
-            {isPending && member.invited_by && (
-              <div className="text-xs text-muted-foreground flex items-center gap-1">
-                <Mail className="w-3 h-3" />
-                Invited by {member.invited_by}
-              </div>
-            )}
-          </div>
-
-          <div className="mt-4 pt-4 border-t border-border">
-            <div className="text-xs text-muted-foreground">
-              <strong>Permissions:</strong>
-              <ul className="mt-1 space-y-1">
-                {member.role === 'admin' && (
-                  <>
-                    <li>• Manage all members</li>
-                    <li>• Edit all transactions</li>
-                    <li>• Manage budgets and goals</li>
-                  </>
-                )}
-                {member.role === 'editor' && (
-                  <>
-                    <li>• Create their own transactions</li>
-                    <li>• Edit their transactions</li>
-                    <li>• View family data</li>
-                  </>
-                )}
-                {member.role === 'viewer' && (
-                  <>
-                    <li>• View transactions</li>
-                    <li>• View reports</li>
-                    <li>• No editing permission</li>
-                  </>
-                )}
-              </ul>
-            </div>
           </div>
         </CardContent>
       </Card>

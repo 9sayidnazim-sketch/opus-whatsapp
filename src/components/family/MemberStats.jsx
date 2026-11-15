@@ -1,155 +1,65 @@
 import { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, DollarSign } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Wallet } from "lucide-react";
+import { formatCurrency } from "@/utils";
 
-export default function MemberStats({ members, transactions, budgets, goals }) {
-  const memberContributions = useMemo(() => {
-    return members.map(member => {
+export default function MemberStats({ members = [], transactions = [] }) {
+  const stats = useMemo(() => {
+    return members.map((member, index) => {
+      // Split transactions across members or by created_by if specified
       const memberTransactions = transactions.filter(
-        t => t.created_by === member.email
+        t => t.created_by === member.email || (!t.created_by && index === 0)
       );
 
       const income = memberTransactions
         .filter(t => t.type === 'receita')
-        .reduce((sum, t) => sum + t.amount, 0);
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
 
       const expense = memberTransactions
         .filter(t => t.type === 'despesa')
-        .reduce((sum, t) => sum + t.amount, 0);
-
-      const contribution = income - expense;
-      const transactionCount = memberTransactions.length;
-
-      // Contribuições para metas
-      const goalContributions = goals.map(goal => {
-        // Aqui você poderia ter uma lógica mais sofisticada
-        // Por agora, assumimos distribuição proporcional à contribuição
-        return {
-          goalId: goal.id,
-          goalTitle: goal.title,
-          amount: 0 // Placeholder - poderia ser calculado baseado em transações específicas
-        };
-      });
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
 
       return {
         ...member,
         income,
         expense,
-        contribution,
-        transactionCount,
-        goalContributions
+        net: income - expense,
+        count: memberTransactions.length,
       };
     });
-  }, [members, transactions, goals]);
-
-  const sortedByContribution = [...memberContributions].sort(
-    (a, b) => b.contribution - a.contribution
-  );
-
-  const totalIncome = memberContributions.reduce((sum, m) => sum + m.income, 0);
-  const totalExpense = memberContributions.reduce((sum, m) => sum + m.expense, 0);
+  }, [members, transactions]);
 
   return (
-    <div className="mb-8">
-      <h2 className="text-xl font-semibold text-foreground mb-4">
-        Individual Contributions (This Month)
-      </h2>
-      
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sortedByContribution.map((member) => {
-          const incomePercent = totalIncome > 0 ? (member.income / totalIncome * 100) : 0;
-          const expensePercent = totalExpense > 0 ? (member.expense / totalExpense * 100) : 0;
-
-          return (
-            <Card key={member.id} className="border-l-4" style={{ borderLeftColor: member.color }}>
-              <CardHeader className="pb-3">
-                <div className="flex items-center gap-3">
-                  <div 
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-lg text-white"
-                    style={{ backgroundColor: member.color }}
-                  >
-                    {member.avatar}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-base truncate">{member.name}</CardTitle>
-                    <p className="text-xs text-muted-foreground">
-                      {member.transactionCount} transactions
-                    </p>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-[hsl(151_31%_73%)]" />
-                    <span className="text-sm text-muted-foreground">Income</span>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-[hsl(151_31%_73%)]">
-                      {member.income.toFixed(2)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {incomePercent.toFixed(1)}% of total
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <TrendingDown className="w-4 h-4 text-[hsl(354_42%_74%)]" />
-                    <span className="text-sm text-muted-foreground">Expenses</span>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-[hsl(354_42%_74%)]">
-                      -{member.expense.toFixed(2)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {expensePercent.toFixed(1)}% of total
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pt-3 border-t">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-[hsl(216_49%_76%)]" />
-                      <span className="text-sm font-medium text-foreground">Contribution</span>
-                    </div>
-                    <p className={`font-bold ${member.contribution >= 0 ? 'text-[hsl(151_31%_73%)]' : 'text-[hsl(354_42%_74%)]'}`}>
-                      {member.contribution >= 0 ? '+' : ''}{member.contribution.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      <Card className="mt-6 bg-muted border-[hsl(264_23%_22%)]">
-        <CardContent className="p-6">
-          <div className="grid md:grid-cols-3 gap-6">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Total Income</p>
-              <p className="text-2xl font-bold text-[hsl(151_31%_73%)]">
-                {totalIncome.toFixed(2)}
-              </p>
+    <Card className="rounded-2xl border-border bg-card">
+      <CardHeader className="p-5 border-b border-border/80">
+        <CardTitle className="text-base font-semibold text-foreground">
+          Member Contributions
+        </CardTitle>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Income and expenses recorded per household member
+        </p>
+      </CardHeader>
+      <CardContent className="p-5 space-y-4">
+        {stats.map((m) => (
+          <div key={m.id} className="p-3.5 rounded-xl bg-secondary/30 border border-border/60 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-sm text-foreground">{m.name}</span>
+              <span className="text-xs font-bold tabular-nums font-heading text-[#B5F13E]">
+                {formatCurrency(m.net, { showSign: true })}
+              </span>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Total Expenses</p>
-              <p className="text-2xl font-bold text-[hsl(354_42%_74%)]">
-                -{totalExpense.toFixed(2)}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Family Balance</p>
-              <p className={`text-2xl font-bold ${(totalIncome - totalExpense) >= 0 ? 'text-[hsl(151_31%_73%)]' : 'text-[hsl(354_42%_74%)]'}`}>
-                {(totalIncome - totalExpense).toFixed(2)}
-              </p>
+
+            <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-border/40">
+              <span className="flex items-center gap-1 text-emerald-400">
+                <ArrowUpRight className="w-3.5 h-3.5" /> Inflow: {formatCurrency(m.income)}
+              </span>
+              <span className="flex items-center gap-1 text-rose-400">
+                <ArrowDownRight className="w-3.5 h-3.5" /> Outflow: {formatCurrency(m.expense)}
+              </span>
             </div>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        ))}
+      </CardContent>
+    </Card>
   );
 }

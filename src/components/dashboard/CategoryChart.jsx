@@ -1,81 +1,112 @@
-import { useId } from "react";
+import { useId, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { Skeleton } from "@/components/ui/skeleton";
+import { getCategoryLabel, formatCurrency } from "@/utils";
 
-const COLORS = ['#a1ade0', '#8aba9f', '#cf9189', '#c7ae79', '#ae9ac4', '#83afb7', '#c592a8', '#a5ad87'];
-
-const SIDES = ['#596185', '#506d5d', '#825752', '#786642', '#635472', '#4b6770', '#794f66', '#5c634b'];
-
-const categoryLabels = {
-  alimentacao: "Food",
-  transporte: "Transport",
-  moradia: "Housing",
-  contas: "Bills",
-  saude: "Health",
-  educacao: "Education",
-  lazer: "Leisure",
-  compras: "Shopping",
-  outros_gastos: "Other"
-};
+const COLORS = [
+  '#B5F13E', // Fuloozi Lime
+  '#38bdf8', // Sky
+  '#a78bfa', // Purple
+  '#fbbf24', // Amber
+  '#f87171', // Coral Red
+  '#34d399', // Emerald
+  '#fb923c', // Orange
+  '#e879f9', // Fuchsia
+  '#94a3b8', // Slate
+];
 
 export default function CategoryChart({ data, isLoading }) {
-  const id = useId();
-  const chartData = data.filter(item => item.value > 0).map(item => ({
-    name: categoryLabels[item.name] || item.name,
-    value: item.value
-  }));
+  const chartData = useMemo(() => {
+    return (data || [])
+      .filter(item => item.value > 0)
+      .map(item => ({
+        name: getCategoryLabel(item.name),
+        rawCategory: item.name,
+        value: item.value,
+      }));
+  }, [data]);
 
   const total = chartData.reduce((sum, item) => sum + item.value, 0);
+
   return (
-    <Card className="min-w-0">
-      <CardHeader className="border-b">
-        <CardTitle>Expenses by category</CardTitle>
+    <Card className="min-w-0 rounded-2xl bg-card border-border">
+      <CardHeader className="p-4 sm:p-6 border-b border-border/80 flex flex-row items-center justify-between">
+        <div>
+          <CardTitle className="text-base sm:text-lg font-semibold text-foreground">Expenses by Category</CardTitle>
+          <p className="text-xs text-muted-foreground mt-0.5">Where your household money is going</p>
+        </div>
+        <div className="text-right">
+          <span className="text-xs text-muted-foreground">Total Spent</span>
+          <p className="text-sm font-semibold text-foreground tabular-nums">{formatCurrency(total)}</p>
+        </div>
       </CardHeader>
-      <CardContent className="min-w-0 p-4 sm:p-6">
+      <CardContent className="p-4 sm:p-6">
         {isLoading ? (
-          <Skeleton className="w-full h-64" />
+          <Skeleton className="w-full h-56 rounded-xl" />
+        ) : chartData.length === 0 ? (
+          <div className="h-56 flex flex-col items-center justify-center text-center text-muted-foreground text-sm">
+            <p>No expense data recorded yet for this period.</p>
+          </div>
         ) : (
-          <>
-            <div className="relative">
-              <ResponsiveContainer width="100%" height={210}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+            <div className="h-48 relative">
+              <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <defs>
-                    {COLORS.map((color, index) => <linearGradient id={`${id}-${index}`} key={color} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={color} style={{ filter: "brightness(1.24)" }} />
-                      <stop offset="100%" stopColor={color} />
-                    </linearGradient>)}
-                  </defs>
-                  <Pie data={chartData.length ? chartData : [{ value: 1 }]} dataKey="value" cx="50%" cy="53%"
-                    innerRadius="53%" outerRadius="81%" paddingAngle={chartData.length > 1 ? 3 : 0}
-                    stroke="none" isAnimationActive={false} tooltipType="none">
-                    {(chartData.length ? chartData : [{ name:'empty' }]).map((entry, index) =>
-                      <Cell key={entry.name} fill={total ? SIDES[index % SIDES.length] : '#23272e'} />)}
+                  <Pie
+                    data={chartData}
+                    dataKey="value"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={48}
+                    outerRadius={72}
+                    paddingAngle={3}
+                    stroke="#181b1f"
+                    strokeWidth={2}
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
                   </Pie>
-                  <Pie data={chartData.length ? chartData : [{ value: 1 }]} dataKey="value" cx="50%" cy="48%"
-                    innerRadius="53%" outerRadius="81%" paddingAngle={chartData.length > 1 ? 3 : 0} cornerRadius={5}
-                    stroke="none" isAnimationActive={false} tooltipType={total ? undefined : 'none'}>
-                    {(chartData.length ? chartData : [{ name:'empty' }]).map((entry, index) =>
-                      <Cell key={entry.name} fill={total ? `url(#${id}-${index % COLORS.length}) ${COLORS[index % COLORS.length]}` : '#525864'} />)}
-                  </Pie>
-                  {total > 0 && <Tooltip formatter={value => Number(value).toFixed(2)} />}
+                  <Tooltip
+                    formatter={value => [formatCurrency(Number(value)), 'Spent']}
+                    contentStyle={{
+                      backgroundColor: '#181b1f',
+                      borderColor: '#262a30',
+                      borderRadius: '12px',
+                      color: '#fafafa',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+                    }}
+                  />
                 </PieChart>
               </ResponsiveContainer>
-              <div className="pointer-events-none absolute inset-x-0 top-[48%] -translate-y-1/2 px-8 text-center">
-                <p className="text-xs text-muted-foreground">This month</p>
-                <p className="truncate text-lg font-semibold tabular-nums">{total.toLocaleString(undefined, { maximumFractionDigits: 2 })}</p>
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Categories</span>
+                <span className="text-sm font-bold text-foreground">{chartData.length}</span>
               </div>
             </div>
-            {total > 0 ? (
-              <ul className="mt-2 space-y-2">
-                {chartData.map((item, index) => <li key={item.name} className="flex items-center gap-2 text-sm">
-                  <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} aria-hidden="true" />
-                  <span className="min-w-0 flex-1 truncate">{item.name}</span>
-                  <span className="tabular-nums text-muted-foreground">{Math.round(item.value / total * 100)}%</span>
-                </li>)}
-              </ul>
-            ) : <p className="text-center text-sm text-muted-foreground">No expenses this month</p>}
-          </>
+
+            <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+              {chartData.map((item, index) => {
+                const percent = total > 0 ? ((item.value / total) * 100).toFixed(0) : '0';
+                return (
+                  <div key={item.name} className="flex items-center justify-between text-xs py-1">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span
+                        className="w-2.5 h-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                      />
+                      <span className="truncate text-foreground font-medium">{item.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 tabular-nums">
+                      <span className="text-muted-foreground">{percent}%</span>
+                      <span className="text-foreground font-medium">{formatCurrency(item.value)}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>

@@ -1,13 +1,12 @@
 import { db } from "@/api/client";
-
 import { useState, useMemo } from "react";
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Plus, TrendingDown } from "lucide-react";
+import { Plus, PiggyBank, AlertTriangle, CheckCircle } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import { startOfMonth, format } from "date-fns";
-import { enUS } from "date-fns/locale";
+import toast from "react-hot-toast";
+import { formatCurrency } from "@/utils";
 
 import BudgetForm from "../components/budgets/BudgetForm";
 import BudgetCard from "../components/budgets/BudgetCard";
@@ -20,16 +19,14 @@ export default function BudgetsPage() {
   const queryClient = useQueryClient();
   const currentMonth = format(startOfMonth(new Date()), "yyyy-MM-dd");
 
-  const { data: budgets, isLoading: loadingBudgets } = useQuery({
+  const { data: budgets = [], isLoading: loadingBudgets } = useQuery({
     queryKey: ['budgets'],
     queryFn: () => db.entities.Budget.list("-created_date"),
-    initialData: [],
   });
 
-  const { data: transactions, isLoading: loadingTransactions } = useQuery({
+  const { data: transactions = [], isLoading: loadingTransactions } = useQuery({
     queryKey: ['transactions'],
     queryFn: () => db.entities.Transaction.list(),
-    initialData: [],
   });
 
   const createMutation = useMutation({
@@ -38,7 +35,9 @@ export default function BudgetsPage() {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       setShowForm(false);
       setEditingBudget(null);
+      toast.success("Budget created");
     },
+    onError: () => toast.error("Could not create budget"),
   });
 
   const updateMutation = useMutation({
@@ -47,14 +46,18 @@ export default function BudgetsPage() {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
       setShowForm(false);
       setEditingBudget(null);
+      toast.success("Budget updated");
     },
+    onError: () => toast.error("Could not update budget"),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => db.entities.Budget.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      toast.success("Budget deleted");
     },
+    onError: () => toast.error("Could not delete budget"),
   });
 
   const handleSubmit = (data) => {
@@ -71,19 +74,14 @@ export default function BudgetsPage() {
   };
 
   const handleDelete = (id) => {
-    if (confirm("Are you sure you want to delete this budget?")) {
-      deleteMutation.mutate(id);
-    }
+    deleteMutation.mutate(id);
   };
-
-  const currentMonthBudgets = useMemo(() => {
-    return budgets.filter(b => b.month === currentMonth && b.active);
-  }, [budgets, currentMonth]);
 
   const budgetsWithSpent = useMemo(() => {
     const monthStart = startOfMonth(new Date());
-    
-    return currentMonthBudgets.map(budget => {
+    const activeBudgets = budgets.filter(b => (!b.month || b.month === currentMonth) && b.active !== false);
+
+    return activeBudgets.map(budget => {
       const spent = transactions
         .filter(t => {
           const tDate = new Date(t.date);
@@ -91,10 +89,10 @@ export default function BudgetsPage() {
                  t.category === budget.category && 
                  tDate >= monthStart;
         })
-        .reduce((sum, t) => sum + t.amount, 0);
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
 
-      const percentage = (spent / budget.amount) * 100;
-      const isWarning = percentage >= budget.alert_threshold;
+      const percentage = budget.amount > 0 ? (spent / budget.amount) * 100 : 0;
+      const isWarning = percentage >= (budget.alert_threshold || 80);
       const isExceeded = percentage > 100;
 
       return {
@@ -106,67 +104,107 @@ export default function BudgetsPage() {
         isExceeded
       };
     });
-  }, [currentMonthBudgets, transactions]);
+  }, [budgets, transactions, currentMonth]);
 
-  const alerts = budgetsWithSpent.filter(b => b.isWarning || b.isExceeded);
+  const stats = useMemo(() => {
+    const totalBudget = budgetsWithSpent.reduce((sum, b) => sum + (b.amount || 0), 0);
+    const totalSpent = budgetsWithSpent.reduce((sum, b) => sum + (b.spent || 0), 0);
+    const totalRemaining = totalBudget - totalSpent;
+    const alertCount = budgetsWithSpent.filter(b => b.isWarning || b.isExceeded).length;
+
+    return {
+      totalBudget,
+      totalSpent,
+      totalRemaining,
+      alertCount
+    };
+  }, [budgetsWithSpent]);
 
   return (
-    <div className="p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="font-heading text-[32px] leading-tight font-semibold tracking-[-0.03em] text-foreground">Budgets</h1>
-            <p className="text-muted-foreground mt-1">
-              Set monthly limits by category - {format(new Date(), "MMMM yyyy", { locale: enUS })}
-            </p>
-          </div>
-          <Button
-            onClick={() => {
-              setEditingBudget(null);
-              setShowForm(!showForm);
-            }}
-            className="bg-[hsl(216_24%_36%)] hover:bg-[hsl(216_24%_36%)]"
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            New Budget
-          </Button>
+    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+      {/* Header */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight text-foreground">
+            Monthly Budgets
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+            Set and track household expense limits in AED
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            setEditingBudget(null);
+            setShowForm(!showForm);
+          }}
+          className="fuloozi-btn-primary inline-flex h-10 items-center gap-2 px-4 text-xs sm:text-sm font-semibold shadow-lime"
+        >
+          <Plus className="w-4 h-4" /> Create Budget
+        </button>
+      </div>
+
+      {/* KPI Stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+        <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border">
+          <p className="text-xs text-muted-foreground">Total Allocated</p>
+          <p className="text-2xl font-bold font-heading text-foreground mt-1 tabular-nums">
+            {formatCurrency(stats.totalBudget)}
+          </p>
         </div>
 
-        {alerts.length > 0 && (
-          <BudgetAlerts alerts={alerts} />
+        <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border">
+          <p className="text-xs text-muted-foreground">Total Spent</p>
+          <p className="text-2xl font-bold font-heading text-rose-400 mt-1 tabular-nums">
+            {formatCurrency(stats.totalSpent)}
+          </p>
+        </div>
+
+        <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border">
+          <p className="text-xs text-muted-foreground">Remaining Cushion</p>
+          <p className="text-2xl font-bold font-heading text-[#B5F13E] mt-1 tabular-nums">
+            {formatCurrency(stats.totalRemaining)}
+          </p>
+        </div>
+
+        <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border">
+          <p className="text-xs text-muted-foreground">Warning / Exceeded</p>
+          <p className={`text-2xl font-bold font-heading mt-1 tabular-nums ${stats.alertCount > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
+            {stats.alertCount} categories
+          </p>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {showForm && (
+          <BudgetForm
+            budget={editingBudget}
+            onSubmit={handleSubmit}
+            onCancel={() => {
+              setShowForm(false);
+              setEditingBudget(null);
+            }}
+            currentMonth={currentMonth}
+          />
         )}
+      </AnimatePresence>
 
-        <AnimatePresence>
-          {showForm && (
-            <BudgetForm
-              budget={editingBudget}
-              onSubmit={handleSubmit}
-              onCancel={() => {
-                setShowForm(false);
-                setEditingBudget(null);
-              }}
-              currentMonth={currentMonth}
-            />
-          )}
-        </AnimatePresence>
+      <BudgetAlerts budgetsWithSpent={budgetsWithSpent} />
 
-        {loadingBudgets || loadingTransactions ? (
-          <div className="text-center py-12 text-muted-foreground">
-            Loading budgets...
-          </div>
+      {/* Budgets Grid */}
+      <div className="space-y-4">
+        <h2 className="text-base font-semibold text-foreground">Categories ({budgetsWithSpent.length})</h2>
+        {loadingBudgets ? (
+          <div className="text-center py-12 text-sm text-muted-foreground">Loading budgets...</div>
         ) : budgetsWithSpent.length === 0 ? (
-          <div className="text-center py-12">
-            <TrendingDown className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground mb-4">
-              You haven't set any budgets for this month yet
+          <div className="text-center py-12 rounded-2xl border border-border bg-card">
+            <PiggyBank className="w-12 h-12 text-[#B5F13E] mx-auto mb-3 opacity-80" />
+            <p className="text-sm font-medium text-foreground">No budgets configured yet</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Add spending limits for groceries, bills, and dining to stay on track.
             </p>
-            <Button onClick={() => setShowForm(true)}>
-              <Plus className="w-4 h-4 mr-2" />
-              Create First Budget
-            </Button>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
             {budgetsWithSpent.map((budget) => (
               <BudgetCard
                 key={budget.id}

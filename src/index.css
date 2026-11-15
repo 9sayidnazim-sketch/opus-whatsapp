@@ -1,49 +1,50 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --font-heading: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", sans-serif;
-    --font-body: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", "Helvetica Neue", sans-serif;
-    --font-display: "SF Pro Rounded", ui-rounded, -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+    --font-heading: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+    --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-display: "Plus Jakarta Sans", ui-rounded, sans-serif;
+    --font-brand: "Plus Jakarta Sans", sans-serif;
 
     color-scheme: dark;
-    --background: 225 8% 8%;
-    --foreground: 225 9% 92%;
-    --card: 225 7% 13%;
-    --card-foreground: 225 9% 92%;
-    --popover: 225 7% 15%;
-    --popover-foreground: 225 9% 92%;
-    --primary: 220 10% 82%;
-    --primary-foreground: 225 9% 10%;
-    --secondary: 225 7% 19%;
-    --secondary-foreground: 225 9% 91%;
-    --muted: 225 7% 17%;
-    --muted-foreground: 220 8% 67%;
-    --accent: 229 19% 23%;
-    --accent-foreground: 228 55% 86%;
-    --destructive: 354 38% 36%;
+    --background: 216 14% 8%;        /* #111316 Deep luxury matte charcoal */
+    --foreground: 0 0% 98%;           /* #fafafa Crisp clean white text */
+    --card: 216 12% 11%;              /* #181b1f Elevated surface */
+    --card-foreground: 0 0% 98%;
+    --popover: 216 12% 12%;           /* #1b1e22 */
+    --popover-foreground: 0 0% 98%;
+    --primary: 83 85% 59%;            /* #B5F13E Signature Fuloozi electric lime */
+    --primary-foreground: 216 14% 10%;/* #14171a Dark text on lime button */
+    --secondary: 216 11% 15%;         /* #22252b */
+    --secondary-foreground: 0 0% 95%;
+    --muted: 216 10% 14%;             /* #1f2227 */
+    --muted-foreground: 215 10% 62%;  /* #9198a4 */
+    --accent: 216 11% 16%;            /* #24282f */
+    --accent-foreground: 83 85% 59%;  /* Lime accent */
+    --destructive: 354 70% 54%;
     --destructive-foreground: 0 0% 98%;
-    --border: 225 6% 23%;
-    --input: 225 7% 25%;
-    --ring: 228 47% 73%;
-    --radius: 1rem;
-    --chart-1: 227 53% 72%;
-    --chart-2: 151 24% 63%;
-    --chart-3: 14 40% 65%;
-    --chart-4: 43 40% 65%;
-    --chart-5: 270 26% 69%;
-    --sidebar-background: 225 8% 10%;
-    --sidebar-foreground: 225 9% 86%;
-    --sidebar-primary: 220 10% 82%;
-    --sidebar-primary-foreground: 225 9% 10%;
-    --sidebar-accent: 229 19% 23%;
-    --sidebar-accent-foreground: 228 55% 86%;
-    --sidebar-border: 225 6% 21%;
-    --sidebar-ring: 228 47% 73%;
+    --border: 216 10% 17%;            /* #262a30 Crisp border */
+    --input: 216 10% 19%;             /* #2a2f37 */
+    --ring: 83 85% 59%;               /* #B5F13E Lime focus ring */
+    --radius: 0.875rem;
+
+    --chart-1: 83 85% 59%;            /* Fuloozi Lime */
+    --chart-2: 151 55% 55%;           /* Emerald Green */
+    --chart-3: 199 89% 48%;           /* Sky Blue */
+    --chart-4: 43 96% 56%;            /* Amber Gold */
+    --chart-5: 354 70% 60%;           /* Coral Red */
+
+    --sidebar-background: 216 14% 9%; /* #131519 */
+    --sidebar-foreground: 0 0% 88%;
+    --sidebar-primary: 83 85% 59%;
+    --sidebar-primary-foreground: 216 14% 10%;
+    --sidebar-accent: 216 11% 15%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 216 10% 16%;
+    --sidebar-ring: 83 85% 59%;
   }
 }
 
@@ -56,157 +57,71 @@
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     height: 100%;
-    
-    
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
-    overflow-x: clip;
-  }
-  body {
-    @apply bg-background text-foreground;
-    font-family: var(--font-body);
-    letter-spacing: -0.011em;
-    min-height: 100vh;
-    min-height: 100dvh;
-    overflow-x: clip;
-    -webkit-tap-highlight-color: transparent;
-  }
-  #root {
-    min-height: 100vh;
-    min-height: 100dvh;
-    overflow-x: clip;
-  }
-  input, textarea, select {
-    /* Keeps iOS from zooming into a focused field and shifting the screen */
-    font-size: 16px;
-  }
-  h1, h2, h3, h4 {
-    font-family: var(--font-heading);
-    letter-spacing: -0.022em;
-  }
-}
-
-@layer base {
-  :focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; }
-  .recharts-cartesian-grid line { stroke: hsl(var(--border)); }
-  .recharts-cartesian-axis line { stroke: hsl(var(--border)); }
-  .recharts-cartesian-axis-tick text { fill: hsl(var(--muted-foreground)); }
-  .recharts-default-tooltip {
-    background: hsl(var(--popover)) !important;
-    border: 1px solid hsl(var(--border)) !important;
-    border-radius: 10px;
+    background-color: hsl(var(--background));
     color: hsl(var(--foreground));
   }
-  .recharts-tooltip-item { color: hsl(var(--foreground)) !important; }
-}
-
-/* Cool silver catches the light on the edges while the workspace stays black. */
-@layer base {
-  :root {
-    --primary: 218 15% 89%;
-    --primary-foreground: 225 11% 12%;
-    --card: 222 9% 19%;
-    --border: 221 10% 32%;
-    --input: 221 9% 35%;
+  body {
+    min-height: 100%;
+    font-family: var(--font-body);
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    overflow-x: hidden;
   }
-  .opus-silver-panel {
-    background: linear-gradient(145deg, #676c75 0%, #42464e 19%, #30343b 52%, #292c32 80%, #454952 100%);
-    border-color: #747982;
-    box-shadow: inset 0 1px 0 #c7cbd454, 0 8px 24px #0004;
-  }
-  .opus-silver-panel .text-muted-foreground { color: #d4d6dc; }
-  .opus-silver-control {
-    background: linear-gradient(155deg, #f8f9fb, #d1d5dc 48%, #9ea6b1);
-    box-shadow: inset 0 1px 0 #fff, 0 2px 6px #0005;
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    letter-spacing: -0.025em;
   }
 }
 
-@layer components {
-  :root {
-    --color-1: 10 36% 66%;
-    --color-2: 262 28% 72%;
-    --color-3: 220 42% 74%;
-    --color-4: 191 25% 67%;
-    --color-5: 150 24% 65%;
-  }
-  .opus-rainbow-button {
-    border-color: transparent;
-    background:
-      linear-gradient(#202229, #202229) padding-box,
-      linear-gradient(110deg, hsl(var(--color-1)), hsl(var(--color-5)), hsl(var(--color-3)), hsl(var(--color-4)), hsl(var(--color-2)), hsl(var(--color-1))) border-box;
-    background-size: 100% 100%, 200% 100%;
-    background-position: 0 0;
-  }
-  .opus-rainbow-button:not(:disabled):is(:hover, :focus-visible) {
-    @apply animate-rainbow;
-  }
-  .opus-metallic-button:not(:disabled):hover {
-    background: linear-gradient(155deg, #fff, #e2e6ec 48%, #b4bdc8);
-  }
-  .opus-metallic-button:not(:disabled):active {
-    box-shadow: inset 0 2px 4px #0004;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .opus-rainbow-button:not(:disabled):is(:hover, :focus-visible) {
-      animation: none;
-    }
-  }
+/* Glass & Card Elevation */
+.fuloozi-card {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  border-radius: var(--radius);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-
-@layer components {
-  .opus-dashboard .opus-silver-panel {
-    background: linear-gradient(150deg, #454a53, #32363d 48%, #292d33);
-    border-color: #565c66;
-    box-shadow: inset 0 1px 0 #c7cbd41f;
-  }
-  .opus-dashboard .opus-dashboard-balance {
-    background: linear-gradient(145deg, #d9dde4, #aeb6c1);
-    border-color: #dbe0e8;
-    color: #1b2028;
-  }
-  .opus-dashboard .opus-dashboard-balance .text-muted-foreground { color: #394353; }
+.fuloozi-card:hover {
+  border-color: rgba(181, 241, 62, 0.25);
 }
 
-@layer components {
-  .fuloozi-mark {
-    display: grid;
-    align-content: center;
-    justify-content: center;
-    gap: 3px;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 11px;
-    border: 1px solid #ffffff25;
-    background: #1d2224;
-  }
-  .fuloozi-mark i { display: block; width: 16px; height: 5px; border-radius: 9px; background: #fcfcfa; }
-  .fuloozi-mark i:nth-child(2) { width: 11px; }
-  .fuloozi-mark i:nth-child(3) { width: 5px; background: #b0f237; }
-  .fuloozi-ledger-canvas { background: #eef1f4; }
-  .fuloozi-ledger-canvas .opus-dashboard { color: #181d28; }
-  .fuloozi-ledger-action { background: #b0f237; color: #1d2224; border-radius: 999px; }
-  .fuloozi-ledger-action:hover { background: #a0e22d; }
-  .fuloozi-summary {
-    background: #fcfcfc;
-    border: 1px solid #dce1e6;
-    border-radius: 22px;
-    color: #181d28;
-    overflow: clip;
-  }
-  .opus-dashboard .fuloozi-summary .opus-silver-panel {
-    background: transparent;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-    color: #181d28;
-  }
-  .opus-dashboard .fuloozi-summary .opus-silver-panel .text-muted-foreground { color: #565e69; }
-  .opus-dashboard .fuloozi-summary .opus-dashboard-balance { background: #edf8d8; }
-  .fuloozi-analytics { background: #1d2224; color: #f8f9f8; }
-  .opus-dashboard .fuloozi-analytics .opus-silver-panel {
-    background: #252a2e;
-    border-color: #393f44;
-    box-shadow: none;
-  }
+.fuloozi-card-featured {
+  background: linear-gradient(135deg, rgba(181, 241, 62, 0.08) 0%, rgba(24, 27, 31, 1) 100%);
+  border: 1px solid rgba(181, 241, 62, 0.35);
+  box-shadow: 0 0 24px -6px rgba(181, 241, 62, 0.15);
+}
+
+/* Primary Action & Buttons */
+.fuloozi-btn-primary {
+  background: #B5F13E;
+  color: #121417;
+  font-weight: 600;
+  border-radius: 9999px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.fuloozi-btn-primary:hover {
+  background: #A4E52E;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px -2px rgba(181, 241, 62, 0.35);
+}
+
+.fuloozi-btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground));
 }

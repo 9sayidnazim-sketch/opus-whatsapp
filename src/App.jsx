@@ -1,14 +1,14 @@
 import FulooziBrand from "@/components/FulooziBrand";
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, Route, Routes, Link } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, Link, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
-import { MetallicButton } from '@/components/ui/metallic-button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/api/client';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { pagesConfig } from './pages.config';
+import { Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
 
 const { Pages, Layout } = pagesConfig;
 const Dashboard = Pages.Dashboard;
@@ -25,8 +25,24 @@ function SignIn() {
     const { error } = await supabase.auth.setSession({
       access_token: account.access_token,
       refresh_token: account.refresh_token,
+      username: account.username,
     });
     if (error) throw error;
+  }
+
+  async function handleDemoLogin() {
+    setPending(true);
+    try {
+      await startSession({
+        username: 'owner',
+        access_token: 'demo-access-token',
+        refresh_token: 'demo-refresh-token',
+      });
+    } catch (err) {
+      setStatus(err.message || 'Could not start demo session');
+    } finally {
+      setPending(false);
+    }
   }
 
   async function submit(event) {
@@ -35,25 +51,38 @@ function SignIn() {
     setStatus('');
     const fields = new FormData(event.currentTarget);
     const enteredPin = fields.get('pin');
+
     if (step === 'name') {
-      setName(fields.get('name').trim());
+      const val = (fields.get('name') || '').trim();
+      if (!val) {
+        setStatus('Please enter your name');
+        return;
+      }
+      setName(val);
       setStep('pin');
       return;
     }
+
     if (step === 'pin') {
+      if (!/^\d{4}$/.test(enteredPin)) {
+        setStatus('Please enter exactly 4 digits');
+        return;
+      }
       setPin(enteredPin);
       setStep('confirm');
       return;
     }
+
     if (step === 'confirm' && enteredPin !== pin) {
-      setStatus('The MPINs don’t match. Enter the same four digits.');
+      setStatus('The MPINs do not match. Enter the same four digits.');
       return;
     }
+
     setPending(true);
     try {
       const response = await fetch('/api/account', {
         method: 'POST',
-        headers: { 'Content-Type':'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           operation: step === 'login' ? 'login' : 'create',
           name: step === 'login' ? fields.get('name') : name,
@@ -70,73 +99,216 @@ function SignIn() {
       }
     } catch (error) {
       setStatus(error.message);
-    } finally { setPending(false); }
+    } finally {
+      setPending(false);
+    }
   }
 
-  const titles = { name:'What’s your name?', pin:'Create your MPIN', confirm:'Confirm your MPIN',
-    login:'Sign in to Fuloozi', created:'Your account is ready' };
-  const labels = { name:'Next', pin:'Next', confirm:'Create account', login:'Sign in' };
+  const titles = {
+    name: 'What’s your name?',
+    pin: 'Create 4-Digit MPIN',
+    confirm: 'Confirm your MPIN',
+    login: 'Sign in to Fuloozi',
+    created: 'Your ledger is ready',
+  };
+  const labels = { name: 'Next', pin: 'Next', confirm: 'Create Account', login: 'Sign In' };
+
   function navigate(next) {
     setStep(next);
     setStatus('');
     setPin('');
   }
 
-  return <main className="min-h-screen grid place-items-center bg-background p-6">
-    <section className="w-full max-w-md opus-silver-panel rounded-xl border bg-card p-8">
-      <FulooziBrand />
-      <h1 className="mt-4 text-3xl font-semibold">{titles[step]}</h1>
-      {step === 'created' ? <>
-        <div className="my-5 rounded-lg border bg-accent p-4" role="status">
-          <p className="text-sm text-muted-foreground">Your sign-in ID</p>
-          <p className="mt-1 text-xl font-semibold">@{created.username}</p>
+  return (
+    <main className="min-h-screen grid place-items-center bg-background p-4 sm:p-6 text-foreground">
+      <section className="w-full max-w-md rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-2xl space-y-6">
+        <div className="flex items-center justify-between">
+          <FulooziBrand size={36} />
+          <span className="px-2 py-0.5 rounded-full bg-[#B5F13E]/15 text-[#B5F13E] text-[10px] font-bold uppercase tracking-wider">
+            Ledger
+          </span>
         </div>
-        <MetallicButton className="w-full" disabled={pending} onClick={async () => {
-          setPending(true);
-          try { await startSession(created); }
-          catch { setStatus('Could not open your account. Sign in with the ID shown above.'); setPending(false); }
-        }}>Open my ledger</MetallicButton>
-      </> : <>
-        <form key={step} className="mt-6 space-y-4" onSubmit={submit}>
-          {(step === 'name' || step === 'login') && <label className="block text-sm">
-            {step === 'name' ? 'Name' : 'Username'}
-            <Input name="name" required minLength={2} maxLength={60}
-              autoComplete={step === 'name' ? 'name' : 'username'} className="mt-2" />
-          </label>}
-          {step !== 'name' && <label className="block text-sm">
-            {step === 'confirm' ? 'Confirm four-digit MPIN' : 'Four-digit MPIN'}
-            <Input name="pin" type="password" inputMode="numeric" pattern="[0-9]{4}"
-              minLength={4} maxLength={4} required autoComplete={step === 'login' ? 'current-password' : 'new-password'} className="mt-2" />
-          </label>}
-          <Button className="w-full" disabled={pending}>{labels[step]}</Button>
-        </form>
-        <button type="button" className="mt-4 text-sm text-primary underline" disabled={pending}
-          onClick={() => navigate(step === 'name' ? 'login' : step === 'confirm' ? 'pin' : 'name')}>
-          {step === 'name' ? 'I already have a username' : step === 'confirm' ? 'Choose a different MPIN' : step === 'pin' ? 'Change name' : 'Create an account'}
-        </button>
-      </>}
-      {status && <p role="alert" className="mt-4 text-sm text-[hsl(354_42%_74%)]">{status}</p>}
-    </section>
-  </main>;
+
+        <div>
+          <h1 className="text-2xl font-bold font-heading tracking-tight">{titles[step]}</h1>
+          <p className="text-xs text-muted-foreground mt-1">
+            Secure household access with simple 4-digit authentication
+          </p>
+        </div>
+
+        {step === 'created' ? (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-border bg-secondary/60 p-4" role="status">
+              <p className="text-xs text-muted-foreground">Your Household Handle</p>
+              <p className="mt-1 text-xl font-bold text-[#B5F13E] font-heading">@{created.username}</p>
+            </div>
+            <button
+              className="fuloozi-btn-primary w-full h-11 text-sm font-semibold shadow-lime"
+              disabled={pending}
+              onClick={async () => {
+                setPending(true);
+                try {
+                  await startSession(created);
+                } catch {
+                  setStatus('Could not open your account. Sign in with the ID shown above.');
+                  setPending(false);
+                }
+              }}
+            >
+              Open Household Ledger
+            </button>
+          </div>
+        ) : (
+          <>
+            <form key={step} className="space-y-4" onSubmit={submit}>
+              {(step === 'name' || step === 'login') && (
+                <div className="space-y-1.5">
+                  <label htmlFor="auth-name" className="text-xs font-medium text-foreground">
+                    {step === 'name' ? 'Your Name' : 'Username (@handle)'}
+                  </label>
+                  <Input
+                    id="auth-name"
+                    name="name"
+                    required
+                    minLength={2}
+                    maxLength={60}
+                    placeholder={step === 'name' ? 'e.g. Tariq' : 'e.g. owner'}
+                    autoComplete={step === 'name' ? 'name' : 'username'}
+                    className="h-11 rounded-xl bg-secondary/50 border-border text-sm"
+                    autoFocus
+                  />
+                </div>
+              )}
+
+              {step !== 'name' && (
+                <div className="space-y-1.5">
+                  <label htmlFor="auth-pin" className="text-xs font-medium text-foreground">
+                    {step === 'confirm' ? 'Confirm 4-digit MPIN' : '4-digit MPIN passcode'}
+                  </label>
+                  <Input
+                    id="auth-pin"
+                    name="pin"
+                    type="password"
+                    inputMode="numeric"
+                    pattern="[0-9]{4}"
+                    minLength={4}
+                    maxLength={4}
+                    placeholder="••••"
+                    required
+                    autoComplete={step === 'login' ? 'current-password' : 'new-password'}
+                    className="h-11 rounded-xl bg-secondary/50 border-border text-center text-lg tracking-[0.4em] font-heading"
+                    autoFocus
+                  />
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={pending}
+                className="fuloozi-btn-primary w-full h-11 text-sm font-semibold shadow-lime disabled:opacity-50"
+              >
+                {labels[step]}
+              </button>
+            </form>
+
+            <div className="flex flex-col gap-2 pt-2 border-t border-border/60 text-center">
+              <button
+                type="button"
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                disabled={pending}
+                onClick={() => navigate(step === 'name' ? 'login' : step === 'confirm' ? 'pin' : 'name')}
+              >
+                {step === 'name'
+                  ? 'Already have an MPIN? Sign in'
+                  : step === 'confirm'
+                  ? 'Choose a different MPIN'
+                  : step === 'pin'
+                  ? 'Back to name'
+                  : 'New here? Create an account'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDemoLogin}
+                disabled={pending}
+                className="inline-flex items-center justify-center gap-1.5 text-xs text-[#B5F13E] hover:underline pt-2 font-medium"
+              >
+                <Sparkles className="w-3.5 h-3.5" /> Instant Preview (One-click Demo)
+              </button>
+            </div>
+          </>
+        )}
+
+        {status && (
+          <p role="alert" className="p-2.5 rounded-lg bg-destructive/10 border border-destructive/20 text-xs text-rose-400">
+            {status}
+          </p>
+        )}
+      </section>
+    </main>
+  );
 }
 
 function Workspace() {
   const [cache] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: 1 } } }));
-  return <QueryClientProvider client={cache}><BrowserRouter><Routes>
-    <Route path="/" element={<Layout currentPageName="Dashboard"><Dashboard /></Layout>} />
-    {Object.entries(Pages).map(([name, Page]) =>
-      <Route key={name} path={`/${name}`} element={<Layout currentPageName={name}><Page /></Layout>} />
-    )}
-    <Route path="*" element={<main className="p-8"><Link to="/">Return to dashboard</Link></main>} />
-  </Routes></BrowserRouter><Toaster /></QueryClientProvider>;
+
+  return (
+    <QueryClientProvider client={cache}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Layout currentPageName="Dashboard"><Dashboard /></Layout>} />
+          
+          {Object.entries(Pages).map(([name, Page]) => {
+            const pathLower = name.toLowerCase();
+            return (
+              <Route
+                key={name}
+                path={`/${pathLower}`}
+                element={<Layout currentPageName={name}><Page /></Layout>}
+              />
+            );
+          })}
+
+          {/* Fallback & aliases */}
+          <Route path="/ledger" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          style: {
+            background: '#181b1f',
+            color: '#fafafa',
+            border: '1px solid #262a30',
+            borderRadius: '12px',
+            fontSize: '13px',
+          },
+        }}
+      />
+    </QueryClientProvider>
+  );
 }
 
 function SessionGate() {
   const session = useAuth();
-  if (session === undefined) return <p className="p-8" role="status">Loading Fuloozi</p>;
+  if (session === undefined) {
+    return (
+      <main className="min-h-screen grid place-items-center bg-background text-foreground">
+        <div className="flex flex-col items-center gap-3">
+          <FulooziBrand size={40} />
+          <p className="text-xs text-muted-foreground animate-pulse">Opening your ledger...</p>
+        </div>
+      </main>
+    );
+  }
   return session ? <Workspace key={session.user.id} /> : <SignIn />;
 }
 
 export default function App() {
-  return <AuthProvider><SessionGate /></AuthProvider>;
+  return (
+    <AuthProvider>
+      <SessionGate />
+    </AuthProvider>
+  );
 }

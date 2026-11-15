@@ -7,28 +7,35 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { X } from "lucide-react";
+import { X, Calendar, DollarSign } from "lucide-react";
 import { format } from "date-fns";
 
 const categoryOptions = {
   receita: [
-    { value: "salario", label: "Salary" },
-    { value: "freelance", label: "Freelance" },
-    { value: "investimentos", label: "Investments" },
-    { value: "outras_receitas", label: "Other Income" }
+    { value: "salario", label: "Salary & Compensation" },
+    { value: "freelance", label: "Freelance & Consulting" },
+    { value: "investimentos", label: "Dividends & Investments" },
+    { value: "outras_receitas", label: "Other Income / Bonus" }
   ],
   despesa: [
-    { value: "alimentacao", label: "Food" },
-    { value: "transporte", label: "Transport" },
-    { value: "moradia", label: "Housing" },
-    { value: "contas", label: "Bills" },
-    { value: "saude", label: "Health" },
-    { value: "educacao", label: "Education" },
-    { value: "lazer", label: "Leisure" },
-    { value: "compras", label: "Shopping" },
+    { value: "alimentacao", label: "Food & Groceries" },
+    { value: "contas", label: "Bills & Utilities (DEWA/du)" },
+    { value: "transporte", label: "Transport & Fuel (Salik/ENOC)" },
+    { value: "moradia", label: "Housing & Rent" },
+    { value: "lazer", label: "Dining & Lifestyle" },
+    { value: "compras", label: "Shopping & Retail" },
+    { value: "saude", label: "Health & Medical" },
+    { value: "educacao", label: "Education & Tuition" },
     { value: "outros_gastos", label: "Other Expenses" }
   ]
 };
+
+const paymentMethodOptions = [
+  { value: "card", label: "Credit / Debit Card" },
+  { value: "bank_transfer", label: "Bank Transfer / Wire" },
+  { value: "apple_pay", label: "Apple Pay / Digital Wallet" },
+  { value: "dinheiro", label: "Cash" },
+];
 
 export default function TransactionForm({ transaction, onSubmit, onCancel, isBillMode = false }) {
   const [formData, setFormData] = useState({
@@ -37,8 +44,8 @@ export default function TransactionForm({ transaction, onSubmit, onCancel, isBil
     category: "",
     description: "",
     date: format(new Date(), "yyyy-MM-dd"),
-    payment_method: "dinheiro",
-    payment_status: isBillMode ? "a_pagar" : "pago",
+    payment_method: "card",
+    payment_status: isBillMode ? "pendente" : "pago",
     due_date: "",
     recurring: false,
     recurring_day: new Date().getDate()
@@ -47,12 +54,12 @@ export default function TransactionForm({ transaction, onSubmit, onCancel, isBil
   useEffect(() => {
     if (transaction) {
       setFormData({
-        type: transaction.type,
-        amount: transaction.amount.toString(),
-        category: transaction.category,
+        type: transaction.type || "despesa",
+        amount: transaction.amount ? transaction.amount.toString() : "",
+        category: transaction.category || "",
         description: transaction.description || "",
-        date: transaction.date,
-        payment_method: transaction.payment_method || "dinheiro",
+        date: transaction.date || format(new Date(), "yyyy-MM-dd"),
+        payment_method: transaction.payment_method || "card",
         payment_status: transaction.payment_status || "pago",
         due_date: transaction.due_date || "",
         recurring: transaction.recurring || false,
@@ -63,205 +70,198 @@ export default function TransactionForm({ transaction, onSubmit, onCancel, isBil
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const submitData = {
+    if (!formData.amount || isNaN(parseFloat(formData.amount))) return;
+    onSubmit({
       ...formData,
       amount: parseFloat(formData.amount)
-    };
-    
-    // Remove campos vazios
-    if (!submitData.due_date) delete submitData.due_date;
-    if (!submitData.recurring) {
-      delete submitData.recurring_day;
-    }
-    
-    onSubmit(submitData);
+    });
   };
 
-  const currentCategories = categoryOptions[formData.type] || [];
-  const showPaymentStatus = formData.type === 'despesa' && formData.due_date;
+  const showPaymentStatus = formData.type === 'despesa' && (isBillMode || formData.due_date);
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: -20 }}
+      initial={{ opacity: 0, y: -16 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
+      exit={{ opacity: 0, y: -16 }}
+      className="mb-8"
     >
-      <Card className="mb-8 shadow-none">
-        <CardHeader className="border-b">
-          <div className="flex items-center justify-between">
-            <CardTitle>
-              {transaction ? "Edit Transaction" : isBillMode ? "New Bill" : "New Transaction"}
+      <Card className="rounded-2xl border-border bg-card shadow-2xl overflow-hidden">
+        <CardHeader className="p-4 sm:p-6 border-b border-border/80 flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-lg font-bold font-heading text-foreground">
+              {transaction?.id ? "Edit Transaction" : isBillMode ? "Add Upcoming Bill" : "Record New Transaction"}
             </CardTitle>
-            <Button variant="ghost" size="icon" onClick={onCancel}>
-              <X className="w-4 h-4" />
-            </Button>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Enter amounts in AED for your household ledger
+            </p>
           </div>
+          <Button variant="ghost" size="icon" onClick={onCancel} className="rounded-xl hover:bg-secondary">
+            <X className="w-4 h-4 text-muted-foreground" />
+          </Button>
         </CardHeader>
-        <CardContent className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              {!isBillMode && (
-                <div>
-                  <Label>Type</Label>
-                  <Select
-                    value={formData.type}
-                    onValueChange={(value) => setFormData({ ...formData, type: value, category: "" })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="receita">Income</SelectItem>
-                      <SelectItem value="despesa">Expense</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
 
-              <div>
-                <Label htmlFor="transaction-amount">Amount</Label>
-                <Input
-                  id="transaction-amount"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  placeholder="0.00"
-                  required
-                />
+        <form onSubmit={handleSubmit}>
+          <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-5">
+            {/* Type selector */}
+            <div className="grid grid-cols-2 gap-2 p-1 rounded-xl bg-secondary/60 border border-border/60">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, type: "despesa", category: "" })}
+                className={`py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all ${
+                  formData.type === "despesa"
+                    ? "bg-card text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Expense (Outflow)
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, type: "receita", category: "" })}
+                className={`py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all ${
+                  formData.type === "receita"
+                    ? "bg-card text-emerald-400 shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Income (Inflow)
+              </button>
+            </div>
+
+            {/* Amount and Category */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="amount" className="text-xs font-medium text-foreground">Amount (AED) *</Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
+                    AED
+                  </span>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    value={formData.amount}
+                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    required
+                    className="pl-12 h-11 rounded-xl bg-secondary/40 border-border text-foreground font-heading font-semibold text-base"
+                  />
+                </div>
               </div>
 
-              <div>
-                <Label>Category</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="category" className="text-xs font-medium text-foreground">Category *</Label>
                 <Select
                   value={formData.category}
                   onValueChange={(value) => setFormData({ ...formData, category: value })}
                   required
                 >
-                  <SelectTrigger aria-label="Category">
-                    <SelectValue placeholder="Select" />
+                  <SelectTrigger id="category" className="h-11 rounded-xl bg-secondary/40 border-border text-sm">
+                    <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {currentCategories.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
+                  <SelectContent className="bg-popover border-border max-h-60">
+                    {(categoryOptions[formData.type] || []).map((cat) => (
+                      <SelectItem key={cat.value} value={cat.value} className="text-sm">
                         {cat.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+            </div>
 
-              <div>
-                <Label>Date</Label>
+            {/* Description */}
+            <div className="space-y-1.5">
+              <Label htmlFor="description" className="text-xs font-medium text-foreground">Description / Payee</Label>
+              <Input
+                id="description"
+                placeholder="e.g. Spinneys Downtown, DEWA Bill, Monthly Salary"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="h-11 rounded-xl bg-secondary/40 border-border text-sm"
+              />
+            </div>
+
+            {/* Date and Payment Method */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="date" className="text-xs font-medium text-foreground">Transaction Date</Label>
                 <Input
+                  id="date"
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  required
+                  className="h-11 rounded-xl bg-secondary/40 border-border text-sm"
                 />
               </div>
 
-              {formData.type === 'despesa' && (
-                <>
-                  <div>
-                    <Label>Due Date</Label>
-                    <Input
-                      type="date"
-                      value={formData.due_date}
-                      onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-                    />
-                  </div>
-
-                  {showPaymentStatus && (
-                    <div>
-                      <Label>Payment Status</Label>
-                      <Select
-                        value={formData.payment_status}
-                        onValueChange={(value) => setFormData({ ...formData, payment_status: value })}
-                      >
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pago">Paid</SelectItem>
-                          <SelectItem value="a_pagar">To Pay</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                </>
-              )}
-
-              <div>
-                <Label>Payment Method</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="payment_method" className="text-xs font-medium text-foreground">Payment Method</Label>
                 <Select
                   value={formData.payment_method}
                   onValueChange={(value) => setFormData({ ...formData, payment_method: value })}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger id="payment_method" className="h-11 rounded-xl bg-secondary/40 border-border text-sm">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="dinheiro">Cash</SelectItem>
-                    <SelectItem value="cartao_credito">Credit Card</SelectItem>
-                    <SelectItem value="cartao_debito">Debit Card</SelectItem>
-                    <SelectItem value="pix">PIX</SelectItem>
-                    <SelectItem value="transferencia">Bank Transfer</SelectItem>
+                  <SelectContent className="bg-popover border-border">
+                    {paymentMethodOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value} className="text-sm">
+                        {opt.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
-            {formData.type === 'despesa' && (
-              <div className="flex items-center justify-between p-4 bg-[hsl(264_23%_22%)] rounded-lg border border-[hsl(264_23%_22%)]">
-                <div className="flex-1">
-                  <Label className="text-base font-medium">Recurring Expense</Label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    This bill repeats every month
-                  </p>
+            {/* Due date if bill */}
+            {(isBillMode || formData.type === 'despesa') && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                <div className="space-y-1.5">
+                  <Label htmlFor="due_date" className="text-xs font-medium text-foreground">Due Date (Optional bill date)</Label>
+                  <Input
+                    id="due_date"
+                    type="date"
+                    value={formData.due_date}
+                    onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                    className="h-11 rounded-xl bg-secondary/40 border-border text-sm"
+                  />
                 </div>
-                <Switch
-                  checked={formData.recurring}
-                  onCheckedChange={(value) => setFormData({ ...formData, recurring: value })}
-                />
+
+                {formData.due_date && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="payment_status" className="text-xs font-medium text-foreground">Status</Label>
+                    <Select
+                      value={formData.payment_status}
+                      onValueChange={(val) => setFormData({ ...formData, payment_status: val })}
+                    >
+                      <SelectTrigger id="payment_status" className="h-11 rounded-xl bg-secondary/40 border-border text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-popover border-border">
+                        <SelectItem value="pendente">Pending / Unpaid</SelectItem>
+                        <SelectItem value="pago">Paid</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             )}
 
-            {formData.recurring && (
-              <div>
-                <Label>Day of the Month (for recurrence)</Label>
-                <Input
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={formData.recurring_day}
-                  onChange={(e) => setFormData({ ...formData, recurring_day: parseInt(e.target.value) })}
-                />
-              </div>
-            )}
-
-            <div>
-              <Label htmlFor="transaction-description">Description</Label>
-              <Textarea
-                id="transaction-description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Add details about this transaction..."
-                rows={3}
-              />
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4">
-              <Button type="button" variant="outline" onClick={onCancel}>
+            {/* Action buttons */}
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-border/80">
+              <Button type="button" variant="outline" onClick={onCancel} className="rounded-xl">
                 Cancel
               </Button>
-              <Button type="submit" >
-                {transaction ? "Update" : "Create"}
+              <Button type="submit" className="fuloozi-btn-primary px-6 h-10 shadow-lime font-semibold">
+                {transaction?.id ? "Update Transaction" : "Save to Ledger"}
               </Button>
             </div>
-          </form>
-        </CardContent>
+          </CardContent>
+        </form>
       </Card>
     </motion.div>
   );

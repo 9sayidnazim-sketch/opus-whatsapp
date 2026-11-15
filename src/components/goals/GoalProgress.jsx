@@ -4,24 +4,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { X, Plus, Plane, Car, Home, GraduationCap, Heart, ShoppingBag, Palmtree, Sparkles } from "lucide-react";
-import { format } from "date-fns";
-import { enUS } from "date-fns/locale";
-
-const iconMap = {
-  Plane, Car, Home, GraduationCap, Heart, ShoppingBag, Palmtree, Sparkles
-};
+import { X, Plus, Target, CheckCircle2 } from "lucide-react";
+import { formatCurrency } from "@/utils";
+import confetti from "canvas-confetti";
 
 export default function GoalProgress({ goal, onClose, onAddProgress }) {
   const [amount, setAmount] = useState("");
-  const Icon = iconMap[goal.icon] || Sparkles;
-  const percentage = (goal.current_amount / goal.target_amount) * 100;
+  const current = Number(goal.current_amount || 0);
+  const target = Number(goal.target_amount || 1);
+  const percentage = Math.min(Math.round((current / target) * 100), 100);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (amount && parseFloat(amount) > 0) {
-      onAddProgress(goal.id, parseFloat(amount));
+    const addVal = parseFloat(amount);
+    if (!isNaN(addVal) && addVal > 0) {
+      if (current + addVal >= target) {
+        try {
+          confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } });
+        } catch {}
+      }
+      onAddProgress(goal.id, addVal);
       setAmount("");
     }
   };
@@ -31,112 +33,91 @@ export default function GoalProgress({ goal, onClose, onAddProgress }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
       onClick={onClose}
     >
       <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
+        initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.9, opacity: 0 }}
+        exit={{ scale: 0.95, opacity: 0 }}
         onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-lg"
       >
-        <Card className="w-full max-w-lg shadow-none">
-          <CardHeader className={`${goal.color} bg-opacity-10 border-b`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className={`p-3 rounded-xl ${goal.color} bg-opacity-20`}>
-                  <Icon className={`w-6 h-6 ${goal.color.replace('bg-', 'text-')}`} />
-                </div>
-                <div>
-                  <CardTitle className="text-xl">{goal.title}</CardTitle>
-                  {goal.description && (
-                    <p className="text-sm text-muted-foreground mt-1">{goal.description}</p>
-                  )}
-                </div>
+        <Card className="rounded-2xl border-border bg-card shadow-2xl overflow-hidden">
+          <CardHeader className="p-5 border-b border-border/80 flex flex-row items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#B5F13E]/15 text-[#B5F13E] flex items-center justify-center shrink-0">
+                <Target className="w-5 h-5" />
               </div>
-              <Button variant="ghost" size="icon" onClick={onClose}>
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="p-6 space-y-6">
-            <div>
-              <div className="flex justify-between items-baseline mb-3">
-                <span className="text-muted-foreground">Current Progress</span>
-                <span className="text-3xl font-bold text-[hsl(264_40%_78%)]">
-                  {percentage.toFixed(1)}%
-                </span>
-              </div>
-              <Progress 
-                value={Math.min(percentage, 100)} 
-                className="h-4"
-                indicatorClassName="bg-[hsl(264_23%_30%)]"
-              />
-              <div className="flex justify-between items-center mt-3">
-                <div>
-                  <p className="text-sm text-muted-foreground">Saved</p>
-                  <p className="text-xl font-bold text-foreground">
-                    {goal.current_amount.toFixed(2)}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Target</p>
-                  <p className="text-xl font-bold text-foreground">
-                    {goal.target_amount.toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-4 bg-muted rounded-lg">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm text-muted-foreground">Left to reach goal</span>
-                <span className="text-2xl font-bold text-foreground">
-                  {(goal.target_amount - goal.current_amount).toFixed(2)}
-                </span>
-              </div>
-              {goal.target_date && (
-                <p className="text-xs text-muted-foreground">
-                  Target date: {format(new Date(goal.target_date), "MMMM d, yyyy", { locale: enUS })}
+              <div>
+                <CardTitle className="text-lg font-bold text-foreground font-heading">
+                  {goal.title}
+                </CardTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Deposit savings toward this target
                 </p>
-              )}
+              </div>
+            </div>
+            <Button variant="ghost" size="icon" onClick={onClose} className="rounded-xl hover:bg-secondary">
+              <X className="w-4 h-4 text-muted-foreground" />
+            </Button>
+          </CardHeader>
+
+          <CardContent className="p-5 space-y-5">
+            <div className="p-4 rounded-xl bg-secondary/40 border border-border/60 space-y-2">
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Current Savings</span>
+                <span className="text-foreground font-bold tabular-nums font-heading">
+                  {formatCurrency(current)} of {formatCurrency(target)}
+                </span>
+              </div>
+
+              <div className="w-full h-3 rounded-full bg-secondary overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-[#B5F13E] transition-all duration-300"
+                  style={{ width: `${percentage}%` }}
+                />
+              </div>
+
+              <div className="flex justify-between text-[11px] text-muted-foreground pt-1">
+                <span>{percentage}% achieved</span>
+                <span>Remaining: {formatCurrency(Math.max(0, target - current))}</span>
+              </div>
             </div>
 
-            {goal.status !== 'concluida' && (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <Label>Add Amount</Label>
-                  <div className="flex gap-2 mt-2">
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={amount}
-                      onChange={(e) => setAmount(e.target.value)}
-                      placeholder="0.00"
-                      className="flex-1"
-                    />
-                    <Button 
-                      type="submit"
-                      className="bg-[hsl(264_23%_36%)] hover:bg-[hsl(264_23%_36%)]"
-                      disabled={!amount || parseFloat(amount) <= 0}
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add
-                    </Button>
-                  </div>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="progress-amount" className="text-xs font-medium text-foreground">
+                  Deposit Amount (AED)
+                </Label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
+                    AED
+                  </span>
+                  <Input
+                    id="progress-amount"
+                    type="number"
+                    step="0.01"
+                    min="1"
+                    placeholder="500.00"
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    required
+                    className="pl-12 h-11 rounded-xl bg-secondary/40 border-border font-heading font-semibold text-base"
+                    autoFocus
+                  />
                 </div>
-              </form>
-            )}
+              </div>
 
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={onClose}
-              >
-                Close
-              </Button>
-            </div>
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <Button type="button" variant="outline" onClick={onClose} className="rounded-xl">
+                  Cancel
+                </Button>
+                <Button type="submit" className="fuloozi-btn-primary px-5 h-10 shadow-lime font-semibold">
+                  <Plus className="w-4 h-4 mr-1.5" /> Add to Goal
+                </Button>
+              </div>
+            </form>
           </CardContent>
         </Card>
       </motion.div>

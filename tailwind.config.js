@@ -5,9 +5,10 @@ module.exports = {
   theme: {
   	extend: {
   		fontFamily: {
-  			heading: ['var(--font-heading)'],
-  			body: ['var(--font-body)'],
-  			display: ['var(--font-display)']
+  			heading: ['"Plus Jakarta Sans"', 'var(--font-heading)', 'sans-serif'],
+  			body: ['"Inter"', 'var(--font-body)', 'sans-serif'],
+  			display: ['"Plus Jakarta Sans"', 'var(--font-display)', 'sans-serif'],
+  			brand: ['"Plus Jakarta Sans"', 'sans-serif'],
   		},
   		borderRadius: {
   			lg: 'var(--radius)',
@@ -18,9 +19,18 @@ module.exports = {
   		},
   		boxShadow: {
   			soft: '0 1px 2px rgba(17, 17, 26, 0.04), 0 12px 32px -16px rgba(17, 17, 26, 0.18)',
-  			card: '0 1px 1px rgba(17, 17, 26, 0.03), 0 8px 24px -18px rgba(17, 17, 26, 0.25)'
+  			card: '0 1px 1px rgba(17, 17, 26, 0.03), 0 8px 24px -18px rgba(17, 17, 26, 0.25)',
+  			lime: '0 0 24px -4px rgba(181, 241, 62, 0.25)',
   		},
   		colors: {
+  			brand: {
+  				lime: '#B5F13E',
+  				'lime-hover': '#A4E52E',
+  				'lime-muted': 'rgba(181, 241, 62, 0.12)',
+  				charcoal: '#181A1D',
+  				surface: '#1E2226',
+  				border: '#282C33',
+  			},
             'color-1': 'hsl(var(--color-1))',
             'color-2': 'hsl(var(--color-2))',
             'color-3': 'hsl(var(--color-3))',
