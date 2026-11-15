@@ -76,9 +76,11 @@ function SignIn() {
     if (!created) return;
     setBiometricPending(true);
     try {
+      // The session is not stored until startSession below, so pass the new token explicitly.
       await registerBiometrics({
         username: created.username,
         displayName: name || created.username,
+        accessToken: created.access_token,
       });
       toast.success('Touch ID / Face ID registered for this device!');
       await startSession(created);

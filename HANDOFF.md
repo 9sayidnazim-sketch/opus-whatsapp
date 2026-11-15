@@ -130,3 +130,30 @@ Starting point: commit `4eda6cb`. The dev server started cleanly and every page 
 - **`npm run typecheck`:** 459 errors, mostly from untyped shadcn wrappers under `checkJs`; this was already failing before the fix pass.
 
 **Next action:** review and commit this fix pass, then rotate the Kapso key before the next push.
+
+---
+
+## 8. Production passkeys on Supabase + Vercel (2026-11-15, Claude Code)
+Branch `claude/great-almeida-1509b6`, on top of `aaa3e26`. This replaces the "Production passkey sign-in" pending item in section 7.
+
+**Done**
+1. **Storage in Supabase** (`supabase/migrations/202611150007_passkeys.sql`): `opus_passkeys` and `opus_passkey_challenges`, both with RLS. Members can read and delete their own passkeys. Only the server (secret key) can enroll, update counters or touch challenges. Challenges are consumed with `DELETE ... RETURNING`, so each one works once.
+2. **Enrollment needs a real session**: `registration-options` and `verify-registration` check the caller's access token with Supabase Auth (`auth.getUser`). The account comes from the token, never from the request body.
+3. **Real sessions at sign-in**: after the signature checks out, the server generates a one-time magic-link token (`auth.admin.generateLink`, no email is sent) and exchanges it with `verifyOtp` on a throwaway client. `App.jsx` gets real `access_token`/`refresh_token` values for `setSession`.
+4. **One code path**: `api/webauthn.js` and the Vite dev API both call `handleWebAuthnRequest` in `server/webauthnService.js`. With no Supabase variables (and not on Vercel), the JSON-file dev mock still works. A deployment missing the secret key returns 503 rather than falling back to the mock.
+5. **Vercel routing**: `/api/webauthn/:action` 404'd on Vercel because `api/webauthn.js` only serves `/api/webauthn`. `vercel.json` now rewrites it.
+6. **Admin page**: the passkey list and Revoke button read and delete `opus_passkeys` (the account's passkeys, not this browser's localStorage). "Test Sensor" verifies the signed-in user's own passkey without creating a new session.
+7. Kept from section 7: server-issued, typed, single-use five-minute challenges; unknown credentials rejected; the v14 `credential:` parameter. Counter updates are compare-and-set, so a passkey revoked mid-sign-in fails closed.
+
+**Verified**
+- `npm test` (new): 11 tests drive `api/webauthn.js` with a software ES256 authenticator against the real `@simplewebauthn/server` and `@supabase/supabase-js`, with Supabase Auth and PostgREST faked at the `fetch` layer. Covered: the enrolled passkey signs the same user in with a token for that user; no token, a bad token or another user's token can't enroll; unknown, forged and revoked passkeys are rejected without a session; made-up, replayed, expired and wrong-ceremony challenges are rejected; the missing-key and `VERCEL` cases fail closed; the dev mock still works. Five mutations of the security checks each made tests fail.
+- `npm run lint`: 0 problems. `vite build`: passes.
+- Dev server (mock mode) in the in-app browser: the dev API issues options and rejects made-up challenges, unknown passkeys and unknown actions. The Admin "Passkeys & Biometrics" tab renders with no app errors.
+
+**Not verified**
+- Against a real Supabase project: the migration hasn't been applied anywhere, and `generateLink` + `verifyOtp` haven't run against real Supabase Auth (including for the `@opus-account.invalid` MPIN emails). No real Face ID / Touch ID ceremony was run; the in-app browser has no platform authenticator.
+
+**Next action**
+Apply the migration, set `SUPABASE_SECRET_KEY` in Vercel (see README, "Passkeys"), deploy, then enroll from Admin while signed in with an MPIN, sign out, and sign in with the passkey.
+- `npm run dev` with real Supabase variables still can't sign in with an MPIN: the dev `/api/account` middleware returns fake tokens. Test passkeys on a Vercel deployment, or make that middleware call `api/account.js`.
+- Alternative: `@supabase/supabase-js` 2.119 ships native passkeys (`auth.registerPasskey()`, `auth.signInWithPasskey()`). If the project's Supabase Auth has them enabled, they could replace this server, the secret key and the magic-link step.

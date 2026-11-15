@@ -2,12 +2,7 @@ import { fileURLToPath, URL } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
 import { handleWhatsAppInbound, getKapsoStatus, sendWhatsAppMessage } from './server/kapsoAgent.js';
-import {
-  getRegistrationOptions,
-  verifyRegistration,
-  getAuthenticationOptions,
-  verifyAuthentication,
-} from './server/webauthnService.js';
+import { handleWebAuthnRequest } from './server/webauthnService.js';
 
 function fulooziDevApi() {
   return {
@@ -32,93 +27,21 @@ function fulooziDevApi() {
           return;
         }
 
-        // 2. WebAuthn Registration Options (/api/webauthn/registration-options)
-        if (req.url?.startsWith('/api/webauthn/registration-options') && req.method === 'POST') {
+        // 2-5. WebAuthn passkeys (/api/webauthn/:action), same handler as api/webauthn.js
+        if (req.url?.startsWith('/api/webauthn/')) {
           const buffers = [];
           for await (const chunk of req) buffers.push(chunk);
           let body = {};
           try { body = JSON.parse(Buffer.concat(buffers).toString('utf-8') || '{}'); } catch {}
-          try {
-            const options = await getRegistrationOptions({
-              username: body.username,
-              displayName: body.displayName,
-              originHeader: req.headers.origin || req.headers.referer,
-            });
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify(options));
-          } catch (err) {
-            res.statusCode = 400;
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({ error: err.message }));
-          }
-          return;
-        }
-
-        // 3. WebAuthn Verify Registration (/api/webauthn/verify-registration)
-        if (req.url?.startsWith('/api/webauthn/verify-registration') && req.method === 'POST') {
-          const buffers = [];
-          for await (const chunk of req) buffers.push(chunk);
-          let body = {};
-          try { body = JSON.parse(Buffer.concat(buffers).toString('utf-8') || '{}'); } catch {}
-          try {
-            const result = await verifyRegistration({
-              username: body.username,
-              response: body.response,
-              expectedChallenge: body.expectedChallenge,
-              deviceName: body.deviceName,
-              originHeader: req.headers.origin || req.headers.referer,
-            });
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify(result));
-          } catch (err) {
-            res.statusCode = 400;
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({ error: err.message }));
-          }
-          return;
-        }
-
-        // 4. WebAuthn Authentication Options (/api/webauthn/authentication-options)
-        if (req.url?.startsWith('/api/webauthn/authentication-options') && req.method === 'POST') {
-          const buffers = [];
-          for await (const chunk of req) buffers.push(chunk);
-          let body = {};
-          try { body = JSON.parse(Buffer.concat(buffers).toString('utf-8') || '{}'); } catch {}
-          try {
-            const options = await getAuthenticationOptions({
-              username: body.username,
-              originHeader: req.headers.origin || req.headers.referer,
-            });
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify(options));
-          } catch (err) {
-            res.statusCode = 400;
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({ error: err.message }));
-          }
-          return;
-        }
-
-        // 5. WebAuthn Verify Authentication (/api/webauthn/verify-authentication)
-        if (req.url?.startsWith('/api/webauthn/verify-authentication') && req.method === 'POST') {
-          const buffers = [];
-          for await (const chunk of req) buffers.push(chunk);
-          let body = {};
-          try { body = JSON.parse(Buffer.concat(buffers).toString('utf-8') || '{}'); } catch {}
-          try {
-            const result = await verifyAuthentication({
-              username: body.username,
-              response: body.response,
-              expectedChallenge: body.expectedChallenge,
-              originHeader: req.headers.origin || req.headers.referer,
-            });
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify(result));
-          } catch (err) {
-            res.statusCode = 400;
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({ error: err.message }));
-          }
+          const result = await handleWebAuthnRequest({
+            action: req.url.split('?')[0].split('/').pop(),
+            method: req.method,
+            body,
+            headers: req.headers,
+          });
+          res.statusCode = result.status;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(result.body));
           return;
         }
 

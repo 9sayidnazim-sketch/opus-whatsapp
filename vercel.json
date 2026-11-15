@@ -1,1 +1,1 @@
-{"framework":"vite","rewrites":[{"source":"/((?!api/).*)","destination":"/index.html"}]}
+{"framework":"vite","rewrites":[{"source":"/api/webauthn/:action","destination":"/api/webauthn?action=:action"},{"source":"/((?!api/).*)","destination":"/index.html"}]}

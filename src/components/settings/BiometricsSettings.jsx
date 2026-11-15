@@ -13,8 +13,8 @@ import {
   checkBiometricsSupport,
   registerBiometrics,
   authenticateWithBiometrics,
-  getRegisteredCredentials,
-  removeCredential,
+  listPasskeys,
+  revokePasskey,
   getDeviceName,
 } from "@/utils/webauthn";
 import { useAuth } from "@/lib/AuthContext";
@@ -47,10 +47,10 @@ export default function BiometricsSettings() {
   useEffect(() => {
     checkBiometricsSupport().then(({ supported, hasBiometrics }) => {
       setSupportInfo({ supported, hasBiometrics, loading: false });
-      if (supported) {
-        setCredentials(getRegisteredCredentials());
-      }
     });
+    listPasskeys()
+      .then(setCredentials)
+      .catch(err => toast.error(err.message));
   }, []);
 
   function handlePolicyChange(field, value) {
@@ -70,7 +70,7 @@ export default function BiometricsSettings() {
 
       if (result.success) {
         toast.success("Touch ID / Face ID passkey enrolled successfully!");
-        setCredentials(getRegisteredCredentials());
+        setCredentials(await listPasskeys());
       }
     } catch (err) {
       if (!err.message?.includes('cancelled')) {
@@ -84,7 +84,7 @@ export default function BiometricsSettings() {
   async function handleTestBiometrics() {
     setTesting(true);
     try {
-      const res = await authenticateWithBiometrics(username);
+      const res = await authenticateWithBiometrics(username, { purpose: 'check' });
       if (res.success) {
         toast.success("Biometric verification verified by device enclave!");
       }
@@ -97,10 +97,13 @@ export default function BiometricsSettings() {
     }
   }
 
-  function handleRemove(id) {
-    const updated = removeCredential(id);
-    setCredentials(updated);
-    toast.success("Passkey credential revoked from this device");
+  async function handleRemove(id) {
+    try {
+      setCredentials(await revokePasskey(id));
+      toast.success("Passkey revoked");
+    } catch (err) {
+      toast.error(err.message || "Could not revoke this passkey");
+    }
   }
 
   return (
@@ -141,8 +144,8 @@ export default function BiometricsSettings() {
                 <ShieldCheck className="w-4 h-4 text-[#B5F13E]" />
                 <p className="text-sm font-semibold text-foreground">
                   {credentials.length > 0
-                    ? `${credentials.length} passkey credential(s) active on this machine`
-                    : 'No passkeys registered on this device yet'}
+                    ? `${credentials.length} passkey credential(s) enrolled for your account`
+                    : 'No passkeys enrolled for your account yet'}
                 </p>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
@@ -246,7 +249,7 @@ export default function BiometricsSettings() {
             {credentials.length === 0 ? (
               <div className="p-6 rounded-xl border border-dashed border-border text-center text-muted-foreground space-y-1">
                 <Fingerprint className="w-8 h-8 mx-auto text-muted-foreground/40 mb-1" />
-                <p className="text-xs">No passkey credentials registered on this browser.</p>
+                <p className="text-xs">No passkey credentials enrolled for your account.</p>
                 <p className="text-[11px] text-muted-foreground/70">Click "Enroll This Device" above to create an authenticated passkey.</p>
               </div>
             ) : (
@@ -264,7 +267,7 @@ export default function BiometricsSettings() {
                         <div className="flex items-center gap-2">
                           <p className="text-xs font-semibold text-foreground">{cred.deviceName || 'Enrolled Device'}</p>
                           <span className="px-1.5 py-0.2 rounded bg-secondary text-[10px] text-muted-foreground border border-border">
-                            @{cred.username}
+                            @{cred.username || username}
                           </span>
                         </div>
                         <p className="text-[11px] text-muted-foreground mt-0.5">

@@ -4,7 +4,9 @@ import {
   startRegistration,
   startAuthentication,
 } from '@simplewebauthn/browser';
+import { supabase, isSupabaseConfigured } from '@/api/client';
 
+// Dev mock only: with no Supabase project, the device list lives in localStorage.
 const STORAGE_KEY = 'fuloozi_webauthn_credentials';
 const CURRENT_CHALLENGE_KEY = 'fuloozi_webauthn_current_challenge';
 
@@ -31,7 +33,7 @@ export async function checkBiometricsSupport() {
 }
 
 /**
- * Get all registered passkey credentials stored on this device
+ * Get passkeys recorded in this browser (dev mock list)
  */
 export function getRegisteredCredentials(username) {
   try {
@@ -47,9 +49,6 @@ export function getRegisteredCredentials(username) {
   }
 }
 
-/**
- * Save a newly verified passkey credential
- */
 function saveCredential(credential) {
   try {
     const existing = getRegisteredCredentials();
@@ -63,7 +62,7 @@ function saveCredential(credential) {
 }
 
 /**
- * Remove an enrolled passkey credential
+ * Remove a passkey from this browser's list (dev mock list)
  */
 export function removeCredential(credentialId) {
   try {
@@ -74,6 +73,36 @@ export function removeCredential(credentialId) {
   } catch {
     return [];
   }
+}
+
+/**
+ * List the signed-in user's passkeys. With Supabase this reads opus_passkeys
+ * (row-level security returns only the caller's own rows).
+ */
+export async function listPasskeys() {
+  if (!isSupabaseConfigured) return getRegisteredCredentials();
+  const { data, error } = await supabase
+    .from('opus_passkeys')
+    .select('id, device_name, created_at, last_used_at')
+    .order('created_at', { ascending: false });
+  if (error) throw new Error('Could not load your passkeys');
+  return data.map(row => ({
+    id: row.id,
+    deviceName: row.device_name,
+    created_at: row.created_at,
+    last_used_at: row.last_used_at,
+  }));
+}
+
+/**
+ * Revoke one of the signed-in user's passkeys. With Supabase the row is deleted,
+ * so that passkey can no longer sign anyone in.
+ */
+export async function revokePasskey(credentialId) {
+  if (!isSupabaseConfigured) return removeCredential(credentialId);
+  const { error } = await supabase.from('opus_passkeys').delete().eq('id', credentialId);
+  if (error) throw new Error('Could not revoke this passkey');
+  return listPasskeys();
 }
 
 /**
@@ -89,10 +118,24 @@ export function getDeviceName() {
   return 'Personal Device Biometrics';
 }
 
+// Enrolment needs the caller's Supabase session; the server verifies the token.
+async function authHeaders(accessToken) {
+  let token = accessToken;
+  if (!token) {
+    const { data } = await supabase.auth.getSession();
+    token = data?.session?.access_token;
+  }
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 /**
- * Register device biometrics (Touch ID / Face ID) using SimpleWebAuthn
+ * Register device biometrics (Touch ID / Face ID) using SimpleWebAuthn.
+ * Pass accessToken when the session is not stored yet (right after account creation).
  */
-export async function registerBiometrics({ username, displayName }) {
+export async function registerBiometrics({ username, displayName, accessToken }) {
   const { supported } = await checkBiometricsSupport();
   if (!supported) {
     throw new Error('WebAuthn biometrics are not supported on this browser');
@@ -100,11 +143,12 @@ export async function registerBiometrics({ username, displayName }) {
 
   const userHandle = username || 'owner';
   const userFull = displayName || username || 'Household Member';
+  const headers = await authHeaders(accessToken);
 
   // 1. Fetch registration options from server
   const optRes = await fetch('/api/webauthn/registration-options', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({
       username: userHandle,
       displayName: userFull,
@@ -129,13 +173,16 @@ export async function registerBiometrics({ username, displayName }) {
     if (err.name === 'NotAllowedError') {
       throw new Error('Biometric registration was cancelled or timed out');
     }
+    if (err.name === 'InvalidStateError') {
+      throw new Error('This device already has a passkey for your account');
+    }
     throw err;
   }
 
   // 3. Verify response with server
   const verRes = await fetch('/api/webauthn/verify-registration', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({
       username: userHandle,
       response: attResp,
@@ -150,39 +197,39 @@ export async function registerBiometrics({ username, displayName }) {
   }
 
   const result = await verRes.json();
+  sessionStorage.removeItem(CURRENT_CHALLENGE_KEY);
 
-  // Save locally for fast device matching
   const credentialRecord = {
     id: attResp.id,
     username: userHandle,
     displayName: userFull,
-    deviceName: getDeviceName(),
-    created_at: new Date().toISOString(),
-    publicKey: result.credential?.publicKey || '',
-    counter: result.credential?.counter || 0,
-    transports: attResp.response?.transports || ['internal'],
+    deviceName: result.credential?.deviceName || getDeviceName(),
+    created_at: result.credential?.created_at || new Date().toISOString(),
+    transports: attResp.response?.transports || [],
   };
 
-  saveCredential(credentialRecord);
-  sessionStorage.removeItem(CURRENT_CHALLENGE_KEY);
+  if (!isSupabaseConfigured) saveCredential(credentialRecord);
 
   return { success: true, credential: credentialRecord };
 }
 
 /**
- * Sign in using Face ID / Touch ID / Device Biometrics
+ * Sign in using Face ID / Touch ID / Device Biometrics.
+ * With purpose 'check', a signed-in user tests their own passkey and no new session is created.
  */
-export async function authenticateWithBiometrics(targetUsername = '') {
+export async function authenticateWithBiometrics(targetUsername = '', { purpose = 'sign-in' } = {}) {
   const { supported } = await checkBiometricsSupport();
   if (!supported) {
     throw new Error('Biometrics not supported on this device');
   }
 
+  const headers = purpose === 'check' ? await authHeaders() : { 'Content-Type': 'application/json' };
+
   // 1. Request authentication options
   const optRes = await fetch('/api/webauthn/authentication-options', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: targetUsername }),
+    headers,
+    body: JSON.stringify({ username: targetUsername, purpose }),
   });
 
   if (!optRes.ok) {
@@ -207,11 +254,12 @@ export async function authenticateWithBiometrics(targetUsername = '') {
   // 3. Verify authentication response
   const verRes = await fetch('/api/webauthn/verify-authentication', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({
       username: targetUsername || asseResp.response?.userHandle,
       response: asseResp,
       expectedChallenge: sessionStorage.getItem(CURRENT_CHALLENGE_KEY),
+      purpose,
     }),
   });
 
@@ -225,4 +273,3 @@ export async function authenticateWithBiometrics(targetUsername = '') {
 
   return { success: true, account };
 }
-
