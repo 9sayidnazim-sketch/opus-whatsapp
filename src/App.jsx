@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes, Link } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
+import { MetallicButton } from '@/components/ui/metallic-button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/api/client';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
@@ -89,11 +90,11 @@ function SignIn() {
           <p className="text-sm text-muted-foreground">Your sign-in ID</p>
           <p className="mt-1 text-xl font-semibold">@{created.username}</p>
         </div>
-        <Button className="w-full" disabled={pending} onClick={async () => {
+        <MetallicButton className="w-full" disabled={pending} onClick={async () => {
           setPending(true);
           try { await startSession(created); }
           catch { setStatus('Could not open your account. Sign in with the ID shown above.'); setPending(false); }
-        }}>Open my ledger</Button>
+        }}>Open my ledger</MetallicButton>
       </> : <>
         <form key={step} className="mt-6 space-y-4" onSubmit={submit}>
           {(step === 'name' || step === 'login') && <label className="block text-sm">

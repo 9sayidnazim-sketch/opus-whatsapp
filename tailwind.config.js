@@ -21,6 +21,11 @@ module.exports = {
   			card: '0 1px 1px rgba(17, 17, 26, 0.03), 0 8px 24px -18px rgba(17, 17, 26, 0.25)'
   		},
   		colors: {
+            'color-1': 'hsl(var(--color-1))',
+            'color-2': 'hsl(var(--color-2))',
+            'color-3': 'hsl(var(--color-3))',
+            'color-4': 'hsl(var(--color-4))',
+            'color-5': 'hsl(var(--color-5))',
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
@@ -73,6 +78,10 @@ module.exports = {
   			}
   		},
   		keyframes: {
+            rainbow: {
+                '0%': { backgroundPosition: '0 0, 0% 0' },
+                '100%': { backgroundPosition: '0 0, 100% 0' },
+            },
   			'accordion-down': {
   				from: {
   					height: '0'
@@ -91,6 +100,7 @@ module.exports = {
   			}
   		},
   		animation: {
+            rainbow: 'rainbow 600ms ease-out both',
   			'accordion-down': 'accordion-down 0.2s ease-out',
   			'accordion-up': 'accordion-up 0.2s ease-out'
   		}

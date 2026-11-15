@@ -122,3 +122,35 @@
     box-shadow: inset 0 1px 0 #fff, 0 2px 6px #0005;
   }
 }
+
+@layer components {
+  :root {
+    --color-1: 10 36% 66%;
+    --color-2: 262 28% 72%;
+    --color-3: 220 42% 74%;
+    --color-4: 191 25% 67%;
+    --color-5: 150 24% 65%;
+  }
+  .opus-rainbow-button {
+    border-color: transparent;
+    background:
+      linear-gradient(#202229, #202229) padding-box,
+      linear-gradient(110deg, hsl(var(--color-1)), hsl(var(--color-5)), hsl(var(--color-3)), hsl(var(--color-4)), hsl(var(--color-2)), hsl(var(--color-1))) border-box;
+    background-size: 100% 100%, 200% 100%;
+    background-position: 0 0;
+  }
+  .opus-rainbow-button:not(:disabled):is(:hover, :focus-visible) {
+    @apply animate-rainbow;
+  }
+  .opus-metallic-button:not(:disabled):hover {
+    background: linear-gradient(155deg, #fff, #e2e6ec 48%, #b4bdc8);
+  }
+  .opus-metallic-button:not(:disabled):active {
+    box-shadow: inset 0 2px 4px #0004;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .opus-rainbow-button:not(:disabled):is(:hover, :focus-visible) {
+      animation: none;
+    }
+  }
+}
