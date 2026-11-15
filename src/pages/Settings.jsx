@@ -8,7 +8,6 @@ import toast from "react-hot-toast";
 import NotificationToggle from "../components/settings/NotificationToggle";
 import NotificationThreshold from "../components/settings/NotificationThreshold";
 import WhatsAppConnection from "../components/settings/WhatsAppConnection";
-import BiometricsSettings from "../components/settings/BiometricsSettings";
 import {
   getNotificationPermission,
   requestNotificationPermission,
@@ -137,9 +136,6 @@ export default function SettingsPage() {
           {updateMutation.isPending || createMutation.isPending ? "Saving..." : "Save Preferences"}
         </button>
       </div>
-
-      {/* Biometric Passkeys (SimpleWebAuthn Face ID / Touch ID) */}
-      <BiometricsSettings />
 
       {/* WhatsApp Integration */}
       <WhatsAppConnection whatsappURL={whatsappURL} />

@@ -32,7 +32,12 @@ function SignIn() {
 
   useEffect(() => {
     checkBiometricsSupport().then(({ supported }) => {
-      setBiometricsAvailable(supported);
+      let allowed = true;
+      try {
+        const policy = JSON.parse(localStorage.getItem('fuloozi_admin_biometrics_policy') || '{}');
+        if (policy.allowLogin === false) allowed = false;
+      } catch {}
+      setBiometricsAvailable(supported && allowed);
       if (supported) {
         const creds = getRegisteredCredentials();
         setRegisteredCreds(creds);

@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import BiometricsSettings from "@/components/settings/BiometricsSettings";
 import {
   Select,
   SelectContent,
@@ -17,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import {
   Bell,
+  Fingerprint,
   Send,
   Users,
   User,
@@ -29,6 +32,7 @@ import {
   Gift,
   TrendingUp,
   RefreshCw,
+  ShieldCheck,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { showBrowserNotification, getNotificationPermission, requestNotificationPermission } from "@/utils/notifications";
@@ -74,6 +78,7 @@ function StatusBadge({ status }) {
 
 export default function AdminPage() {
   const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState("notifications");
   const [form, setForm] = useState({
     title: "",
     body: "",
@@ -166,19 +171,45 @@ export default function AdminPage() {
   const TypeIcon = cfg.icon;
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto space-y-8">
+    <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold font-heading tracking-tight text-foreground">
-          Admin Panel
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Send targeted notifications to household members
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-bold font-heading tracking-tight text-foreground">
+              Admin Control Center
+            </h1>
+            <Badge className="bg-[#B5F13E]/15 text-[#B5F13E] border-[#B5F13E]/30 text-[10px] font-bold uppercase tracking-wider">
+              Superuser
+            </Badge>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage household notifications, device passkeys, and biometric security policies.
+          </p>
+        </div>
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="bg-secondary/60 p-1 border border-border/60 rounded-xl grid grid-cols-2 max-w-md h-11">
+          <TabsTrigger
+            value="notifications"
+            className="rounded-lg text-xs font-semibold data-[state=active]:bg-background data-[state=active]:text-[#B5F13E] flex items-center justify-center gap-2 transition-all"
+          >
+            <Bell className="w-3.5 h-3.5" />
+            <span>Push Notifications</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="passkeys"
+            className="rounded-lg text-xs font-semibold data-[state=active]:bg-background data-[state=active]:text-[#B5F13E] flex items-center justify-center gap-2 transition-all"
+          >
+            <Fingerprint className="w-3.5 h-3.5" />
+            <span>Passkeys & Biometrics</span>
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="notifications" className="space-y-8 mt-0">
+          {/* Stats row */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {[
           { label: "Total Sent", value: sentCount, icon: CheckCircle, color: "text-emerald-400" },
           { label: "In History", value: totalCount, icon: Bell, color: "text-[#B5F13E]" },
@@ -490,6 +521,12 @@ export default function AdminPage() {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="passkeys" className="space-y-6 mt-0">
+          <BiometricsSettings />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
