@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2, Shield } from "lucide-react";
 import { motion } from "framer-motion";
+import { MemberAvatar } from "./MemberAvatar";
 
 export default function MemberCard({ member, onEdit, onDelete }) {
   const role = member.role || 'Member';
@@ -18,12 +19,12 @@ export default function MemberCard({ member, onEdit, onDelete }) {
         <CardContent className="p-4 sm:p-5">
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className="flex items-center gap-3 min-w-0">
-              <div 
-                className="w-11 h-11 rounded-2xl flex items-center justify-center text-sm font-bold text-black font-heading shrink-0 shadow-sm"
-                style={{ backgroundColor: member.color || '#B5F13E' }}
-              >
-                {member.avatar || member.name.charAt(0).toUpperCase()}
-              </div>
+              <MemberAvatar
+                avatar={member.avatar}
+                name={member.name}
+                color={member.color}
+                className="w-11 h-11 rounded-2xl text-sm shadow-sm"
+              />
               <div className="min-w-0">
                 <h3 className="font-semibold text-base text-foreground truncate">
                   {member.name}

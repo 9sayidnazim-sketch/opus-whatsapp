@@ -412,7 +412,7 @@ export default function AdminPage() {
             <CardContent className="space-y-2">
               {[
                 { type: "alert",   title: "Budget Warning",     body: "You've used over 80% of your monthly food budget. Check your spending." },
-                { type: "success", title: "Goal Reached! 🎉",   body: "Your savings goal has been fully funded. Well done!" },
+                { type: "success", title: "Goal Reached",       body: "Your savings goal has been fully funded. Well done!" },
                 { type: "info",    title: "Bill Due Soon",       body: "A bill is due in the next 3 days. Review your upcoming payments." },
                 { type: "promo",   title: "Monthly Summary",     body: "Your household finance report for this month is ready." },
               ].map((tpl) => {

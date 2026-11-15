@@ -144,7 +144,7 @@ export function checkAndTriggerDueAlerts({ transactions = [], budgets = [], goal
         if (days <= leadDays && days >= 0 && !notifiedSet.has(alertId)) {
           notifiedSet.add(alertId);
           showBrowserNotification({
-            title: days === 0 ? '⚠️ Bill Due Today' : `📅 Bill Due in ${days} days`,
+            title: days === 0 ? 'Bill Due Today' : days === 1 ? 'Bill Due Tomorrow' : `Bill Due in ${days} Days`,
             body: `${bill.description || getCategoryLabel(bill.category)}: ${formatCurrency(bill.amount)} is due on ${bill.due_date}.`,
             tag: alertId,
             url: '/bills',
@@ -174,7 +174,7 @@ export function checkAndTriggerDueAlerts({ transactions = [], budgets = [], goal
       if (pct >= threshold && !notifiedSet.has(alertId)) {
         notifiedSet.add(alertId);
         showBrowserNotification({
-          title: pct >= 100 ? '🚨 Budget Exceeded' : '⚠️ Budget Warning',
+          title: pct >= 100 ? 'Budget Exceeded' : 'Budget Warning',
           body: `${getCategoryLabel(budget.category)} is at ${Math.round(pct)}% (${formatCurrency(spent)} of ${formatCurrency(budget.amount)}).`,
           tag: alertId,
           url: '/budgets',

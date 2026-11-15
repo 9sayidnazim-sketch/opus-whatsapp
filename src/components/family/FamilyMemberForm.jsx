@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X } from "lucide-react";
+import { AVATAR_OPTIONS, AvatarGlyph, DEFAULT_AVATAR, normalizeAvatar } from "./MemberAvatar";
 
 const colorOptions = [
   { value: "#6366f1", label: "Indigo" },
@@ -18,7 +19,6 @@ const colorOptions = [
   { value: "#14b8a6", label: "Teal" }
 ];
 
-const avatarOptions = ["👤", "👨", "👩", "👨💼", "👩💼", "🧑", "👶", "👴", "👵"];
 
 export default function FamilyMemberForm({ member, onSubmit, onCancel }) {
   const [formData, setFormData] = useState({
@@ -26,7 +26,7 @@ export default function FamilyMemberForm({ member, onSubmit, onCancel }) {
     name: "",
     role: "editor",
     color: "#6366f1",
-    avatar: "👤",
+    avatar: DEFAULT_AVATAR,
     active: true
   });
 
@@ -37,7 +37,7 @@ export default function FamilyMemberForm({ member, onSubmit, onCancel }) {
         name: member.name,
         role: member.role,
         color: member.color || "#6366f1",
-        avatar: member.avatar || "👤",
+        avatar: normalizeAvatar(member.avatar),
         active: member.active
       });
     }
@@ -142,9 +142,19 @@ export default function FamilyMemberForm({ member, onSubmit, onCancel }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {avatarOptions.map(emoji => (
-                      <SelectItem key={emoji} value={emoji}>
-                        <span className="text-2xl">{emoji}</span>
+                    {AVATAR_OPTIONS.map(option => (
+                      <SelectItem key={option.id} value={option.id}>
+                        <span className="flex items-center gap-2">
+                          <span className="flex h-5 w-5 items-center justify-center font-heading text-[10px] font-bold">
+                            <AvatarGlyph
+                              avatar={option.id}
+                              name={formData.name}
+                              placeholderInitials="AB"
+                              iconClassName="h-4 w-4"
+                            />
+                          </span>
+                          {option.label}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>

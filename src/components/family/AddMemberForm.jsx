@@ -7,7 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X } from "lucide-react";
+import { Eye, Pencil, ShieldCheck, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  AVATAR_OPTIONS,
+  AvatarGlyph,
+  DEFAULT_AVATAR,
+  MemberAvatar,
+  normalizeAvatar,
+} from "./MemberAvatar";
 
 const colorOptions = [
   "#ef4444", "#f97316", "#f59e0b", "#eab308", "#84cc16",
@@ -16,7 +24,11 @@ const colorOptions = [
   "#ec4899", "#f43f5e"
 ];
 
-const emojiOptions = ["👨", "👩", "👦", "👧", "🧑", "👶", "👴", "👵"];
+const roleOptions = [
+  { value: "admin", label: "Admin (full access)", icon: ShieldCheck },
+  { value: "editor", label: "Editor (creates and edits their transactions)", icon: Pencil },
+  { value: "viewer", label: "Viewer (read only)", icon: Eye },
+];
 
 export default function AddMemberForm({ member, onSubmit, onCancel }) {
   const [formData, setFormData] = useState({
@@ -24,7 +36,7 @@ export default function AddMemberForm({ member, onSubmit, onCancel }) {
     email: "",
     role: "editor",
     color: colorOptions[0],
-    avatar: "👨",
+    avatar: DEFAULT_AVATAR,
     status: "active"
   });
 
@@ -45,7 +57,7 @@ export default function AddMemberForm({ member, onSubmit, onCancel }) {
         email: member.email,
         role: member.role,
         color: member.color || colorOptions[0],
-        avatar: member.avatar || "👨",
+        avatar: normalizeAvatar(member.avatar),
         status: member.status || "active"
       });
     }
@@ -116,15 +128,14 @@ export default function AddMemberForm({ member, onSubmit, onCancel }) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="admin">
-                      👑 Admin (full access)
-                    </SelectItem>
-                    <SelectItem value="editor">
-                      ✏️ Editor (creates and edits their transactions)
-                    </SelectItem>
-                    <SelectItem value="viewer">
-                      👁️ Viewer (read only)
-                    </SelectItem>
+                    {roleOptions.map(({ value, label, icon: RoleIcon }) => (
+                      <SelectItem key={value} value={value}>
+                        <span className="flex min-w-0 items-center gap-2">
+                          <RoleIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+                          <span className="min-w-0 truncate">{label}</span>
+                        </span>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -147,25 +158,48 @@ export default function AddMemberForm({ member, onSubmit, onCancel }) {
               </div>
             </div>
 
-            <div>
-              <Label>Avatar</Label>
-              <div className="flex gap-2 mt-2">
-                {emojiOptions.map((emoji) => (
-                  <button
-                    key={emoji}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, avatar: emoji })}
-                    className={`w-12 h-12 text-2xl rounded-lg border-2 hover:scale-110 transition-transform ${
-                      formData.avatar === emoji
-                        ? 'border-[#B5F13E] bg-[#B5F13E]/10'
-                        : 'border-border bg-secondary/40'
-                    }`}
-                  >
-                    {emoji}
-                  </button>
-                ))}
+            <fieldset>
+              <legend className="text-sm font-medium leading-none">Avatar</legend>
+              <div className="mt-2 grid grid-cols-4 gap-2 sm:grid-cols-8">
+                {AVATAR_OPTIONS.map((option) => {
+                  const selected = formData.avatar === option.id;
+                  return (
+                    <label
+                      key={option.id}
+                      className={cn(
+                        "flex cursor-pointer flex-col items-center gap-1.5 rounded-lg border-2 px-1 py-2.5 text-[11px] font-medium transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-background",
+                        selected
+                          ? "border-[#B5F13E] bg-[#B5F13E]/10 text-foreground"
+                          : "border-border bg-secondary/40 text-muted-foreground hover:border-[#B5F13E]/40 hover:text-foreground"
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="avatar"
+                        value={option.id}
+                        checked={selected}
+                        onChange={() => setFormData({ ...formData, avatar: option.id })}
+                        className="sr-only"
+                      />
+                      <span
+                        className={cn(
+                          "flex h-6 items-center justify-center font-heading text-sm font-bold",
+                          selected && "text-[#B5F13E]"
+                        )}
+                      >
+                        <AvatarGlyph
+                          avatar={option.id}
+                          name={formData.name}
+                          placeholderInitials="AB"
+                          iconClassName="h-5 w-5"
+                        />
+                      </span>
+                      {option.label}
+                    </label>
+                  );
+                })}
               </div>
-            </div>
+            </fieldset>
 
             <div>
               <Label>Identification Color</Label>
@@ -188,12 +222,12 @@ export default function AddMemberForm({ member, onSubmit, onCancel }) {
             <div className="bg-secondary/40 border border-border/60 rounded-lg p-4">
               <h4 className="font-medium text-muted-foreground text-sm mb-3">Preview</h4>
               <div className="flex items-center gap-3">
-                <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center text-xl"
-                  style={{ backgroundColor: formData.color }}
-                >
-                  {formData.avatar}
-                </div>
+                <MemberAvatar
+                  avatar={formData.avatar}
+                  name={formData.name}
+                  color={formData.color}
+                  className="w-12 h-12 rounded-full text-base"
+                />
                 <div>
                   <p className="font-medium text-foreground">{formData.name || "Name"}</p>
                   <p className="text-sm text-muted-foreground">{formData.email || "email@example.com"}</p>

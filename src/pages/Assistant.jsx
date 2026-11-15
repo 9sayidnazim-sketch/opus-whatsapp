@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ExternalLink, Plus, Send, MessageSquare } from 'lucide-react';
+import { ExternalLink, Lightbulb, Plus, Send, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { db, askAssistant, whatsappURL, openWhatsAppChat } from '@/api/client';
@@ -153,9 +153,10 @@ export default function Assistant() {
                     <button
                       key={suggestion}
                       onClick={() => handleSend(suggestion)}
-                      className="w-full text-left p-2.5 rounded-xl bg-secondary/50 hover:bg-secondary text-xs text-foreground/90 border border-border/60 hover:border-[#B5F13E]/40 transition-all"
+                      className="w-full flex items-start gap-2 text-left p-2.5 rounded-xl bg-secondary/50 hover:bg-secondary text-xs text-foreground/90 border border-border/60 hover:border-[#B5F13E]/40 transition-all"
                     >
-                      💡 {suggestion}
+                      <Lightbulb className="w-3.5 h-3.5 mt-px shrink-0 text-[#B5F13E]" aria-hidden="true" />
+                      <span>{suggestion}</span>
                     </button>
                   ))}
                 </div>

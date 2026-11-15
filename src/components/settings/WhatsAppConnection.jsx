@@ -223,8 +223,9 @@ export default function WhatsAppConnection({ whatsappURL }) {
             <div className="p-3 rounded-lg bg-card border border-border/80 text-xs text-muted-foreground font-mono select-all break-all">
               {qrConnectUrl}
             </div>
-            <p className="text-[11px] text-[#B5F13E]">
-              ✓ Pre-filled greeting: "Hi Octapus 7829104921"
+            <p className="flex items-center justify-center gap-1.5 text-[11px] text-[#B5F13E] sm:justify-start">
+              <CheckCircle className="w-3 h-3 shrink-0" aria-hidden="true" />
+              Pre-filled greeting: "Hi Octapus 7829104921"
             </p>
           </div>
         </div>
@@ -368,9 +369,15 @@ export default function WhatsAppConnection({ whatsappURL }) {
               {outboundResult && (
                 <div className={`mt-2 p-3 rounded-lg text-xs font-mono ${outboundResult.ok ? 'bg-emerald-950/30 border border-emerald-800 text-emerald-400' : 'bg-rose-950/30 border border-rose-800 text-rose-300'}`}>
                   {outboundResult.ok ? (
-                    <p>✓ Sent successfully! Message ID: {outboundResult.message_id}</p>
+                    <p className="flex items-start gap-1.5">
+                      <CheckCircle className="w-3.5 h-3.5 mt-px shrink-0" aria-hidden="true" />
+                      <span>Sent successfully! Message ID: {outboundResult.message_id}</span>
+                    </p>
                   ) : (
-                    <p>✗ {outboundResult.error} {outboundResult.next_steps ? `(${outboundResult.next_steps})` : ''}</p>
+                    <p className="flex items-start gap-1.5">
+                      <AlertCircle className="w-3.5 h-3.5 mt-px shrink-0" aria-hidden="true" />
+                      <span>{outboundResult.error} {outboundResult.next_steps ? `(${outboundResult.next_steps})` : ''}</span>
+                    </p>
                   )}
                 </div>
               )}

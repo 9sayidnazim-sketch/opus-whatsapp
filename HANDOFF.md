@@ -130,3 +130,32 @@ Starting point: commit `4eda6cb`. The dev server started cleanly and every page 
 - **`npm run typecheck`:** 459 errors, mostly from untyped shadcn wrappers under `checkJs`; this was already failing before the fix pass.
 
 **Next action:** review and commit this fix pass, then rotate the Kapso key before the next push.
+
+---
+
+## 8. No-emoji pass (2026-11-15, Claude Code)
+Starting point: commit `aaa3e26`. Resolves the emoji item pending in section 7: system-generated text and UI no longer use emoji. Lucide icons replace them where an icon carries meaning; everywhere else it's plain text.
+
+**Changed**
+1. **Push notification titles** (`src/utils/notifications.js`) are plain text. "Bill Due in 1 days" now reads "Bill Due Tomorrow".
+2. **WhatsApp bot** (`server/kapsoAgent.js`): the canned replies are plain text, and the bullets stay. The Kapso agent prompt used to say "Use emoji sparingly"; it now asks for plain text, and `server/stripEmoji.js` removes any emoji the model adds anyway. The web Assistant (`api/assistant.js`) gets the same instruction and filter.
+3. **Family avatars** (`src/components/family/MemberAvatar.jsx`): members choose Initials (the default) or one of seven icons: Adult, Partner, Working, Student, Child, Baby, Caregiver. The choice is stored as an id (`"initials"`, `"baby"`, ...). Initials and icons switch between charcoal and white for contrast with the member's color.
+   - Members saved with emoji avatars still display without emoji. The baby, boy/girl and office-worker emoji map to the Baby, Child and Working icons; any other emoji shows the member's initials. Saving the member stores the new id.
+   - The activity list and member filter now use the same fallback color as the member card (lime, not blue), so a member without a color looks the same everywhere.
+4. **Role labels** (`AddMemberForm.jsx`) use shield, pencil and eye icons.
+5. **Elsewhere:** the Admin "Goal Reached" template (its type icon already marks success), a lime lightbulb on the Assistant suggestion chips, and icons in place of the check and cross marks in the WhatsApp settings panel.
+
+**Verified**
+- `grep -rnP '[\x{1F300}-\x{1FAFF}\x{2600}-\x{27BF}]' src server api` finds nothing. In the built bundle, the only emoji are two `console.warn` strings from dependencies and the legacy-avatar lookup table.
+- `npm run lint`: 0 problems. `vite build`: passes.
+- `stripEmoji`: 17 edge cases pass, covering ZWJ sequences, skin tones, flags, keycaps, and emoji at line start vs mid-line. Bullets, arrows, © and ™ and Arabic text are unchanged.
+- Bot replies: all six paths (linking, expense, income, summary, bills, agent fallback) run offline with no emoji and readable bullets.
+- In-app browser, against the worktree's dev server in local mock mode on port 5181 with Kapso and model keys unset:
+  - Family, with seeded members whose stored avatars are emoji: cards, activity list, member filter, add and edit forms (saving rewrites the avatar to an id), and the picker at 375px.
+  - Admin templates and live preview, the Assistant chips, and the Settings QR and dispatcher-error lines.
+
+**Pending**
+- `FamilyMemberForm.jsx` isn't imported anywhere. It uses the same avatar set now but was only linted and built, not opened in a browser.
+- Bot replies show the internal category key ("Category: alimentacao") instead of a label such as "Groceries".
+
+**Next action:** review and merge this branch. Other side branches also add sections to the end of this file, so keep both when resolving.

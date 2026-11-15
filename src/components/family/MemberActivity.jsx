@@ -6,6 +6,7 @@ import { ArrowUpRight, ArrowDownRight, Calendar, User } from "lucide-react";
 import { format } from "date-fns";
 import { enUS } from "date-fns/locale";
 import { formatCurrency, getCategoryLabel } from "@/utils";
+import { MemberAvatar } from "./MemberAvatar";
 
 export default function MemberActivity({ members = [], transactions = [] }) {
   const [selectedMember, setSelectedMember] = useState("all");
@@ -42,7 +43,13 @@ export default function MemberActivity({ members = [], transactions = [] }) {
                 {members.map((member) => (
                   <SelectItem key={member.id} value={member.id}>
                     <div className="flex items-center gap-2">
-                      <span className="text-sm">{member.avatar || "👤"}</span>
+                      <MemberAvatar
+                        avatar={member.avatar}
+                        name={member.name}
+                        color={member.color}
+                        className="h-5 w-5 rounded-full text-[9px]"
+                        iconClassName="h-3 w-3"
+                      />
                       <span className="text-xs">{member.name}</span>
                     </div>
                   </SelectItem>
@@ -66,12 +73,12 @@ export default function MemberActivity({ members = [], transactions = [] }) {
                   <div key={transaction.id} className="p-4 hover:bg-secondary/30 transition-colors">
                     <div className="flex items-center gap-3.5">
                       {member ? (
-                        <div 
-                          className="w-9 h-9 rounded-full flex items-center justify-center text-base text-white flex-shrink-0 shadow-sm"
-                          style={{ backgroundColor: member.color || '#3b82f6' }}
-                        >
-                          {member.avatar || <User className="w-4 h-4" />}
-                        </div>
+                        <MemberAvatar
+                          avatar={member.avatar}
+                          name={member.name}
+                          color={member.color}
+                          className="w-9 h-9 rounded-full text-xs shadow-sm"
+                        />
                       ) : (
                         <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center text-muted-foreground flex-shrink-0">
                           <User className="w-4 h-4" />

@@ -3,6 +3,8 @@
  * Connects the Fuloozi Household Ledger with Kapso's WhatsApp Cloud API & Kapso Agent
  */
 
+import { stripEmoji } from './stripEmoji.js';
+
 const KAPSO_BASE_URL = 'https://api.kapso.ai';
 const NOT_CONFIGURED = 'Kapso is not configured. Set KAPSO_API_KEY and KAPSO_PHONE_NUMBER_ID in .env.local.';
 
@@ -219,7 +221,7 @@ export async function handleWhatsAppInbound({
   // Check for greetings / linking code
   const greetingMatch = /^hi octapus[\s,:—-]+([0-9]{10})$/i.exec(body);
   if (greetingMatch) {
-    const reply = `👋 Welcome to Fuloozi, ${contactName || 'there'}! Your WhatsApp is now connected.\n\nYou can:\n• Log expenses: "expense 45 lunch"\n• Log income: "income 2500 consulting"\n• Ask questions: "What bills are due this week?" or "How's our grocery budget?"`;
+    const reply = `Welcome to Fuloozi, ${contactName || 'there'}! Your WhatsApp is now connected.\n\nYou can:\n• Log expenses: "expense 45 lunch"\n• Log income: "income 2500 consulting"\n• Ask questions: "What bills are due this week?" or "How's our grocery budget?"`;
     const sendResult = await sendWhatsAppMessage({ to: cleanSender, text: reply });
     return { ok: true, action: 'linked', reply, sent: sendResult.ok };
   }
@@ -244,7 +246,7 @@ export async function handleWhatsAppInbound({
       });
     }
 
-    const reply = `✅ Recorded in Fuloozi:\n• Amount: AED ${amount.toLocaleString('en-AE', { minimumFractionDigits: 2 })}\n• Item: "${description}"\n• Category: ${category}\n\nYour household ledger has been updated live.`;
+    const reply = `Recorded in Fuloozi:\n• Amount: AED ${amount.toLocaleString('en-AE', { minimumFractionDigits: 2 })}\n• Item: "${description}"\n• Category: ${category}\n\nYour household ledger has been updated live.`;
     const sendResult = await sendWhatsAppMessage({ to: cleanSender, text: reply });
     return { ok: true, action: 'expense_recorded', amount, description, category, reply, sent: sendResult.ok };
   }
@@ -266,21 +268,21 @@ export async function handleWhatsAppInbound({
       });
     }
 
-    const reply = `💰 Inflow Logged in Fuloozi:\n• Amount: AED ${amount.toLocaleString('en-AE', { minimumFractionDigits: 2 })}\n• Description: "${description}"\n\nYour net savings cushion has increased.`;
+    const reply = `Inflow Logged in Fuloozi:\n• Amount: AED ${amount.toLocaleString('en-AE', { minimumFractionDigits: 2 })}\n• Description: "${description}"\n\nYour net savings cushion has increased.`;
     const sendResult = await sendWhatsAppMessage({ to: cleanSender, text: reply });
     return { ok: true, action: 'income_recorded', amount, description, reply, sent: sendResult.ok };
   }
 
   // Pattern C: Summary / Balance Query
   if (/^(?:summary|balance|saldo|overview|report)/i.test(cleanCommand)) {
-    const reply = `📊 Fuloozi Household Ledger Summary (This Month):\n• Inflow: AED 24,500.00\n• Outflow: AED 2,409.00\n• Net Savings: AED 22,091.00\n• Savings Rate: 90%\n\nAll monthly spending remains safely within budget limits.`;
+    const reply = `Fuloozi Household Ledger Summary (This Month):\n• Inflow: AED 24,500.00\n• Outflow: AED 2,409.00\n• Net Savings: AED 22,091.00\n• Savings Rate: 90%\n\nAll monthly spending remains safely within budget limits.`;
     const sendResult = await sendWhatsAppMessage({ to: cleanSender, text: reply });
     return { ok: true, action: 'summary', reply, sent: sendResult.ok };
   }
 
   // Pattern D: Bills / Due Dates
   if (/^(?:bills|due|contas|upcoming)/i.test(cleanCommand)) {
-    const reply = `📅 Upcoming Household Bills:\n• DEWA (Electricity & Water): AED 680.00 (Due soon)\n• du Home Fibre: AED 389.00 (Settled)\n\nTip: You can check payment receipts on your Fuloozi dashboard at /bills.`;
+    const reply = `Upcoming Household Bills:\n• DEWA (Electricity & Water): AED 680.00 (Due soon)\n• du Home Fibre: AED 389.00 (Settled)\n\nTip: You can check payment receipts on your Fuloozi dashboard at /bills.`;
     const sendResult = await sendWhatsAppMessage({ to: cleanSender, text: reply });
     return { ok: true, action: 'bills_query', reply, sent: sendResult.ok };
   }
@@ -294,9 +296,9 @@ Current household financial context:
 - Main expense categories: Groceries (AED 920), Utilities (AED 680), Dining (AED 240), Fuel (AED 180)
 - Upcoming bills: DEWA Utilities AED 680
 - Active goals: Family Holiday (AED 8,500 / 15,000 saved), Emergency Reserve (AED 32,000 / 50,000 saved)
-Answer concisely, supportively, and in plain everyday language. Use emoji sparingly. Limit to 3 short paragraphs.`;
+Answer concisely, supportively, and in plain everyday language. Write plain text only: no emoji. Limit to 3 short paragraphs.`;
 
-  let reply = await askKapsoAgent(cleanCommand, systemContext);
+  let reply = stripEmoji(await askKapsoAgent(cleanCommand, systemContext));
 
   if (!reply) {
     // Intelligent local fallback if cloud agent takes longer than timeout
