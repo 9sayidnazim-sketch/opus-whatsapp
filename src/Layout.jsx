@@ -1,3 +1,4 @@
+import FulooziBrand from "@/components/FulooziBrand";
 import { db } from "@/api/client";
 
 import { Link, useLocation } from "react-router-dom";
@@ -37,15 +38,7 @@ export default function Layout({ children, currentPageName }) {
       <div className="min-h-screen flex w-full bg-background">
         <Sidebar className="border-r border-border/80 bg-card">
           <SidebarHeader className="p-5 pb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
-                <span className="font-display text-primary-foreground text-lg font-semibold tracking-tight">O</span>
-              </div>
-              <div className="leading-none">
-                <h2 className="font-heading text-[17px] font-semibold tracking-[-0.02em] text-foreground">OPUS</h2>
-                <p className="text-[11px] text-muted-foreground mt-1 tracking-tight">by Octapus</p>
-              </div>
-            </div>
+            <FulooziBrand />
           </SidebarHeader>
 
           <SidebarContent className="px-3">
@@ -97,14 +90,11 @@ export default function Layout({ children, currentPageName }) {
           </SidebarFooter>
         </Sidebar>
 
-        <main className="min-w-0 flex-1 flex flex-col">
+        <main className={`min-w-0 flex-1 flex flex-col ${currentPageName === "Dashboard" ? "fuloozi-ledger-canvas" : ""}`}>
           <header className="sticky top-0 z-20 bg-card border-b border-border/70 px-4 py-3 md:hidden">
             <div className="flex items-center gap-3">
               <SidebarTrigger className="hover:bg-secondary p-2 rounded-xl transition-colors duration-200" />
-              <div className="leading-none">
-                <h1 className="font-heading text-[15px] font-semibold tracking-[-0.02em]">OPUS</h1>
-                <p className="text-[10px] text-muted-foreground mt-1">by Octapus</p>
-              </div>
+              <FulooziBrand />
             </div>
           </header>
 

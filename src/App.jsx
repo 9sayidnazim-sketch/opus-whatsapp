@@ -1,3 +1,4 @@
+import FulooziBrand from "@/components/FulooziBrand";
 import { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes, Link } from 'react-router-dom';
@@ -73,7 +74,7 @@ function SignIn() {
   }
 
   const titles = { name:'What’s your name?', pin:'Create your MPIN', confirm:'Confirm your MPIN',
-    login:'Sign in to OPUS', created:'Your account is ready' };
+    login:'Sign in to Fuloozi', created:'Your account is ready' };
   const labels = { name:'Next', pin:'Next', confirm:'Create account', login:'Sign in' };
   function navigate(next) {
     setStep(next);
@@ -83,7 +84,7 @@ function SignIn() {
 
   return <main className="min-h-screen grid place-items-center bg-background p-6">
     <section className="w-full max-w-md opus-silver-panel rounded-xl border bg-card p-8">
-      <p className="text-sm font-medium text-primary">OPUS by Octapus</p>
+      <FulooziBrand />
       <h1 className="mt-4 text-3xl font-semibold">{titles[step]}</h1>
       {step === 'created' ? <>
         <div className="my-5 rounded-lg border bg-accent p-4" role="status">
@@ -132,7 +133,7 @@ function Workspace() {
 
 function SessionGate() {
   const session = useAuth();
-  if (session === undefined) return <p className="p-8" role="status">Loading OPUS</p>;
+  if (session === undefined) return <p className="p-8" role="status">Loading Fuloozi</p>;
   return session ? <Workspace key={session.user.id} /> : <SignIn />;
 }
 

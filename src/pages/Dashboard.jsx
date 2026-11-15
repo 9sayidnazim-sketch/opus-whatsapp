@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+import { Plus } from "lucide-react";
 import { db } from "@/api/client";
 
 import { useMemo } from "react";
@@ -140,12 +142,15 @@ export default function Dashboard() {
 
   return (
     <section className="opus-dashboard mx-auto w-full min-w-0 max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-        <div className="mb-6">
-          <h1 className="font-heading text-3xl md:text-[36px] leading-tight font-semibold tracking-[-0.03em] text-foreground mb-1.5">Household ledger</h1>
-          <p className="text-muted-foreground capitalize text-[15px]">
+        <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
+          <div>
+          <h1 className="font-heading text-3xl md:text-[36px] leading-tight font-semibold tracking-[-0.03em] mb-1.5">Household ledger</h1>
+          <p className="capitalize text-sm text-[#565e69]">
             {format(new Date(), "MMMM yyyy", { locale: enUS })}
           </p>
-        </div>
+          </div>
+          <Link to="/transactions?new=1" className="fuloozi-ledger-action inline-flex min-h-11 items-center gap-2 px-4 text-sm font-semibold"><Plus className="size-4" aria-hidden="true" />Add transaction</Link>
+        </header>
 
         <NotificationsBanner
           budgetsWithSpent={budgetsWithSpent}
@@ -155,7 +160,7 @@ export default function Dashboard() {
         />
 
         {loadingTransactions ? (
-          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+          <div className="fuloozi-summary mb-6 grid grid-cols-2 xl:grid-cols-4">
             {[...Array(4)].map((_, i) => (
               <Card key={i}>
                 <CardHeader className="pb-2">
@@ -168,7 +173,7 @@ export default function Dashboard() {
             ))}
           </div>
         ) : (
-          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+          <div className="fuloozi-summary mb-6 grid grid-cols-2 xl:grid-cols-4">
             <StatsCard
               title="Monthly balance"
               value={`${stats.saldo.toFixed(2)}`}
@@ -193,7 +198,9 @@ export default function Dashboard() {
           </div>
         )}
 
-        <div className="grid min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:gap-6">
+        <section className="fuloozi-analytics min-w-0 rounded-3xl p-3 sm:p-5 lg:p-6" aria-labelledby="ledger-analytics">
+          <h2 id="ledger-analytics" className="mb-4 px-1 text-lg font-semibold">Financial analytics and records</h2>
+          <div className="grid min-w-0 items-start gap-4 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
           <div className="grid min-w-0 content-start gap-4 lg:gap-6">
             <MonthlyTrend transactions={transactions} isLoading={loadingTransactions} />
             <RecentTransactions transactions={transactions} isLoading={loadingTransactions} />
@@ -210,7 +217,8 @@ export default function Dashboard() {
               isLoading={loadingGoals} 
             />
           </div>
-        </div>
+          </div>
+        </section>
     </section>
   );
 }

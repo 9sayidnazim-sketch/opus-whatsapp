@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -9,7 +10,8 @@ import TransactionList from '@/components/transactions/TransactionList';
 import TransactionFilters from '@/components/transactions/TransactionFilters';
 
 export default function Transactions() {
-  const [editing, setEditing] = useState(null);
+  const { search } = useLocation();
+  const [editing, setEditing] = useState(() => new URLSearchParams(search).has("new") ? {} : null);
   const [filters, setFilters] = useState({ type: 'all', category: 'all' });
   const cache = useQueryClient();
   const query = useQuery({ queryKey: ['transactions'], queryFn: () => db.entities.Transaction.list('-date') });
@@ -27,11 +29,12 @@ export default function Transactions() {
       <div><h1 className="text-3xl font-semibold">Transactions</h1><p className="mt-2 text-muted-foreground">Review income and spending in your household ledger</p></div>
       <Button onClick={() => setEditing({})}><Plus className="mr-2 h-4 w-4" />Add transaction</Button>
     </header>
+    {editing && <TransactionForm transaction={editing.id ? editing : undefined} onCancel={() => setEditing(null)}
+      onSubmit={data => { if (!mutation.isPending) mutation.mutate({ id: editing.id, data }); }} />}
     <TransactionFilters onFilterChange={setFilters} />
     {query.isError && <p role="alert">Could not load transactions</p>}
     <TransactionList transactions={transactions} isLoading={query.isPending} onEdit={setEditing}
       onDelete={id => { if (window.confirm('Delete this transaction?')) mutation.mutate({ id }); }} />
-    {editing && <TransactionForm transaction={editing.id ? editing : undefined} onCancel={() => setEditing(null)}
-      onSubmit={data => { if (!mutation.isPending) mutation.mutate({ id: editing.id, data }); }} />}
+
   </section>;
 }
