@@ -155,5 +155,6 @@ Branch `claude/great-almeida-1509b6`, on top of `aaa3e26`. This replaces the "Pr
 
 **Next action**
 Apply the migration, set `SUPABASE_SECRET_KEY` in Vercel (see README, "Passkeys"), deploy, then enroll from Admin while signed in with an MPIN, sign out, and sign in with the passkey.
+- Production is Vercel project `opus-whatsapp` (opus-whatsapp.vercel.app) on Supabase project `pylylytdfhmtxglaloli` (the ref comes from the live bundle). The Supabase connector in Claude Code is signed in to a different account and gets "no permission" on that project, so the migration has to go in through that project's SQL editor (or a connector signed in to its owner).
 - `npm run dev` with real Supabase variables still can't sign in with an MPIN: the dev `/api/account` middleware returns fake tokens. Test passkeys on a Vercel deployment, or make that middleware call `api/account.js`.
 - Alternative: `@supabase/supabase-js` 2.119 ships native passkeys (`auth.registerPasskey()`, `auth.signInWithPasskey()`). If the project's Supabase Auth has them enabled, they could replace this server, the secret key and the magic-link step.
