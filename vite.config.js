@@ -1,6 +1,8 @@
 import { fileURLToPath, URL } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
+import { GET as whatsappWebhookGet, POST as whatsappWebhookPost } from './api/whatsapp.js';
+import { isLocalRequest } from './server/localRequest.js';
 import { handleWhatsAppInbound, getKapsoStatus, sendWhatsAppMessage } from './server/kapsoAgent.js';
 import {
   getRegistrationOptions,
@@ -150,8 +152,9 @@ function fulooziDevApi() {
           return;
         }
 
-        // 8. Kapso Direct WhatsApp Send Endpoint
+        // 8. Kapso Direct WhatsApp Send Endpoint (this computer only)
         if (req.url?.startsWith('/api/kapso/send') && req.method === 'POST') {
+          if (!isLocalRequest(req)) return refuseNonLocal(req, res);
           const buffers = [];
           for await (const chunk of req) buffers.push(chunk);
           let body = {};
@@ -162,8 +165,9 @@ function fulooziDevApi() {
           return;
         }
 
-        // 9. Kapso Agent Simulation Endpoint
+        // 9. Kapso Agent Simulation Endpoint (this computer only; it replies over WhatsApp)
         if (req.url?.startsWith('/api/kapso/simulate') && req.method === 'POST') {
+          if (!isLocalRequest(req)) return refuseNonLocal(req, res);
           const buffers = [];
           for await (const chunk of req) buffers.push(chunk);
           let body = {};
@@ -178,67 +182,49 @@ function fulooziDevApi() {
           return;
         }
 
-        // 10. WhatsApp Webhook Inbound Handler (/api/whatsapp)
-        if (req.url?.startsWith('/api/whatsapp')) {
-          if (req.method === 'GET') {
-            const urlObj = new URL(req.url, 'http://localhost');
-            const mode = urlObj.searchParams.get('hub.mode');
-            const challenge = urlObj.searchParams.get('hub.challenge');
-            if (mode === 'subscribe' && challenge) {
-              res.setHeader('Content-Type', 'text/plain');
-              res.end(challenge);
-              return;
-            }
-            const status = await getKapsoStatus();
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify(status));
-            return;
-          }
-
-          if (req.method === 'POST') {
-            const buffers = [];
-            for await (const chunk of req) buffers.push(chunk);
-            let event = {};
-            try {
-              event = JSON.parse(Buffer.concat(buffers).toString('utf-8') || '{}');
-            } catch {}
-
-            let sender = null;
-            let text = '';
-            let contactName = '';
-
-            if (event.message && event.conversation) {
-              sender = event.conversation.phone_number?.replace(/^\+/, '');
-              contactName = event.conversation.contact_name || '';
-              text = event.message.text?.body || event.message.kapso?.content || '';
-            } else if (Array.isArray(event.entry)) {
-              const val = event.entry[0]?.changes?.[0]?.value;
-              const msg = val?.messages?.[0];
-              sender = msg?.from;
-              text = msg?.text?.body || '';
-              contactName = val?.contacts?.[0]?.profile?.name || '';
-            } else if (event.text || event.prompt) {
-              sender = event.sender || event.to || '15557969980';
-              text = event.text || event.prompt || '';
-              contactName = event.contactName || '';
-            }
-
-            const result = await handleWhatsAppInbound({
-              sender: sender || '15557969980',
-              text: text || '',
-              contactName,
-            });
-
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify(result));
-            return;
-          }
+        // 10. WhatsApp webhook (/api/whatsapp): the production handler itself, so
+        //     dev enforces the same Kapso signature check. Unsigned events are
+        //     refused; use /api/kapso/simulate for local testing.
+        if (req.url?.startsWith('/api/whatsapp') && (req.method === 'GET' || req.method === 'POST')) {
+          await runWebHandler(req.method === 'GET' ? whatsappWebhookGet : whatsappWebhookPost, req, res);
+          return;
         }
 
         next();
       });
     },
   };
+}
+
+// Endpoints that send as the business WhatsApp number answer only requests
+// made on this computer (see server/localRequest.js).
+function refuseNonLocal(req, res) {
+  res.statusCode = 403;
+  res.setHeader('Content-Type', 'application/json');
+  res.end(JSON.stringify({
+    ok: false,
+    error: `This tester only works on the computer running the dev server. Open http://localhost:${req.socket.localPort} there.`,
+  }));
+}
+
+// Runs a Web-standard handler from api/ against a Node request, so the dev
+// server and the Vercel deployment share one implementation.
+async function runWebHandler(handler, req, res) {
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  const headers = new Headers();
+  for (const [name, value] of Object.entries(req.headers)) {
+    for (const item of [].concat(value ?? [])) headers.append(name, item);
+  }
+  const hasBody = req.method !== 'GET' && req.method !== 'HEAD';
+  const response = await handler(new Request(new URL(req.url, 'http://localhost'), {
+    method: req.method,
+    headers,
+    body: hasBody ? Buffer.concat(chunks) : undefined,
+  }));
+  res.statusCode = response.status;
+  response.headers.forEach((value, name) => res.setHeader(name, value));
+  res.end(Buffer.from(await response.arrayBuffer()));
 }
 
 export default defineConfig(({ mode }) => {

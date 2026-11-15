@@ -90,7 +90,11 @@ export default function WhatsAppConnection({ whatsappURL }) {
           text: textToRun,
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error || 'Simulation failed');
+        return;
+      }
       setBotReply(data.reply || 'No reply received');
       toast.success('Bot processed response');
     } catch {
