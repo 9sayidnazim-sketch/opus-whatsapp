@@ -282,10 +282,18 @@ export async function askAssistant(messages) {
   return (await response.json()).reply;
 }
 
+// This user's WhatsApp link with "Hi Octapus <chat code>" pre-filled. Each call
+// reopens the 10-minute pairing window while no phone is linked, so fetch it
+// only when the user asks for it, and never hand it to a third party.
+export async function getWhatsAppChatLink() {
+  const chatId = String(unwrap(await supabase.rpc('opus_open_whatsapp')));
+  if (!/^\d{10}$/.test(chatId)) throw new Error('Unexpected WhatsApp chat code');
+  return { chatId, url: `${whatsappURL}?text=${encodeURIComponent(`Hi Octapus ${chatId}`)}` };
+}
+
 export async function openWhatsAppChat(windowHandle) {
   try {
-    const chatId = unwrap(await supabase.rpc('opus_open_whatsapp'));
-    const url = `${whatsappURL}?text=${encodeURIComponent(`Hi Octapus ${chatId}`)}`;
+    const { url } = await getWhatsAppChatLink();
     if (windowHandle) {
       windowHandle.opener = null;
       windowHandle.location.replace(url);

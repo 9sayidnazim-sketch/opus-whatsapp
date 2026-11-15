@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import {
   MessageSquare,
   ExternalLink,
@@ -17,13 +18,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import toast from 'react-hot-toast';
-import { supabase, openWhatsAppChat } from '@/api/client';
+import { getWhatsAppChatLink, openWhatsAppChat } from '@/api/client';
 
 export default function WhatsAppConnection({ whatsappURL }) {
   // Start unknown, not "connected": the badge must reflect the real status check.
   const [kapsoInfo, setKapsoInfo] = useState({ connected: false, loading: true });
 
   const [showQr, setShowQr] = useState(false);
+  // This user's pairing link, loaded when the QR panel opens: { status, chatId, url }
+  const [qr, setQr] = useState({ status: 'idle' });
+  const qrRequest = useRef(0);
   const [showTester, setShowTester] = useState(false);
   const [testText, setTestText] = useState('expense 45 lunch at Arabian Tea House');
   const [simulating, setSimulating] = useState(false);
@@ -36,11 +40,6 @@ export default function WhatsAppConnection({ whatsappURL }) {
   const [outboundResult, setOutboundResult] = useState(null);
 
   const botNumber = (whatsappURL || '').replace(/^https:\/\/wa\.me\//, '');
-  // The QR is drawn by a third-party service, so it must not carry this user's
-  // pairing code (any holder can link a phone during the 10-minute window).
-  // It keeps the shared dev placeholder until QR codes are rendered locally.
-  const qrConnectUrl = `${whatsappURL}?text=${encodeURIComponent('Hi Octapus 7829104921')}`;
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=10&data=${encodeURIComponent(qrConnectUrl)}`;
 
   useEffect(() => {
     fetch('/api/kapso/status')
@@ -65,11 +64,34 @@ export default function WhatsAppConnection({ whatsappURL }) {
       .catch(() => toast.error('Could not open WhatsApp. Try again.'));
   }
 
+  // The QR encodes this user's pairing code, so it is drawn here in the browser;
+  // the link never goes to a QR service.
+  async function loadQr() {
+    const request = ++qrRequest.current;
+    setQr({ status: 'loading' });
+    try {
+      const link = await getWhatsAppChatLink();
+      if (request === qrRequest.current) setQr({ status: 'ready', ...link });
+    } catch {
+      if (request === qrRequest.current) setQr({ status: 'error' });
+    }
+  }
+
+  function toggleQr() {
+    if (showQr) {
+      qrRequest.current += 1; // drop a load that is still in flight
+      setShowQr(false);
+      setQr({ status: 'idle' });
+    } else {
+      setShowQr(true);
+      loadQr();
+    }
+  }
+
   async function handleCopy() {
     try {
-      const { data: chatId, error } = await supabase.rpc('opus_open_whatsapp');
-      if (error) throw error;
-      await navigator.clipboard.writeText(`${whatsappURL}?text=${encodeURIComponent(`Hi Octapus ${chatId}`)}`);
+      const { url } = await getWhatsAppChatLink();
+      await navigator.clipboard.writeText(url);
       toast.success('WhatsApp connection link copied');
     } catch {
       toast.error('Could not copy your WhatsApp link. Use Open in WhatsApp instead.');
@@ -188,7 +210,8 @@ export default function WhatsAppConnection({ whatsappURL }) {
 
           <button
             type="button"
-            onClick={() => setShowQr(!showQr)}
+            onClick={toggleQr}
+            aria-expanded={showQr}
             className="p-2.5 rounded-xl border border-border bg-secondary hover:bg-secondary/80 text-foreground transition-colors"
             title="Show QR Code"
           >
@@ -210,12 +233,37 @@ export default function WhatsAppConnection({ whatsappURL }) {
       {showQr && (
         <div className="p-5 rounded-xl border border-border/70 bg-secondary/30 flex flex-col sm:flex-row items-center gap-6 animate-in fade-in duration-200">
           <div className="p-3 bg-white rounded-xl shadow-md border border-border">
-            <img
-              src={qrCodeUrl}
-              alt="Scan to Connect WhatsApp"
-              className="w-48 h-48 rounded-lg"
-              loading="lazy"
-            />
+            {qr.status === 'ready' ? (
+              <QRCodeSVG
+                value={qr.url}
+                size={192}
+                level="M"
+                marginSize={2}
+                role="img"
+                title="QR code that opens your Fuloozi chat in WhatsApp"
+                className="rounded-lg"
+              />
+            ) : (
+              <div
+                role={qr.status === 'error' ? 'alert' : 'status'}
+                className="w-48 h-48 flex flex-col items-center justify-center gap-2 text-center text-xs text-neutral-600"
+              >
+                {qr.status === 'error' ? (
+                  <>
+                    <AlertCircle className="w-5 h-5 text-rose-500" aria-hidden="true" />
+                    <span>Could not load your code.</span>
+                    <button type="button" onClick={loadQr} className="font-semibold text-neutral-900 underline underline-offset-2">
+                      Try again
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-5 h-5 animate-spin" aria-hidden="true" />
+                    <span>Loading your code...</span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
           <div className="space-y-3 text-center sm:text-left">
             <div>
@@ -224,12 +272,20 @@ export default function WhatsAppConnection({ whatsappURL }) {
                 Open your smartphone camera or WhatsApp scanner to immediately start chatting with the Fuloozi ledger bot.
               </p>
             </div>
-            <div className="p-3 rounded-lg bg-card border border-border/80 text-xs text-muted-foreground font-mono select-all break-all">
-              {qrConnectUrl}
-            </div>
-            <p className="text-[11px] text-[#B5F13E]">
-              ✓ Pre-filled greeting: "Hi Octapus 7829104921"
-            </p>
+            {qr.status === 'ready' && (
+              <>
+                <div className="p-3 rounded-lg bg-card border border-border/80 text-xs text-muted-foreground font-mono select-all break-all">
+                  {qr.url}
+                </div>
+                <p className="flex items-center justify-center gap-1.5 text-[11px] text-[#B5F13E] sm:justify-start">
+                  <CheckCircle className="w-3 h-3 shrink-0" aria-hidden="true" />
+                  Pre-filled greeting: "Hi Octapus {qr.chatId}"
+                </p>
+                <p className="text-[11px] text-muted-foreground">
+                  Send it within 10 minutes to link a new phone.
+                </p>
+              </>
+            )}
           </div>
         </div>
       )}
