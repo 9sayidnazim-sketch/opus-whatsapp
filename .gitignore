@@ -33,6 +33,7 @@ base44/.app.jsonc
 !.env.example
 .vercel/
 .vercel
+.webauthn_store.json
 .env*
 
 !.env.example

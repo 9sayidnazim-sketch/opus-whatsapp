@@ -1,14 +1,20 @@
 import FulooziBrand from "@/components/FulooziBrand";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Route, Routes, Link, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { supabase } from '@/api/client';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { pagesConfig } from './pages.config';
-import { Sparkles, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Sparkles, ArrowRight, ShieldCheck, Fingerprint, ScanFace } from 'lucide-react';
+import {
+  checkBiometricsSupport,
+  authenticateWithBiometrics,
+  registerBiometrics,
+  getRegisteredCredentials,
+} from '@/utils/webauthn';
 
 const { Pages, Layout } = pagesConfig;
 const Dashboard = Pages.Dashboard;
@@ -20,6 +26,19 @@ function SignIn() {
   const [created, setCreated] = useState(null);
   const [status, setStatus] = useState('');
   const [pending, setPending] = useState(false);
+  const [biometricsAvailable, setBiometricsAvailable] = useState(false);
+  const [registeredCreds, setRegisteredCreds] = useState([]);
+  const [biometricPending, setBiometricPending] = useState(false);
+
+  useEffect(() => {
+    checkBiometricsSupport().then(({ supported }) => {
+      setBiometricsAvailable(supported);
+      if (supported) {
+        const creds = getRegisteredCredentials();
+        setRegisteredCreds(creds);
+      }
+    });
+  }, []);
 
   async function startSession(account) {
     const { error } = await supabase.auth.setSession({
@@ -28,6 +47,40 @@ function SignIn() {
       username: account.username,
     });
     if (error) throw error;
+  }
+
+  async function handleBiometricSignIn() {
+    setPending(true);
+    setStatus('');
+    try {
+      const res = await authenticateWithBiometrics();
+      if (res.success && res.account) {
+        toast.success('Biometric authentication verified');
+        await startSession(res.account);
+      }
+    } catch (err) {
+      if (!err.message?.includes('cancelled')) {
+        setStatus(err.message || 'Biometric authentication failed. Please enter your MPIN.');
+      }
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function handleRegisterBiometricsOnCreate() {
+    if (!created) return;
+    setBiometricPending(true);
+    try {
+      await registerBiometrics({
+        username: created.username,
+        displayName: name || created.username,
+      });
+      toast.success('Touch ID / Face ID registered for this device!');
+      await startSession(created);
+    } catch (err) {
+      setStatus(err.message || 'Could not register biometrics');
+      setBiometricPending(false);
+    }
   }
 
   async function handleDemoLogin() {
@@ -142,6 +195,19 @@ function SignIn() {
               <p className="text-xs text-muted-foreground">Your Household Handle</p>
               <p className="mt-1 text-xl font-bold text-[#B5F13E] font-heading">@{created.username}</p>
             </div>
+
+            {biometricsAvailable && (
+              <button
+                type="button"
+                onClick={handleRegisterBiometricsOnCreate}
+                disabled={biometricPending || pending}
+                className="w-full h-11 rounded-xl bg-secondary hover:bg-secondary/80 border border-[#B5F13E]/40 text-foreground flex items-center justify-center gap-2 text-xs font-semibold transition-all hover:border-[#B5F13E]"
+              >
+                <Fingerprint className="w-4 h-4 text-[#B5F13E]" />
+                {biometricPending ? 'Enrolling Touch ID / Face ID...' : 'Enable Face ID / Touch ID on This Device'}
+              </button>
+            )}
+
             <button
               className="fuloozi-btn-primary w-full h-11 text-sm font-semibold shadow-lime"
               disabled={pending}
@@ -160,6 +226,25 @@ function SignIn() {
           </div>
         ) : (
           <>
+            {biometricsAvailable && (step === 'name' || step === 'login') && (
+              <div className="space-y-3 pb-1">
+                <button
+                  type="button"
+                  onClick={handleBiometricSignIn}
+                  disabled={pending}
+                  className="w-full h-12 rounded-xl bg-secondary/80 hover:bg-secondary border border-[#B5F13E]/30 hover:border-[#B5F13E] text-foreground flex items-center justify-center gap-2.5 font-semibold text-sm transition-all group shadow-sm disabled:opacity-50"
+                >
+                  <Fingerprint className="w-5 h-5 text-[#B5F13E] group-hover:scale-110 transition-transform" />
+                  <span>Sign in with Face ID / Touch ID</span>
+                </button>
+                <div className="flex items-center gap-3 text-[11px] text-muted-foreground justify-center uppercase tracking-wider">
+                  <span className="h-px bg-border/80 flex-1" />
+                  <span>or enter MPIN</span>
+                  <span className="h-px bg-border/80 flex-1" />
+                </div>
+              </div>
+            )}
+
             <form key={step} className="space-y-4" onSubmit={submit}>
               {(step === 'name' || step === 'login') && (
                 <div className="space-y-1.5">

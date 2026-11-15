@@ -57,11 +57,41 @@ All user journeys have been fully verified and polished:
 
 ---
 
-## 4. Verification Checklist (`octapus-master`)
+## 4. SimpleWebAuthn Biometrics Architecture
+Engineered per the user request using `@simplewebauthn/browser` and `@simplewebauthn/server`:
+- **Hardware Integration:**
+  - Automatic detection of biometric support via `checkBiometricsSupport()` (`browserSupportsWebAuthn` and `platformAuthenticatorIsAvailable`).
+  - Native hardware enclave integration for Face ID, Touch ID, Windows Hello, and Android Biometrics.
+- **Registration Flow:**
+  - `POST /api/webauthn/registration-options`: Generates challenge, RP details (`Fuloozi Household Ledger`), and cryptographic public key parameters via `@simplewebauthn/server`.
+  - Client prompts native Touch ID / Face ID sheet via `startRegistration({ optionsJSON })`.
+  - `POST /api/webauthn/verify-registration`: Validates attestation response and stores credential ID, public key, counter, and friendly device name.
+- **Authentication Flow:**
+  - One-tap "Sign in with Face ID / Touch ID" on the Sign In screen.
+  - Native biometric prompt signs the server challenge.
+  - On verification, creates authenticated session and opens ledger instantly without typing.
+  - Seamless fallback to 4-digit MPIN always available.
+- **Settings Management:**
+  - Device Passkeys card in Settings with enrollment status, hardware badges, and credential deletion.
+
+---
+
+## 5. Kapso WhatsApp Cloud Agent Integration
+- **Agent Backend (`server/kapsoAgent.js`):**
+  - Connects to Kapso WhatsApp Meta proxy (`https://api.kapso.ai/meta/whatsapp/v24.0/${phone_number_id}/messages`).
+  - Validated with active verified number `+1 555-796-9980` (`Mr.Octapus`).
+  - Processes financial actions: logs expenses (`expense 45 lunch`), income (`income 2000 consulting`), and responds with formatted ledger summaries.
+  - Handles inbound webhooks at `/api/whatsapp` with challenge verification and signature checking.
+
+---
+
+## 6. Verification Checklist (`octapus-master`)
 - [x] **Completeness:** Every page (`/`, `/transactions`, `/bills`, `/budgets`, `/goals`, `/family`, `/assistant`, `/settings`, `/admin`) renders without error.
+- [x] **Biometrics:** SimpleWebAuthn Face ID / Touch ID sign-in and device registration fully functional with MPIN fallback.
+- [x] **Kapso WhatsApp:** Webhook and outbound messaging connected to Kapso Meta API.
 - [x] **Connected:** All cards and tables display real data from the mock provider or Supabase.
 - [x] **Configurable:** Currency, budget thresholds, bill alert lead times, and payment wall are editable in Settings.
-- [x] **Admin Dispatch:** Dedicated `/admin` route allows sending customized push notifications (with type, audience, live preview, quick templates, and history log) directly to household members.
+- [x] **Admin Dispatch:** Dedicated `/admin` route allows sending customized push notifications directly to household members.
 - [x] **Professional Look:** 0 raw IDs or technical stack traces on screen; 4/8px spacing; 44px+ touch targets; high contrast dark mode.
-- [x] **Build:** `npm run build` compiles with 0 errors in ~2.0 seconds.
+- [x] **Build:** `npm run build` compiles with 0 errors.
 - [x] **Dev Server:** Running live on `http://localhost:5173/`.
