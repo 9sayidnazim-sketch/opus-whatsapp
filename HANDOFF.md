@@ -123,7 +123,7 @@ Starting point: commit `4eda6cb`. The dev server started cleanly and every page 
 **Pending (needs a decision or more work)**
 - **Before any `git push`:** the Kapso key is still in the history of unpushed commit `b8745ae`. Rotate it in Kapso, or rewrite the unpushed commits, before pushing to the public repo.
 - **Production passkey sign-in:** it returns placeholder tokens rather than real Supabase sessions; registration is unauthenticated; credentials live in a JSON file that won't persist on Vercel.
-- **WhatsApp QR code:** still encodes the shared placeholder code, because it is drawn by `api.qrserver.com` and a real pairing code must not go to a third party. The user approved `qrcode.react`, but the install was blocked again in the hardening session (section 8).
+- **WhatsApp QR code:** done in section 8.
 - **Webhook signatures (`api/whatsapp.js`):** done in section 8.
 - **Dev API exposure:** done in section 8.
 - **Emoji** in notification titles, WhatsApp replies, avatars and role labels conflicts with the no-emoji preference.
@@ -133,7 +133,7 @@ Starting point: commit `4eda6cb`. The dev server started cleanly and every page 
 
 ---
 
-## 8. WhatsApp webhook and dev API hardening (2026-11-15, Claude Code)
+## 8. WhatsApp webhook, dev API and QR hardening (2026-11-15, Claude Code)
 Branch `claude/agitated-jennings-bac7e5` (worktree `.claude/worktrees/agitated-jennings-bac7e5`), on top of main `aaa3e26`. Not merged yet.
 
 **Done**
@@ -142,18 +142,29 @@ Branch `claude/agitated-jennings-bac7e5` (worktree `.claude/worktrees/agitated-j
 3. **Dev endpoints that send WhatsApp messages stay on this computer** (`server/localRequest.js`, `vite.config.js`, commit `ba22a82`). `/api/kapso/send` and `/api/kapso/simulate` now need all of: a loopback peer, a loopback Host, no proxy or tunnel headers, and a same-origin Origin when one is sent. Anything else gets 403. This also blocks other sites open in the browser and DNS rebinding, which mattered because plugin middleware runs before Vite's own CORS and host checks.
 4. **The dev `/api/whatsapp` route runs the production handler.** Before, it processed unsigned events and replied to whatever `sender` they named. Now it checks signatures like production. `.env.local` has no `KAPSO_WEBHOOK_SECRET` today, so it answers 503; use `/api/kapso/simulate` for local testing.
 5. The Settings simulator shows the refusal message instead of a success toast.
+6. **The QR code is drawn locally with the user's own code** (`WhatsAppConnection.jsx`, `src/api/client.js`, commit `31aa91f`). The user approved `qrcode.react` 4.2.0 (ISC, no dependencies) and installed it. The code comes from `opus_open_whatsapp()` only when the QR panel opens, because each call reopens the 10-minute pairing window. Closing the panel discards it. There are loading and error states, and the error state has a retry. A single helper, `getWhatsAppChatLink()`, now builds the link for Open in WhatsApp, Copy and the QR, and it rejects anything but a 10-digit code. `api.qrserver.com` is no longer used anywhere.
 
 **Verified**
 - `npm test`: 19 node:test cases with `fetch` stubbed. Signed events pass. Unsigned, wrong-secret, tampered, re-serialised and malformed signatures fail. With no secret, POSTs get 503. The challenge comes back as inert text.
 - The old handler, called the way Vercel calls it (body already parsed), accepted unsigned and forged events and sent replies.
 - Worktree dev server on port 5199, with the Kapso credentials blanked so nothing could reach WhatsApp. From this computer, send and simulate went through. Via the LAN IP, a foreign Host, a cross-site Origin or `X-Forwarded-For`, they got 403. The dev webhook rejected unsigned and forged events with 401 and accepted a signed one with 200.
 - In the in-app browser, the Settings simulator works at `localhost:5199`. Opened via `192.168.0.157:5199`, it shows the refusal.
+- QR checks in the in-app browser, with the RPC replaced at runtime so it returned a code different from the old placeholder:
+  - Opening Settings made no RPC call; opening the QR made exactly one.
+  - The browser's own `BarcodeDetector` decoded the drawn QR as `https://wa.me/15557969980?text=Hi%20Octapus%205550001234`, matching the RPC's code.
+  - Copy and Open in WhatsApp produced the same link.
+  - When the RPC failed, the panel showed "Could not load your code" with a working "Try again".
+  - The page made no QR or third-party request; the only off-origin requests were the Google Fonts it already loads.
+  - At 375 px the panel stacks into a column; at 1024 px it is a row. Neither width scrolls sideways, and the console shows no app errors.
 - `npm run lint`: 0 problems. `vite build`: passes.
-- Not verified: a real Vercel deployment or a real Kapso delivery. Vercel's `opus-whatsapp` project has `KAPSO_WEBHOOK_SECRET` for Production only (variable names checked, values not read), so Preview deployments now answer webhooks with 503.
+- Not verified: a real Vercel deployment, a real Kapso delivery, and the QR against live Supabase (this worktree runs the dev mock, whose RPC returns `7829104921`). Vercel's `opus-whatsapp` project has `KAPSO_WEBHOOK_SECRET` for Production only (variable names checked, values not read), so Preview deployments now answer webhooks with 503.
 
 **Pending**
-- **Local QR code.** The user approved `qrcode.react` 4.2.0, but this session's permission check blocked `npm install` as well. Once it is installed, render the QR locally from `opus_open_whatsapp()`, fetched when the QR is opened.
 - **The webhook lost its real behaviour in `b8745ae`.** Commit `0e46f8d` linked accounts and wrote the ledger through Supabase (`opus_account_chat`, `opus_whatsapp_event`, a phone-number allow-list and a 64 KB cap). `b8745ae` replaced that with mock replies from `server/kapsoAgent.js`. The README still describes the Supabase flow.
-- **Merging.** With the passkeys branch (`claude/great-almeida-1509b6`), only `package.json` conflicts, because both branches add `"test"`. Keep `node --test server/*.test.js`, which runs both branches' tests. The emoji branch (`claude/recursing-khayyam-baee8d`) merges cleanly. All three branches append a section 8 here: keep all three and renumber.
+- **`npm audit`** reports 7 issues, all from before this work: `jspdf` (critical), `dompurify` via jspdf, `zod`, `react-router`, and `quill`/`react-quill`.
+- **Merging (checked with `git merge-tree`).**
+  - Passkeys branch (`claude/great-almeida-1509b6`): `package.json` conflicts because both branches add `"test"`. Keep `node --test server/*.test.js`, which runs both branches' tests.
+  - Emoji branch (`claude/recursing-khayyam-baee8d`): only the QR greeting block in `WhatsAppConnection.jsx` conflicts. Take this branch's side, which already uses their `CheckCircle` icon.
+  - All three branches append a section 8 here: keep all three and renumber.
 
-**Next action:** install `qrcode.react` and finish the local QR code. Then check main again (the Antigravity agent commits there) and merge this branch.
+**Next action:** check main again (the Antigravity agent commits there), then merge this branch. After that, try the QR once against live Supabase.
