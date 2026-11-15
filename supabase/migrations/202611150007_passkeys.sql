@@ -3,7 +3,7 @@
 -- users can list and revoke their own passkeys; nobody else can read them.
 
 create table public.opus_passkeys (
-  id text primary key check (id ~ '^[A-Za-z0-9_-]{16,1366}$'),  -- base64url credential ID
+  id text primary key check (id ~ '^[A-Za-z0-9_-]+$' and char_length(id) between 16 and 1366),  -- base64url credential ID
   owner_id uuid not null references auth.users(id) on delete cascade,
   public_key text not null,                                     -- base64 COSE public key
   counter bigint not null default 0 check (counter >= 0),
@@ -40,3 +40,6 @@ create index opus_passkey_challenges_expiry on public.opus_passkey_challenges(ex
 alter table public.opus_passkey_challenges enable row level security;
 revoke all on public.opus_passkey_challenges from anon, authenticated;
 grant all on public.opus_passkey_challenges to service_role;
+
+-- Make the new tables visible to the Data API straight away.
+notify pgrst, 'reload schema';

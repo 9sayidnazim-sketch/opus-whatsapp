@@ -4,7 +4,7 @@
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { generateKeyPairSync, createHash, sign, randomBytes, randomUUID } from 'node:crypto';
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { isoCBOR, isoBase64URL } from '@simplewebauthn/server/helpers';
@@ -348,6 +348,15 @@ test('a deployment missing the secret key fails closed instead of using the dev 
 test('unknown actions and methods are rejected', async () => {
   assert.equal((await call('delete-everything')).status, 404);
   assert.equal((await call('__proto__')).status, 404);
+});
+
+test('migration regexes stay within Postgres limits (bounds up to 255)', () => {
+  const sql = readFileSync(new URL('../supabase/migrations/202611150007_passkeys.sql', import.meta.url), 'utf8');
+  for (const [, pattern] of sql.matchAll(/~\s*'([^']*)'/g)) {
+    for (const [, min, max] of pattern.matchAll(/\{(\d+)(?:,(\d*))?\}/g)) {
+      assert.ok(Number(min) <= 255 && (!max || Number(max) <= 255), `Postgres rejects the bound in ${pattern}`);
+    }
+  }
 });
 
 /* ---------- Dev mock ---------- */
