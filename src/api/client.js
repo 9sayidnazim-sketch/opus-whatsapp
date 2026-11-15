@@ -77,6 +77,8 @@ function getInitialData(kind) {
       ];
     case 'Conversation':
       return [];
+    case 'AdminNotification':
+      return [];
     default:
       return [];
   }
@@ -258,7 +260,7 @@ export const db = {
     logout: () => supabase.auth.signOut(),
   },
   entities: Object.fromEntries(
-    ['Transaction', 'Budget', 'Goal', 'FamilyMember', 'NotificationSettings', 'Conversation'].map(name => [
+    ['Transaction', 'Budget', 'Goal', 'FamilyMember', 'NotificationSettings', 'Conversation', 'AdminNotification'].map(name => [
       name,
       isSupabaseConfigured ? liveEntity(name) : localEntity(name),
     ])

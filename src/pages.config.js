@@ -6,6 +6,7 @@ import Goals from './pages/Goals';
 import Settings from './pages/Settings';
 import Bills from './pages/Bills';
 import Family from './pages/Family';
+import Admin from './pages/Admin';
 import __Layout from './Layout.jsx';
 
 export const PAGES = {
@@ -17,6 +18,7 @@ export const PAGES = {
     "Settings": Settings,
     "Bills": Bills,
     "Family": Family,
+    "Admin": Admin,
 }
 
 export const pagesConfig = {

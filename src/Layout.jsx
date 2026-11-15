@@ -15,6 +15,7 @@ import {
   LogOut,
   ArrowLeftRight,
   Bell,
+  ShieldCheck,
 } from "lucide-react";
 import { getNotificationPermission } from "@/utils/notifications";
 
@@ -41,6 +42,7 @@ const navigationItems = [
   { title: "Family", url: createPageUrl("Family"), icon: Users },
   { title: "Assistant", url: createPageUrl("Assistant"), icon: Sparkles, badge: "AI" },
   { title: "Settings", url: createPageUrl("Settings"), icon: Settings },
+  { title: "Admin", url: createPageUrl("Admin"), icon: ShieldCheck, badge: "Admin" },
 ];
 
 export default function Layout({ children, currentPageName }) {
