@@ -68,6 +68,13 @@ export function evolutionConfig() {
     process.env.EVOLUTION_WEBHOOK_SECRET ||
     '';
 
+  const whatsappNumber =
+    fileEnv.VITE_WHATSAPP_NUMBER ||
+    fileEnv.WHATSAPP_NUMBER ||
+    process.env.VITE_WHATSAPP_NUMBER ||
+    process.env.WHATSAPP_NUMBER ||
+    '';
+
   const configured = Boolean(apiUrl);
 
   return {
@@ -76,6 +83,7 @@ export function evolutionConfig() {
     instanceName,
     instanceId,
     webhookSecret,
+    whatsappNumber,
     configured,
   };
 }
@@ -83,7 +91,7 @@ export function evolutionConfig() {
 /**
  * Update configuration dynamically and persist to .env.local
  */
-export function updateEvolutionConfig({ apiUrl, apiKey, instanceName, webhookSecret }) {
+export function updateEvolutionConfig({ apiUrl, apiKey, instanceName, webhookSecret, whatsappNumber }) {
   if (apiUrl) process.env.EVOLUTION_API_URL = apiUrl.replace(/\/+$/, '');
   if (apiKey !== undefined) process.env.EVOLUTION_API_KEY = apiKey;
   if (instanceName) {
@@ -91,6 +99,10 @@ export function updateEvolutionConfig({ apiUrl, apiKey, instanceName, webhookSec
     process.env.EVOLUTION_INSTANCE_ID = instanceName;
   }
   if (webhookSecret !== undefined) process.env.EVOLUTION_WEBHOOK_SECRET = webhookSecret;
+  if (whatsappNumber !== undefined) {
+    const cleanNum = String(whatsappNumber).replace(/\D/g, '');
+    process.env.VITE_WHATSAPP_NUMBER = cleanNum;
+  }
 
   try {
     const envPath = path.resolve(process.cwd(), '.env.local');
@@ -99,10 +111,11 @@ export function updateEvolutionConfig({ apiUrl, apiKey, instanceName, webhookSec
       content = fs.readFileSync(envPath, 'utf8');
     }
     const vars = {
-      EVOLUTION_API_URL: process.env.EVOLUTION_API_URL || 'http://localhost:8080',
+      EVOLUTION_API_URL: process.env.EVOLUTION_API_URL || 'http://localhost:8088',
       EVOLUTION_API_KEY: process.env.EVOLUTION_API_KEY || '',
       EVOLUTION_INSTANCE_NAME: process.env.EVOLUTION_INSTANCE_NAME || 'fuloozi',
       EVOLUTION_WEBHOOK_SECRET: process.env.EVOLUTION_WEBHOOK_SECRET || '',
+      VITE_WHATSAPP_NUMBER: process.env.VITE_WHATSAPP_NUMBER || '',
     };
     for (const [key, val] of Object.entries(vars)) {
       const regex = new RegExp(`^${key}=.*$`, 'm');
@@ -170,10 +183,21 @@ export async function getEvolutionStatus() {
             const current = Array.isArray(list) ? list.find((i) => i.name === instanceName) : null;
             if (current?.ownerJid) {
               phoneNumber = current.ownerJid.replace(/@.*$/, '');
+            } else if (current?.number) {
+              phoneNumber = String(current.number).replace(/\D/g, '');
+            }
+
+            if (phoneNumber) {
+              const cur = readEnvLocal();
+              if (!cur.VITE_WHATSAPP_NUMBER || cur.VITE_WHATSAPP_NUMBER !== phoneNumber) {
+                updateEvolutionConfig({ whatsappNumber: phoneNumber });
+              }
             }
           }
         } catch {}
       }
+
+      const activeNum = phoneNumber || (evolutionConfig().whatsappNumber) || '';
 
       return {
         connected: isConnected,
@@ -183,7 +207,7 @@ export async function getEvolutionStatus() {
         apiUrl,
         apiKeySet: Boolean(apiKey),
         verified_name: 'Evolution WhatsApp API',
-        display_phone_number: phoneNumber,
+        display_phone_number: activeNum,
         data,
       };
     } else if (res.status === 401 || res.status === 403) {

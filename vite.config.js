@@ -215,6 +215,7 @@ function fulooziDevApi() {
               instanceName: cfg.instanceName,
               instanceId: cfg.instanceId,
               webhookSecret: cfg.webhookSecret,
+              whatsappNumber: cfg.whatsappNumber || '',
             }));
             return;
           }
@@ -228,6 +229,7 @@ function fulooziDevApi() {
               apiUrl: body.apiUrl,
               instanceName: body.instanceName,
               webhookSecret: body.webhookSecret,
+              whatsappNumber: body.whatsappNumber,
             };
             if (body.apiKey !== undefined && body.apiKey !== '••••••••') {
               newConfig.apiKey = body.apiKey;

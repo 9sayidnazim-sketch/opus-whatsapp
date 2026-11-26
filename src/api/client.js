@@ -289,19 +289,25 @@ export async function getWhatsAppStatus() {
 
 export async function openWhatsAppChat() {
   const status = await getWhatsAppStatus();
-  const phone = status.display_phone_number || status.phone;
+  let phone = status.display_phone_number || status.phone;
+  if (!phone) {
+    try {
+      const cfgRes = await fetch('/api/evolution/config');
+      if (cfgRes.ok) {
+        const cfg = await cfgRes.json();
+        phone = cfg.whatsappNumber;
+      }
+    } catch {}
+  }
+  if (!phone) {
+    phone = import.meta.env.VITE_WHATSAPP_NUMBER;
+  }
   if (phone) {
-    const clean = phone.replace(/\D/g, '');
+    const clean = String(phone).replace(/\D/g, '');
     if (clean && clean !== '15557969980') {
       window.open(`https://wa.me/${clean}`, '_blank');
       return { ok: true, phone: clean };
     }
   }
-  const envNum = import.meta.env.VITE_WHATSAPP_NUMBER;
-  if (envNum && envNum !== '15557969980') {
-    const clean = envNum.replace(/\D/g, '');
-    window.open(`https://wa.me/${clean}`, '_blank');
-    return { ok: true, phone: clean };
-  }
-  throw new Error('Evolution WhatsApp instance is not linked yet. Open Settings to scan the QR code.');
+  throw new Error('WhatsApp phone number is not configured yet. Open Admin → WhatsApp Gateway to link or set your number.');
 }

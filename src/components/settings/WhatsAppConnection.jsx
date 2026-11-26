@@ -40,6 +40,7 @@ export default function WhatsAppConnection() {
     apiKey: '',
     apiKeySet: false,
     instanceName: 'fuloozi',
+    whatsappNumber: '',
   });
   const [showConfigEditor, setShowConfigEditor] = useState(true);
   const [showApiKey, setShowApiKey] = useState(false);
@@ -79,13 +80,14 @@ export default function WhatsAppConnection() {
       const res = await fetch('/api/evolution/status');
       const data = await res.json();
       const isConn = Boolean(data.connected);
+      const activePhone = data.display_phone_number || '';
       setStatus({
         connected: isConn,
         loading: false,
         state: data.state || (isConn ? 'open' : 'close'),
         instanceName: data.instanceName || config.instanceName || 'fuloozi',
         apiUrl: data.apiUrl || config.apiUrl || 'http://localhost:8088',
-        display_phone_number: data.display_phone_number || '',
+        display_phone_number: activePhone,
         error: data.error || null,
       });
 
@@ -94,8 +96,9 @@ export default function WhatsAppConnection() {
         setShowConfigEditor(false);
       }
 
-      if (isConn && data.display_phone_number && !sendPhone) {
-        setSendPhone(data.display_phone_number.replace(/\D/g, ''));
+      if (activePhone) {
+        if (!sendPhone) setSendPhone(activePhone.replace(/\D/g, ''));
+        setConfig((prev) => ({ ...prev, whatsappNumber: prev.whatsappNumber || activePhone.replace(/\D/g, '') }));
       }
       return isConn;
     } catch {
@@ -118,12 +121,14 @@ export default function WhatsAppConnection() {
       const res = await fetch('/api/evolution/config');
       const data = await res.json();
       if (data) {
-        setConfig({
+        setConfig((prev) => ({
+          ...prev,
           apiUrl: data.apiUrl || 'http://localhost:8088',
           apiKey: data.apiKey || '',
           apiKeySet: Boolean(data.apiKeySet),
           instanceName: data.instanceName || 'fuloozi',
-        });
+          whatsappNumber: data.whatsappNumber || prev.whatsappNumber || '',
+        }));
       }
     } catch {}
   };
@@ -446,6 +451,19 @@ export default function WhatsAppConnection() {
               Reconnect
             </button>
 
+            {(status.display_phone_number || config.whatsappNumber) && (
+              <a
+                href={`https://wa.me/${(status.display_phone_number || config.whatsappNumber).replace(/\D/g, '')}`}
+                target="_blank"
+                rel="noreferrer"
+                className="px-3 py-2 rounded-xl bg-[#25D366]/15 hover:bg-[#25D366]/25 text-[#25D366] border border-[#25D366]/30 text-xs font-semibold inline-flex items-center gap-1.5 transition-colors"
+                title="Open WhatsApp Chat in Web or App"
+              >
+                <MessageSquare className="w-3.5 h-3.5" />
+                <span>Open Chat</span>
+              </a>
+            )}
+
             {status.connected && (
               <button
                 type="button"
@@ -474,9 +492,18 @@ export default function WhatsAppConnection() {
           </div>
           <div>
             <span className="text-muted-foreground text-[11px] block">Linked Phone</span>
-            <strong className="text-[#B5F13E] font-mono text-sm">
-              {status.display_phone_number ? `+${status.display_phone_number.replace(/^\+/, '')}` : 'Not Linked Yet'}
-            </strong>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <strong className="text-[#B5F13E] font-mono text-sm">
+                {status.display_phone_number || config.whatsappNumber
+                  ? `+${(status.display_phone_number || config.whatsappNumber).replace(/^\+/, '')}`
+                  : 'Not Configured Yet'}
+              </strong>
+              {(status.display_phone_number || config.whatsappNumber) && (
+                <span className="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/20 text-emerald-400 font-semibold">
+                  Configured
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -573,7 +600,25 @@ export default function WhatsAppConnection() {
                     required
                   />
                   <p className="text-[10px] text-muted-foreground">
-                    Identifier for your WhatsApp session inside Evolution-Go.
+                    Identifier for your WhatsApp session inside Evolution API.
+                  </p>
+                </div>
+
+                {/* WhatsApp Phone Number */}
+                <div className="space-y-1.5 md:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-foreground">WhatsApp Bot Phone Number (with Country Code)</label>
+                    <span className="text-[11px] text-muted-foreground">e.g. 971509979359</span>
+                  </div>
+                  <input
+                    type="tel"
+                    value={config.whatsappNumber}
+                    onChange={(e) => setConfig({ ...config, whatsappNumber: e.target.value })}
+                    placeholder="e.g. 971509979359"
+                    className="w-full h-10 px-3 rounded-xl bg-secondary/30 border border-border text-foreground text-xs font-mono focus:outline-none focus:border-[#B5F13E]"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    The WhatsApp phone number that household members interact with. Auto-populated when linked.
                   </p>
                 </div>
               </div>
