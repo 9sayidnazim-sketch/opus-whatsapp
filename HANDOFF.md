@@ -252,3 +252,22 @@ Lint gap: `eslint.config.js` spreads the recommended configs and then replaces t
    - `GET /api/evolution/status` verified: `state: connecting`, latency: 4ms.
    - `GET /api/evolution/qr` verified: generates live WhatsApp QR barcode (`ok: true`, base64 length: 13,242 chars).
    - `npm run build` verified: zero errors. Dev server running on `http://localhost:5173/`.
+
+---
+
+## November 26 — WhatsApp Phone Number Auto-Configuration & Direct Chat Linking
+
+### Resolution of Unconfigured WhatsApp Number:
+1. **Auto-Detection from Active Session:**
+   - When the WhatsApp account is paired, Evolution API provides the account owner's phone JID (`971509979359@s.whatsapp.net`).
+   - Added logic in `getEvolutionStatus()` to automatically capture and write `VITE_WHATSAPP_NUMBER=971509979359` directly into `.env.local`.
+2. **Configurable Phone Number Setting:**
+   - Added a dedicated "WhatsApp Bot Phone Number" field inside [Admin → WhatsApp Gateway](http://localhost:5173/admin) (`src/components/settings/WhatsAppConnection.jsx`).
+   - Added dynamic persistence in `/api/evolution/config` (GET & POST) so users can view and edit the bot number at any time without restarting the server.
+3. **Seamless Direct Chat & Deep-Linking:**
+   - Added an "Open Chat" action button directly in the WhatsApp Gateway banner (`https://wa.me/971509979359`).
+   - Updated `openWhatsAppChat()` in `src/api/client.js` to look up the configured number dynamically from `/api/evolution/status` and `/api/evolution/config`.
+4. **Verified:**
+   - `.env.local` configured: `VITE_WHATSAPP_NUMBER=971509979359`.
+   - `GET /api/evolution/status` reports `connected: true, state: "open", display_phone_number: "971509979359"`.
+   - `npm run build` passed in 4.06s.
