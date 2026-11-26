@@ -11,8 +11,15 @@ import {
   RotateCcw,
   Sparkles,
   KeyRound,
-  ExternalLink,
   ShieldCheck,
+  Server,
+  Eye,
+  EyeOff,
+  Copy,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Zap,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -27,6 +34,21 @@ export default function WhatsAppConnection() {
     error: null,
   });
 
+  // Server & Instance Configuration State
+  const [config, setConfig] = useState({
+    apiUrl: 'http://localhost:8080',
+    apiKey: '',
+    apiKeySet: false,
+    instanceName: 'fuloozi',
+  });
+  const [showConfigEditor, setShowConfigEditor] = useState(true);
+  const [showApiKey, setShowApiKey] = useState(false);
+  const [configSaving, setConfigSaving] = useState(false);
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [testResult, setTestResult] = useState(null);
+  const [copiedDocker, setCopiedDocker] = useState(false);
+
+  // Pairing State
   const [activePairMethod, setActivePairMethod] = useState('qr'); // 'qr' | 'pairCode'
   const [qrCodeData, setQrCodeData] = useState(null);
   const [qrLoading, setQrLoading] = useState(false);
@@ -50,39 +72,142 @@ export default function WhatsAppConnection() {
   // Reconnect / Disconnect loading
   const [actionLoading, setActionLoading] = useState(false);
 
+  // 1. Fetch current Evolution API status
   const fetchStatus = async () => {
     setStatus((prev) => ({ ...prev, loading: true }));
     try {
       const res = await fetch('/api/evolution/status');
       const data = await res.json();
+      const isConn = Boolean(data.connected);
       setStatus({
-        connected: Boolean(data.connected),
+        connected: isConn,
         loading: false,
-        state: data.state || (data.connected ? 'open' : 'close'),
-        instanceName: data.instanceName || 'fuloozi',
-        apiUrl: data.apiUrl || 'http://localhost:8080',
+        state: data.state || (isConn ? 'open' : 'close'),
+        instanceName: data.instanceName || config.instanceName || 'fuloozi',
+        apiUrl: data.apiUrl || config.apiUrl || 'http://localhost:8080',
         display_phone_number: data.display_phone_number || '',
         error: data.error || null,
       });
-      if (data.connected && data.display_phone_number && !sendPhone) {
+
+      // Auto-collapse config editor if already connected
+      if (isConn) {
+        setShowConfigEditor(false);
+      }
+
+      if (isConn && data.display_phone_number && !sendPhone) {
         setSendPhone(data.display_phone_number.replace(/\D/g, ''));
       }
-    } catch (err) {
+    } catch {
       setStatus({
         connected: false,
         loading: false,
         state: 'error',
-        instanceName: 'fuloozi',
-        apiUrl: 'http://localhost:8080',
+        instanceName: config.instanceName || 'fuloozi',
+        apiUrl: config.apiUrl || 'http://localhost:8080',
         display_phone_number: '',
         error: 'Could not connect to Evolution API server',
       });
     }
   };
 
+  // 2. Fetch server configuration
+  const fetchConfig = async () => {
+    try {
+      const res = await fetch('/api/evolution/config');
+      const data = await res.json();
+      if (data) {
+        setConfig({
+          apiUrl: data.apiUrl || 'http://localhost:8080',
+          apiKey: data.apiKey || '',
+          apiKeySet: Boolean(data.apiKeySet),
+          instanceName: data.instanceName || 'fuloozi',
+        });
+      }
+    } catch {}
+  };
+
   useEffect(() => {
+    fetchConfig();
     fetchStatus();
   }, []);
+
+  // Save Gateway Configuration
+  const handleSaveConfig = async (e) => {
+    if (e) e.preventDefault();
+    setConfigSaving(true);
+    setTestResult(null);
+
+    try {
+      const res = await fetch('/api/evolution/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        toast.success('Gateway configuration saved');
+        if (data.status) {
+          setStatus({
+            connected: Boolean(data.status.connected),
+            loading: false,
+            state: data.status.state || 'close',
+            instanceName: data.status.instanceName || config.instanceName,
+            apiUrl: data.status.apiUrl || config.apiUrl,
+            display_phone_number: data.status.display_phone_number || '',
+            error: data.status.error || null,
+          });
+        }
+        await fetchStatus();
+        if (data.status?.connected) {
+          setShowConfigEditor(false);
+        } else {
+          // If instance is online and waiting, refresh QR
+          fetchQrCode();
+        }
+      } else {
+        toast.error(data.error || 'Failed to save configuration');
+      }
+    } catch (err) {
+      toast.error('Network error saving configuration');
+    } finally {
+      setConfigSaving(false);
+    }
+  };
+
+  // Live Test Connectivity
+  const handleTestConnection = async () => {
+    setTestingConnection(true);
+    setTestResult(null);
+
+    try {
+      const res = await fetch('/api/evolution/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apiUrl: config.apiUrl,
+          apiKey: config.apiKey,
+        }),
+      });
+      const data = await res.json();
+      setTestResult(data);
+
+      if (data.ok) {
+        toast.success(data.message || 'Connection successful!');
+      } else {
+        toast.error(data.message || 'Connection test failed');
+      }
+    } catch (err) {
+      setTestResult({
+        ok: false,
+        reachable: false,
+        message: 'Could not reach Evolution API test endpoint',
+      });
+      toast.error('Could not reach test endpoint');
+    } finally {
+      setTestingConnection(false);
+    }
+  };
 
   // Fetch QR Code from Evolution-Go
   const fetchQrCode = async () => {
@@ -227,6 +352,14 @@ export default function WhatsAppConnection() {
     }
   };
 
+  const copyDockerCommand = () => {
+    const cmd = 'docker run -d --name evolution-go -p 8080:8080 evolutionapi/evolution-go:latest';
+    navigator.clipboard.writeText(cmd);
+    setCopiedDocker(true);
+    toast.success('Docker command copied to clipboard');
+    setTimeout(() => setCopiedDocker(false), 3000);
+  };
+
   return (
     <div className="space-y-6">
       {/* Main Gateway Card */}
@@ -267,7 +400,9 @@ export default function WhatsAppConnection() {
                       ? 'Connected (Active)'
                       : status.state === 'connecting'
                         ? 'Connecting'
-                        : 'Awaiting Connection'}
+                        : status.state === 'offline'
+                          ? 'Server Offline'
+                          : 'Awaiting Connection'}
                 </span>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
@@ -321,7 +456,9 @@ export default function WhatsAppConnection() {
           </div>
           <div>
             <span className="text-muted-foreground text-[11px] block">Server URL</span>
-            <span className="text-muted-foreground font-mono text-[11px] truncate block">{status.apiUrl}</span>
+            <span className="text-muted-foreground font-mono text-[11px] truncate block" title={status.apiUrl}>
+              {status.apiUrl}
+            </span>
           </div>
           <div>
             <span className="text-muted-foreground text-[11px] block">Linked Phone</span>
@@ -331,13 +468,192 @@ export default function WhatsAppConnection() {
           </div>
         </div>
 
+        {/* Gateway Server & Credentials Configuration Section */}
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowConfigEditor(!showConfigEditor)}
+            className="w-full px-4 py-3 bg-secondary/30 hover:bg-secondary/50 flex items-center justify-between transition-colors text-left"
+          >
+            <div className="flex items-center gap-2">
+              <Server className="w-4 h-4 text-[#B5F13E]" />
+              <span className="text-xs font-semibold text-foreground">Evolution API Server & Credentials</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-md bg-secondary border border-border text-muted-foreground">
+                {status.apiUrl}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>{showConfigEditor ? 'Hide Settings' : 'Edit Credentials'}</span>
+              {showConfigEditor ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </div>
+          </button>
+
+          {showConfigEditor && (
+            <form onSubmit={handleSaveConfig} className="p-4 sm:p-5 space-y-4 border-t border-border/70">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Server URL */}
+                <div className="space-y-1.5 md:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium text-foreground">Evolution API Server URL</label>
+                    <span className="text-[11px] text-muted-foreground">Local or remote Evolution-Go host</span>
+                  </div>
+                  <input
+                    type="url"
+                    value={config.apiUrl}
+                    onChange={(e) => setConfig({ ...config, apiUrl: e.target.value })}
+                    placeholder="http://localhost:8080 or https://your-evolution-server.com"
+                    className="w-full h-10 px-3 rounded-xl bg-secondary/30 border border-border text-foreground text-xs font-mono focus:outline-none focus:border-[#B5F13E]"
+                    required
+                  />
+                  {/* Preset quick buttons */}
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <span className="text-[10px] text-muted-foreground">Quick Presets:</span>
+                    {[
+                      'http://localhost:8080',
+                      'http://localhost:8081',
+                      'http://127.0.0.1:8080',
+                    ].map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setConfig({ ...config, apiUrl: preset })}
+                        className="text-[10px] px-2 py-0.5 rounded bg-secondary hover:bg-secondary/80 border border-border text-muted-foreground hover:text-foreground font-mono transition-colors"
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* API Key */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-foreground">Global API Key / Token</label>
+                  <div className="relative">
+                    <input
+                      type={showApiKey ? 'text' : 'password'}
+                      value={config.apiKey}
+                      onChange={(e) => setConfig({ ...config, apiKey: e.target.value })}
+                      placeholder={config.apiKeySet ? '•••••••• (Configured)' : 'Enter API Key (Optional)'}
+                      className="w-full h-10 px-3 pr-10 rounded-xl bg-secondary/30 border border-border text-foreground text-xs font-mono focus:outline-none focus:border-[#B5F13E]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowApiKey(!showApiKey)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Sent via <code>apikey</code> and <code>Bearer</code> headers per Swagger spec.
+                  </p>
+                </div>
+
+                {/* Instance Name */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-foreground">Instance Name / ID</label>
+                  <input
+                    type="text"
+                    value={config.instanceName}
+                    onChange={(e) => setConfig({ ...config, instanceName: e.target.value })}
+                    placeholder="fuloozi"
+                    className="w-full h-10 px-3 rounded-xl bg-secondary/30 border border-border text-foreground text-xs font-mono focus:outline-none focus:border-[#B5F13E]"
+                    required
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Identifier for your WhatsApp session inside Evolution-Go.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border/50">
+                <button
+                  type="button"
+                  onClick={handleTestConnection}
+                  disabled={testingConnection || configSaving}
+                  className="px-4 py-2 rounded-xl border border-border bg-secondary hover:bg-secondary/80 text-foreground text-xs font-medium inline-flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                >
+                  <Zap className={`w-3.5 h-3.5 text-[#B5F13E] ${testingConnection ? 'animate-pulse' : ''}`} />
+                  {testingConnection ? 'Testing...' : 'Test Connection'}
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={configSaving}
+                  className="fuloozi-btn-primary px-5 py-2 text-xs font-semibold shadow-lime disabled:opacity-50"
+                >
+                  {configSaving ? 'Saving...' : 'Save & Connect'}
+                </button>
+              </div>
+
+              {/* Test Connection Result Box */}
+              {testResult && (
+                <div
+                  className={`p-3 rounded-xl text-xs flex items-start gap-2.5 ${
+                    testResult.ok
+                      ? 'bg-emerald-950/30 border border-emerald-800/40 text-emerald-300'
+                      : 'bg-rose-950/30 border border-rose-900/40 text-rose-300'
+                  }`}
+                >
+                  {testResult.ok ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <strong className="block font-semibold">
+                      {testResult.ok ? 'Connection Verified' : 'Connection Failed'}
+                    </strong>
+                    <p className="mt-0.5 text-[11px] leading-relaxed opacity-90">{testResult.message}</p>
+                    {testResult.latencyMs && (
+                      <span className="text-[10px] text-muted-foreground block mt-1">
+                        Latency: {testResult.latencyMs}ms
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </form>
+          )}
+        </div>
+
+        {/* Offline Diagnostics & Starter Helper */}
         {status.error && !status.connected && (
-          <div className="p-3 rounded-xl bg-rose-950/30 border border-rose-900/40 text-xs text-rose-300">
-            <strong>Evolution API Notice:</strong> {status.error}
+          <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-800/30 text-xs text-amber-200/90 space-y-3">
+            <div className="flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <strong className="font-semibold text-amber-300">Evolution API Server Notice:</strong>
+                <p className="text-[11px] text-amber-200/80 leading-relaxed">{status.error}</p>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-amber-800/30 space-y-2">
+              <span className="text-[11px] font-semibold text-amber-300 block">
+                How to start your Evolution-Go container:
+              </span>
+              <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-black/40 border border-amber-900/40 font-mono text-[11px] text-amber-100">
+                <span className="truncate">
+                  docker run -d --name evolution-go -p 8080:8080 evolutionapi/evolution-go:latest
+                </span>
+                <button
+                  type="button"
+                  onClick={copyDockerCommand}
+                  className="px-2 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 shrink-0 transition-colors inline-flex items-center gap-1"
+                >
+                  {copiedDocker ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                  {copiedDocker ? 'Copied' : 'Copy'}
+                </button>
+              </div>
+              <p className="text-[10px] text-amber-300/70">
+                Or if you are hosting Evolution API on another port or remote server, enter the URL in the settings above and click <strong>Save & Connect</strong>.
+              </p>
+            </div>
           </div>
         )}
 
-        {/* Pairing Hub (Visible when instance needs linking or user wants to re-pair) */}
+        {/* Pairing Hub (Visible when instance is ready to link) */}
         {!status.connected && (
           <div className="rounded-xl border border-border/80 bg-secondary/20 p-5 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border/60 pb-3">
@@ -478,7 +794,7 @@ export default function WhatsAppConnection() {
 
         {/* Live Interactive Testing & Simulation Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 pt-2 border-t border-border/60">
-          {/* Outbound Sender */}
+          {/* Outbound Direct Message Sender */}
           <form onSubmit={handleSendText} className="p-4 rounded-xl border border-border/70 bg-secondary/20 space-y-3">
             <h3 className="text-xs font-semibold text-foreground flex items-center gap-1.5">
               <Send className="w-3.5 h-3.5 text-[#B5F13E]" />

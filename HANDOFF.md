@@ -78,10 +78,19 @@ Engineered per the user request using `@simplewebauthn/browser` and `@simpleweba
 
 ## 5. Evolution API (Orbit WhatsApp / evolution-go) Integration
 - **Agent Backend (`server/evolutionAgent.js`):**
-  - Connects to Evolution API / Evolution-Go (`POST /send/text`, `POST /send/media`, `GET /instance/status`, `GET /instance/qr`, `POST /message/presence`).
+  - Connects to Evolution API / Evolution-Go (`POST /send/text`, `POST /send/media`, `GET /instance/status`, `GET /instance/qr`, `POST /instance/pair`, `POST /instance/connect`, `POST /instance/reconnect`, `POST /instance/forcereconnect`, `POST /instance/create`, `POST /message/presence`).
   - Follows the official Evolution-Go Swagger 2.0 schema for message dispatch, media attachments, and instance lifecycle.
+  - Automatically handles missing instances via `POST /instance/create` and connects sockets before requesting QR.
   - Processes financial actions: logs expenses (`expense 45 lunch`), income (`income 2000 consulting`), and responds with formatted ledger summaries.
   - Handles inbound webhooks at `/api/whatsapp` with challenge verification and signature checking.
+- **Gateway Server & Credentials Configuration UI (`src/components/settings/WhatsAppConnection.jsx`):**
+  - Live configuration editor directly accessible in the browser:
+    - **Server URL:** Supports local host (`http://localhost:8080`, `http://localhost:8081`) or remote hosted Evolution API domain (`https://api.yourdomain.com`).
+    - **API Key / Token:** Secure password input with eye toggle; sends `apikey` and `Bearer` headers.
+    - **Instance Name:** Customizable instance identifier (defaults to `fuloozi`).
+    - **Live Connectivity Test:** Tests `GET /instance/status`, measures response latency in ms, and diagnoses exact error (offline, unauthorized, or ready).
+    - **Automated Persistence:** Updates runtime configuration and persists directly to `.env.local` via `POST /api/evolution/config`.
+    - **Docker Quick-Launch Guidance:** Shows exact 1-click copyable Docker run command if the user's Evolution-Go container is stopped.
 
 ---
 

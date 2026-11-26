@@ -5,7 +5,7 @@ import { BrowserRouter, Route, Routes, Link, Navigate } from 'react-router-dom';
 import toast, { Toaster } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { supabase } from '@/api/client';
+import { isSupabaseConfigured, supabase } from '@/api/client';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import { pagesConfig } from './pages.config';
 import { Sparkles, ArrowRight, ShieldCheck, Fingerprint, ScanFace } from 'lucide-react';
@@ -31,6 +31,7 @@ function SignIn() {
   const [biometricPending, setBiometricPending] = useState(false);
 
   useEffect(() => {
+    if (!import.meta.env.DEV || isSupabaseConfigured) return;
     checkBiometricsSupport().then(({ supported }) => {
       let allowed = true;
       try {
@@ -317,14 +318,16 @@ function SignIn() {
                   : 'New here? Create an account'}
               </button>
 
-              <button
-                type="button"
-                onClick={handleDemoLogin}
-                disabled={pending}
-                className="inline-flex items-center justify-center gap-1.5 text-xs text-[#B5F13E] hover:underline pt-2 font-medium"
-              >
-                <Sparkles className="w-3.5 h-3.5" /> Instant Preview (One-click Demo)
-              </button>
+              {import.meta.env.DEV && !isSupabaseConfigured && (
+                <button
+                  type="button"
+                  onClick={handleDemoLogin}
+                  disabled={pending}
+                  className="inline-flex items-center justify-center gap-1.5 text-xs text-[#B5F13E] hover:underline pt-2 font-medium"
+                >
+                  <Sparkles className="w-3.5 h-3.5" /> Instant Preview (One-click Demo)
+                </button>
+              )}
             </div>
           </>
         )}

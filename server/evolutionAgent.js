@@ -4,7 +4,8 @@
  * Based on official Evolution-Go Swagger 2.0 API specification
  */
 
-const NOT_CONFIGURED = 'Evolution API is not configured. Set EVOLUTION_API_KEY and EVOLUTION_API_URL in .env.local.';
+import fs from 'node:fs';
+import path from 'node:path';
 
 /**
  * Read configuration from environment variables
@@ -15,7 +16,7 @@ export function evolutionConfig() {
   const instanceName = process.env.EVOLUTION_INSTANCE_NAME || 'fuloozi';
   const instanceId = process.env.EVOLUTION_INSTANCE_ID || instanceName;
   const webhookSecret = process.env.EVOLUTION_WEBHOOK_SECRET || '';
-  const configured = Boolean(apiKey);
+  const configured = Boolean(apiUrl);
 
   return {
     apiUrl,
@@ -25,6 +26,46 @@ export function evolutionConfig() {
     webhookSecret,
     configured,
   };
+}
+
+/**
+ * Update configuration dynamically and persist to .env.local
+ */
+export function updateEvolutionConfig({ apiUrl, apiKey, instanceName, webhookSecret }) {
+  if (apiUrl) process.env.EVOLUTION_API_URL = apiUrl.replace(/\/+$/, '');
+  if (apiKey !== undefined) process.env.EVOLUTION_API_KEY = apiKey;
+  if (instanceName) {
+    process.env.EVOLUTION_INSTANCE_NAME = instanceName;
+    process.env.EVOLUTION_INSTANCE_ID = instanceName;
+  }
+  if (webhookSecret !== undefined) process.env.EVOLUTION_WEBHOOK_SECRET = webhookSecret;
+
+  try {
+    const envPath = path.resolve(process.cwd(), '.env.local');
+    let content = '';
+    if (fs.existsSync(envPath)) {
+      content = fs.readFileSync(envPath, 'utf8');
+    }
+    const vars = {
+      EVOLUTION_API_URL: process.env.EVOLUTION_API_URL || 'http://localhost:8080',
+      EVOLUTION_API_KEY: process.env.EVOLUTION_API_KEY || '',
+      EVOLUTION_INSTANCE_NAME: process.env.EVOLUTION_INSTANCE_NAME || 'fuloozi',
+      EVOLUTION_WEBHOOK_SECRET: process.env.EVOLUTION_WEBHOOK_SECRET || '',
+    };
+    for (const [key, val] of Object.entries(vars)) {
+      const regex = new RegExp(`^${key}=.*$`, 'm');
+      if (regex.test(content)) {
+        content = content.replace(regex, `${key}=${val}`);
+      } else {
+        content += `\n${key}=${val}`;
+      }
+    }
+    fs.writeFileSync(envPath, content.trim() + '\n', 'utf8');
+  } catch (err) {
+    console.warn('Could not persist to .env.local:', err.message);
+  }
+
+  return evolutionConfig();
 }
 
 /**
@@ -46,20 +87,10 @@ function getAuthHeaders(apiKey) {
  * Calls GET /instance/status or GET /instance/info/{instanceId} per Swagger
  */
 export async function getEvolutionStatus() {
-  const { apiUrl, apiKey, instanceName, instanceId, configured } = evolutionConfig();
-
-  if (!configured) {
-    return {
-      connected: false,
-      configured: false,
-      state: 'disconnected',
-      instanceName,
-      apiUrl,
-      error: NOT_CONFIGURED,
-    };
-  }
-
+  const { apiUrl, apiKey, instanceName, instanceId } = evolutionConfig();
   const headers = getAuthHeaders(apiKey);
+
+  let lastError = null;
 
   // 1. Try Evolution-Go GET /instance/status
   try {
@@ -71,21 +102,33 @@ export async function getEvolutionStatus() {
 
     if (res.ok) {
       const data = await res.json().catch(() => ({}));
-      const state = (data.status || data.state || data.instance?.state || (data.connected ? 'open' : 'close')).toLowerCase();
-      const isConnected = state === 'open' || state === 'connected' || Boolean(data.connected);
+      const rawState = (data.status || data.state || data.instance?.state || (data.connected ? 'open' : 'close')).toLowerCase();
+      const isConnected = rawState === 'open' || rawState === 'connected' || Boolean(data.connected);
 
       return {
         connected: isConnected,
         configured: true,
-        state: isConnected ? 'open' : state,
+        state: isConnected ? 'open' : rawState,
         instanceName,
         apiUrl,
+        apiKeySet: Boolean(apiKey),
         verified_name: 'Orbit WhatsApp API (Evolution-Go)',
-        display_phone_number: data.phone || data.number || data.jid?.replace(/@.*$/, '') || process.env.VITE_WHATSAPP_NUMBER || '',
+        display_phone_number: data.phone || data.number || data.jid?.replace(/@.*$/, '') || '',
+        data,
+      };
+    } else if (res.status === 401 || res.status === 403) {
+      return {
+        connected: false,
+        configured: true,
+        state: 'unauthorized',
+        instanceName,
+        apiUrl,
+        apiKeySet: Boolean(apiKey),
+        error: `Authentication failed (HTTP ${res.status}). Please check your API Key.`,
       };
     }
-  } catch {
-    // Try fallback endpoint
+  } catch (err) {
+    lastError = err;
   }
 
   // 2. Fallback: GET /instance/info/{instanceId}
@@ -106,12 +149,14 @@ export async function getEvolutionStatus() {
         state: isConnected ? 'open' : 'close',
         instanceName,
         apiUrl,
+        apiKeySet: Boolean(apiKey),
         verified_name: 'Orbit WhatsApp API (Evolution-Go)',
-        display_phone_number: data.phone || data.number || process.env.VITE_WHATSAPP_NUMBER || '',
+        display_phone_number: data.phone || data.number || '',
+        data,
       };
     }
-  } catch {
-    // Try v1 connectionState fallback
+  } catch (err) {
+    lastError = err;
   }
 
   // 3. Fallback: GET /instance/connectionState/{instanceName}
@@ -131,40 +176,92 @@ export async function getEvolutionStatus() {
         state,
         instanceName,
         apiUrl,
-        display_phone_number: process.env.VITE_WHATSAPP_NUMBER || '',
+        apiKeySet: Boolean(apiKey),
+        display_phone_number: '',
+        data,
       };
     }
   } catch (err) {
-    return {
-      connected: false,
-      configured: true,
-      state: 'error',
-      instanceName,
-      apiUrl,
-      error: `Could not reach Evolution API at ${apiUrl}: ${err.message}`,
-    };
+    lastError = err;
   }
+
+  // Detailed network diagnostics
+  const errMsg = lastError?.message || 'Server did not respond';
+  const isConnRefused = errMsg.includes('ECONNREFUSED') || errMsg.includes('fetch failed') || errMsg.includes('Failed to fetch');
 
   return {
     connected: false,
     configured: true,
-    state: 'close',
+    state: isConnRefused ? 'offline' : 'close',
     instanceName,
     apiUrl,
-    error: 'Instance disconnected or awaiting QR scan',
+    apiKeySet: Boolean(apiKey),
+    error: isConnRefused
+      ? `Could not connect to Evolution API at ${apiUrl}. Make sure your Evolution API server is running on this address.`
+      : `Evolution API returned: ${errMsg}`,
   };
+}
+
+/**
+ * Initialize instance connection via Evolution-Go POST /instance/connect
+ */
+export async function connectEvolutionInstance({ webhookUrl } = {}) {
+  const { apiUrl, apiKey } = evolutionConfig();
+  const headers = getAuthHeaders(apiKey);
+
+  try {
+    const res = await fetch(`${apiUrl}/instance/connect`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(10000),
+      headers,
+      body: JSON.stringify({
+        immediate: true,
+        webhookUrl: webhookUrl || '',
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    return { ok: res.ok, data };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+/**
+ * Create instance on Evolution-Go via POST /instance/create
+ * Schema: CreateStruct { name, instanceId, token? }
+ */
+export async function createEvolutionInstance({ name, instanceId, token } = {}) {
+  const { apiUrl, apiKey, instanceName, instanceId: defaultId } = evolutionConfig();
+  const headers = getAuthHeaders(token || apiKey);
+  const instName = name || instanceName;
+  const instId = instanceId || defaultId || instName;
+
+  try {
+    const res = await fetch(`${apiUrl}/instance/create`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(10000),
+      headers,
+      body: JSON.stringify({
+        name: instName,
+        instanceId: instId,
+        token: token || apiKey || '',
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    return { ok: res.ok, data };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
 }
 
 /**
  * Fetch live QR code from Evolution-Go via GET /instance/qr
  */
 export async function getEvolutionQrCode() {
-  const { apiUrl, apiKey, instanceName, configured } = evolutionConfig();
-  if (!configured) return { ok: false, error: NOT_CONFIGURED };
-
+  const { apiUrl, apiKey, instanceName, instanceId } = evolutionConfig();
   const headers = getAuthHeaders(apiKey);
 
-  // 1. Evolution-Go endpoint: GET /instance/qr
+  // 1. Evolution-Go primary endpoint: GET /instance/qr
   try {
     const res = await fetch(`${apiUrl}/instance/qr`, {
       method: 'GET',
@@ -184,11 +281,69 @@ export async function getEvolutionQrCode() {
         };
       }
     }
-  } catch {
-    // Try fallback
-  }
+  } catch {}
 
-  // 2. Fallback: GET /instance/connect/{instanceName}
+  // 2. Try POST /instance/connect then retry GET /instance/qr
+  try {
+    await fetch(`${apiUrl}/instance/connect`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(6000),
+      headers,
+      body: JSON.stringify({ immediate: true }),
+    }).catch(() => {});
+
+    // Short pause for whatsmeow socket startup
+    await new Promise((r) => setTimeout(r, 600));
+
+    const retryRes = await fetch(`${apiUrl}/instance/qr`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(6000),
+      headers,
+    });
+    if (retryRes.ok) {
+      const retryData = await retryRes.json().catch(() => ({}));
+      const base64 = retryData.base64 || retryData.qrcode || retryData.qr;
+      if (base64) {
+        return {
+          ok: true,
+          base64: base64.startsWith('data:') ? base64 : `data:image/png;base64,${base64}`,
+          code: retryData.code || null,
+        };
+      }
+    }
+  } catch {}
+
+  // 3. Fallback: Create instance if missing then connect and retry QR
+  try {
+    await createEvolutionInstance({ name: instanceName, instanceId });
+    await fetch(`${apiUrl}/instance/connect`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(6000),
+      headers,
+      body: JSON.stringify({ immediate: true }),
+    }).catch(() => {});
+
+    await new Promise((r) => setTimeout(r, 600));
+
+    const finalRes = await fetch(`${apiUrl}/instance/qr`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(6000),
+      headers,
+    });
+    if (finalRes.ok) {
+      const data = await finalRes.json().catch(() => ({}));
+      const base64 = data.base64 || data.qrcode || data.qr;
+      if (base64) {
+        return {
+          ok: true,
+          base64: base64.startsWith('data:') ? base64 : `data:image/png;base64,${base64}`,
+          code: data.code || null,
+        };
+      }
+    }
+  } catch {}
+
+  // 4. Fallback: GET /instance/connect/{instanceName}
   try {
     const res = await fetch(`${apiUrl}/instance/connect/${encodeURIComponent(instanceName)}`, {
       method: 'GET',
@@ -206,10 +361,13 @@ export async function getEvolutionQrCode() {
       };
     }
   } catch (err) {
-    return { ok: false, error: err.message };
+    return { ok: false, error: `Could not connect to ${apiUrl}: ${err.message}` };
   }
 
-  return { ok: false, error: 'Could not fetch QR code from Evolution API' };
+  return {
+    ok: false,
+    error: `Could not fetch QR code from Evolution API at ${apiUrl}. Is the server reachable?`,
+  };
 }
 
 /**
@@ -218,9 +376,7 @@ export async function getEvolutionQrCode() {
  */
 export async function pairEvolutionInstance({ phone }) {
   if (!phone) throw new Error('Phone number is required for pairing');
-  const { apiUrl, apiKey, configured } = evolutionConfig();
-  if (!configured) return { ok: false, error: NOT_CONFIGURED };
-
+  const { apiUrl, apiKey } = evolutionConfig();
   const cleanPhone = String(phone).replace(/\D/g, '');
   const headers = getAuthHeaders(apiKey);
 
@@ -250,15 +406,24 @@ export async function pairEvolutionInstance({ phone }) {
 }
 
 /**
- * Force reconnect Evolution API instance via POST /instance/reconnect
+ * Force reconnect Evolution API instance via POST /instance/reconnect or POST /instance/forcereconnect
  */
 export async function reconnectEvolutionInstance() {
-  const { apiUrl, apiKey, configured } = evolutionConfig();
-  if (!configured) return { ok: false, error: NOT_CONFIGURED };
-
+  const { apiUrl, apiKey } = evolutionConfig();
   const headers = getAuthHeaders(apiKey);
   try {
     const res = await fetch(`${apiUrl}/instance/reconnect`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(10000),
+      headers,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) return { ok: true, data };
+  } catch {}
+
+  // Fallback to /instance/forcereconnect
+  try {
+    const res = await fetch(`${apiUrl}/instance/forcereconnect`, {
       method: 'POST',
       signal: AbortSignal.timeout(10000),
       headers,
@@ -271,12 +436,100 @@ export async function reconnectEvolutionInstance() {
 }
 
 /**
+ * Force reconnect Evolution API instance via POST /instance/forcereconnect
+ */
+export async function forceReconnectEvolutionInstance() {
+  const { apiUrl, apiKey } = evolutionConfig();
+  const headers = getAuthHeaders(apiKey);
+  try {
+    const res = await fetch(`${apiUrl}/instance/forcereconnect`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(10000),
+      headers,
+    });
+    const data = await res.json().catch(() => ({}));
+    return { ok: res.ok, data };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+/**
+ * Test connectivity to an Evolution API endpoint with optional custom credentials
+ */
+export async function testEvolutionConnection({ apiUrl: testUrl, apiKey: testKey } = {}) {
+  const current = evolutionConfig();
+  const targetUrl = (testUrl || current.apiUrl || 'http://localhost:8080').replace(/\/+$/, '');
+  const targetKey = testKey !== undefined ? testKey : current.apiKey;
+  const headers = getAuthHeaders(targetKey);
+  const startTime = Date.now();
+
+  try {
+    const res = await fetch(`${targetUrl}/instance/status`, {
+      method: 'GET',
+      signal: AbortSignal.timeout(6000),
+      headers,
+    });
+    const latencyMs = Date.now() - startTime;
+    const data = await res.json().catch(() => ({}));
+
+    if (res.ok) {
+      const isConnected = data.connected || data.status === 'open' || data.state === 'open';
+      return {
+        ok: true,
+        reachable: true,
+        authenticated: true,
+        latencyMs,
+        status: isConnected ? 'connected' : 'ready',
+        state: data.status || data.state || 'ready',
+        phoneNumber: data.phone || data.number || data.jid?.replace(/@.*$/, '') || '',
+        message: isConnected
+          ? `Connected to Evolution API! WhatsApp session is active (+${data.phone || data.number || ''}).`
+          : `Reachable (${latencyMs}ms). Instance is ready for QR code scanning or pairing.`,
+        data,
+      };
+    } else if (res.status === 401 || res.status === 403) {
+      return {
+        ok: false,
+        reachable: true,
+        authenticated: false,
+        latencyMs,
+        status: 'unauthorized',
+        message: `Evolution API is reachable, but authentication failed (HTTP ${res.status}). Please check your API key.`,
+      };
+    } else {
+      return {
+        ok: false,
+        reachable: true,
+        authenticated: true,
+        latencyMs,
+        status: 'error',
+        message: `Evolution API returned HTTP ${res.status}: ${res.statusText}`,
+        data,
+      };
+    }
+  } catch (err) {
+    const latencyMs = Date.now() - startTime;
+    const msg = err.message || '';
+    const isConnRefused = msg.includes('ECONNREFUSED') || msg.includes('fetch failed');
+    return {
+      ok: false,
+      reachable: false,
+      authenticated: false,
+      latencyMs,
+      status: 'offline',
+      message: isConnRefused
+        ? `Cannot reach Evolution API at ${targetUrl}. Server is offline or port is blocked.`
+        : `Connection error: ${msg}`,
+    };
+  }
+}
+
+/**
  * Disconnect Evolution API instance via POST /instance/disconnect
  */
 export async function disconnectEvolutionInstance() {
-  const { apiUrl, apiKey, configured } = evolutionConfig();
-  if (!configured) return { ok: false, error: NOT_CONFIGURED };
-
+  const { apiUrl, apiKey } = evolutionConfig();
   const headers = getAuthHeaders(apiKey);
   try {
     const res = await fetch(`${apiUrl}/instance/disconnect`, {
@@ -300,9 +553,7 @@ export async function sendWhatsAppMessage({ to, text }) {
     throw new Error('Recipient number ("to") and message text are required');
   }
 
-  const { apiUrl, apiKey, instanceName, configured } = evolutionConfig();
-  if (!configured) return { ok: false, error: NOT_CONFIGURED };
-
+  const { apiUrl, apiKey, instanceName } = evolutionConfig();
   const cleanRecipient = String(to).replace(/\D/g, '');
   const headers = getAuthHeaders(apiKey);
 
@@ -363,9 +614,7 @@ export async function sendWhatsAppAudio({ to, audioBase64 }) {
     throw new Error('Recipient number ("to") and audio are required');
   }
 
-  const { apiUrl, apiKey, instanceName, configured } = evolutionConfig();
-  if (!configured) return { ok: false, error: NOT_CONFIGURED };
-
+  const { apiUrl, apiKey, instanceName } = evolutionConfig();
   const cleanRecipient = String(to).replace(/\D/g, '');
   const headers = getAuthHeaders(apiKey);
   const dataUri = audioBase64.startsWith('data:')
@@ -418,9 +667,7 @@ export async function sendWhatsAppAudio({ to, audioBase64 }) {
  * Set typing presence via Evolution-Go POST /message/presence
  */
 export async function sendChatPresence({ to, state = 'composing', delay = 1200 }) {
-  const { apiUrl, apiKey, configured } = evolutionConfig();
-  if (!configured) return;
-
+  const { apiUrl, apiKey } = evolutionConfig();
   const cleanRecipient = String(to).replace(/\D/g, '');
   const headers = getAuthHeaders(apiKey);
 
@@ -436,9 +683,7 @@ export async function sendChatPresence({ to, state = 'composing', delay = 1200 }
         isAudio: state === 'recording',
       }),
     });
-  } catch {
-    // Non-blocking presence signal
-  }
+  } catch {}
 }
 
 /**

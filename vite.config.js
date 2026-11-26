@@ -7,7 +7,13 @@ import {
   getEvolutionQrCode,
   pairEvolutionInstance,
   reconnectEvolutionInstance,
+  forceReconnectEvolutionInstance,
   disconnectEvolutionInstance,
+  connectEvolutionInstance,
+  createEvolutionInstance,
+  testEvolutionConnection,
+  evolutionConfig,
+  updateEvolutionConfig,
   sendWhatsAppMessage,
   extractEvolutionMessage,
 } from './server/evolutionAgent.js';
@@ -148,6 +154,82 @@ function fulooziDevApi() {
           }
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify({ reply }));
+          return;
+        }
+
+        // 7a. Evolution API Configuration (GET & POST /api/evolution/config)
+        if (req.url?.startsWith('/api/evolution/config')) {
+          if (req.method === 'GET') {
+            const cfg = evolutionConfig();
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({
+              apiUrl: cfg.apiUrl,
+              apiKey: cfg.apiKey ? '••••••••' : '',
+              apiKeySet: Boolean(cfg.apiKey),
+              instanceName: cfg.instanceName,
+              instanceId: cfg.instanceId,
+              webhookSecret: cfg.webhookSecret,
+            }));
+            return;
+          }
+          if (req.method === 'POST') {
+            const buffers = [];
+            for await (const chunk of req) buffers.push(chunk);
+            let body = {};
+            try { body = JSON.parse(Buffer.concat(buffers).toString('utf-8') || '{}'); } catch {}
+
+            const newConfig = {
+              apiUrl: body.apiUrl,
+              instanceName: body.instanceName,
+              webhookSecret: body.webhookSecret,
+            };
+            if (body.apiKey !== undefined && body.apiKey !== '••••••••') {
+              newConfig.apiKey = body.apiKey;
+            }
+            const updated = updateEvolutionConfig(newConfig);
+            const status = await getEvolutionStatus();
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ ok: true, config: updated, status }));
+            return;
+          }
+        }
+
+        // 7b. Evolution API Test Endpoint (/api/evolution/test)
+        if (req.url?.startsWith('/api/evolution/test') && req.method === 'POST') {
+          const buffers = [];
+          for await (const chunk of req) buffers.push(chunk);
+          let body = {};
+          try { body = JSON.parse(Buffer.concat(buffers).toString('utf-8') || '{}'); } catch {}
+          const testResult = await testEvolutionConnection({
+            apiUrl: body.apiUrl,
+            apiKey: body.apiKey === '••••••••' ? undefined : body.apiKey,
+          });
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(testResult));
+          return;
+        }
+
+        // 7c. Evolution API Create Instance Endpoint (/api/evolution/create)
+        if (req.url?.startsWith('/api/evolution/create') && req.method === 'POST') {
+          const buffers = [];
+          for await (const chunk of req) buffers.push(chunk);
+          let body = {};
+          try { body = JSON.parse(Buffer.concat(buffers).toString('utf-8') || '{}'); } catch {}
+          const result = await createEvolutionInstance({
+            name: body.name,
+            instanceId: body.instanceId,
+            token: body.token,
+          });
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(result));
+          return;
+        }
+
+        // 7d. Evolution API Force Reconnect Endpoint (/api/evolution/forcereconnect)
+        if (req.url?.startsWith('/api/evolution/forcereconnect') && req.method === 'POST') {
+          const result = await forceReconnectEvolutionInstance();
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(result));
           return;
         }
 

@@ -1,4 +1,4 @@
-import { db } from "@/api/client";
+import { isSupabaseConfigured, db } from "@/api/client";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
@@ -523,7 +523,11 @@ export default function AdminPage() {
         </TabsContent>
 
         <TabsContent value="passkeys" className="space-y-6 mt-0">
-          <BiometricsSettings />
+          {import.meta.env.DEV && !isSupabaseConfigured ? (
+            <BiometricsSettings />
+          ) : (
+            <p className="text-sm text-muted-foreground">Device passkeys are unavailable. Sign in with your MPIN.</p>
+          )}
         </TabsContent>
       </Tabs>
     </div>
