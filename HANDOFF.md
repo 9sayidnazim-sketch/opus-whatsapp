@@ -271,3 +271,15 @@ Lint gap: `eslint.config.js` spreads the recommended configs and then replaces t
    - `.env.local` configured: `VITE_WHATSAPP_NUMBER=971509979359`.
    - `GET /api/evolution/status` reports `connected: true, state: "open", display_phone_number: "971509979359"`.
    - `npm run build` passed in 4.06s.
+
+---
+
+## November 26 — Multi-Branch Git Synchronization & Public Production Deployment
+
+- **All Branches Pushed to GitHub (`9sayidnazim-sketch/opus-whatsapp`):**
+  - `main` (`0421ac1`)
+  - `claude/agitated-jennings-bac7e5` (`451f218`)
+  - `claude/great-almeida-1509b6` (`ed05c97`)
+  - `claude/recursing-khayyam-baee8d` (`479487a`)
+- **Public GitHub Repository:** `https://github.com/9sayidnazim-sketch/opus-whatsapp`
+- **Live Production Deployment:** Deployed to Vercel (inspect `9zWGCcfiYaC9TUPnmaiw3e997UtP`), live and aliased to **`https://fuloozi.vercel.app`**.
