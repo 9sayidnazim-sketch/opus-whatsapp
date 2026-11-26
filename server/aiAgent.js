@@ -49,8 +49,8 @@ export const AI_PRESETS = {
   },
   anthropic: {
     name: 'Anthropic Claude',
-    defaultModel: 'claude-3-5-haiku-20241022',
-    models: ['claude-3-5-haiku-20241022', 'claude-3-5-sonnet-20241022'],
+    defaultModel: 'claude-sonnet-4-6',
+    models: ['claude-sonnet-4-6', 'claude-3-5-haiku-20241022', 'claude-3-5-sonnet-20241022'],
     baseUrl: 'https://api.anthropic.com/v1',
     authHeader: 'x-api-key',
   },
@@ -264,22 +264,24 @@ export async function generateAIReply({ messages = [], userPrompt = '', househol
 
     // PROVIDER 2: Anthropic Claude
     if (config.provider === 'anthropic') {
-      const isCustomProxy = config.baseUrl.includes('mwapi') || config.baseUrl.includes('proxy');
       const headers = {
         'Content-Type': 'application/json',
+        'x-api-key': config.apiKey,
+        'anthropic-version': '2023-06-01',
       };
-      if (isCustomProxy) {
-        headers['Authorization'] = `Bearer ${config.apiKey}`;
-      } else {
-        headers['x-api-key'] = config.apiKey;
-        headers['anthropic-version'] = '2023-06-01';
-      }
 
       const formattedMessages = promptHistory
         .filter((m) => m.role === 'user' || m.role === 'assistant')
         .map((m) => ({ role: m.role, content: m.content }));
 
-      const res = await fetch(`${config.baseUrl}/messages`, {
+      const cleanBase = (config.baseUrl || 'https://api.anthropic.com/v1').replace(/\/+$/, '');
+      const messagesUrl = cleanBase.endsWith('/messages')
+        ? cleanBase
+        : cleanBase.endsWith('/v1')
+          ? `${cleanBase}/messages`
+          : `${cleanBase}/v1/messages`;
+
+      const res = await fetch(messagesUrl, {
         method: 'POST',
         signal: AbortSignal.timeout(18000),
         headers,
@@ -393,17 +395,22 @@ export async function testAIConnection({ provider, model, apiKey, baseUrl } = {}
     // 2. Anthropic
     if (targetProvider === 'anthropic') {
       if (!targetKey) throw new Error('Anthropic API Key is required');
-      const isCustomProxy = targetBaseUrl.includes('mwapi') || targetBaseUrl.includes('proxy');
-      const headers = { 'Content-Type': 'application/json' };
-      if (isCustomProxy) headers['Authorization'] = `Bearer ${targetKey}`;
-      else {
-        headers['x-api-key'] = targetKey;
-        headers['anthropic-version'] = '2023-06-01';
-      }
+      const headers = {
+        'Content-Type': 'application/json',
+        'x-api-key': targetKey,
+        'anthropic-version': '2023-06-01',
+      };
 
-      const res = await fetch(`${targetBaseUrl}/messages`, {
+      const cleanBase = (targetBaseUrl || 'https://api.anthropic.com/v1').replace(/\/+$/, '');
+      const messagesUrl = cleanBase.endsWith('/messages')
+        ? cleanBase
+        : cleanBase.endsWith('/v1')
+          ? `${cleanBase}/messages`
+          : `${cleanBase}/v1/messages`;
+
+      const res = await fetch(messagesUrl, {
         method: 'POST',
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(12000),
         headers,
         body: JSON.stringify({
           model: targetModel,

@@ -92,10 +92,8 @@ export async function getRegistrationOptions({ username, displayName, originHead
   }
 
   const user = store.users[normalizedUser];
-  const excludeCredentials = (user.credentials || []).map(cred => ({
-    id: cred.id,
-    transports: cred.transports,
-  }));
+  // Do not exclude existing credentials so re-registering or re-enabling Touch ID / Passkeys succeeds
+  const excludeCredentials = [];
 
   const options = await generateRegistrationOptions({
     rpName: 'Fuloozi Household Ledger',

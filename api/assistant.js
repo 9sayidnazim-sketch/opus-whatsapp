@@ -22,21 +22,26 @@ export function buildContext(memory, question, name) {
 }
 
 export async function askClaude(messages) {
-  const key = process.env.SUB2API_API_KEY;
+  const key = process.env.AI_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.SUB2API_API_KEY;
   if (!key) throw new Error('Missing assistant credential');
-  const response = await fetch('https://api.mwapi.dev/v1/responses', {
+  const response = await fetch('https://api.mwapi.dev/v1/messages', {
     method: 'POST',
     signal: AbortSignal.timeout(20000),
-    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    headers: {
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'Content-Type': 'application/json',
+    },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-6', store: false, max_output_tokens: 400,
-      instructions: jenniferInstructions,
-      input: messages,
+      model: 'claude-sonnet-4-6',
+      max_tokens: 500,
+      system: jenniferInstructions,
+      messages: Array.isArray(messages) ? messages : [{ role: 'user', content: String(messages) }],
     }),
   });
   if (!response.ok) throw new Error('Assistant provider failed');
   const payload = await response.json();
-  const reply = payload.output?.flatMap(item => item.content ?? []).map(item => item.text ?? '').join('').trim();
+  const reply = payload.content?.[0]?.text?.trim() || '';
   if (!reply) throw new Error('Assistant returned no text');
   return reply;
 }
