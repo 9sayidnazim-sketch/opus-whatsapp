@@ -185,7 +185,7 @@ export default function WhatsAppConnection() {
       } else {
         toast.error(data.error || 'Failed to save configuration');
       }
-    } catch (err) {
+    } catch {
       toast.error('Network error saving configuration');
     } finally {
       setConfigSaving(false);
@@ -214,7 +214,7 @@ export default function WhatsAppConnection() {
       } else {
         toast.error(data.message || 'Connection test failed');
       }
-    } catch (err) {
+    } catch {
       setTestResult({
         ok: false,
         reachable: false,
@@ -337,7 +337,7 @@ export default function WhatsAppConnection() {
       } else {
         toast.error(data.error || 'Failed to send message');
       }
-    } catch (err) {
+    } catch {
       toast.error(err.message || 'Send error');
     } finally {
       setSending(false);

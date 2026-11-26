@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,12 +32,10 @@ import {
   Info,
   Gift,
   TrendingUp,
-  RefreshCw,
   Sparkles,
   MessageSquare,
   ShieldCheck,
   Key,
-  Layers,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { showBrowserNotification, getNotificationPermission, requestNotificationPermission } from "@/utils/notifications";
@@ -190,7 +187,7 @@ export default function AdminPage() {
   }
 
   const cfg = typeConfig(form.type);
-  const TypeIcon = cfg.icon;
+  const _TypeIcon = cfg.icon;
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-5xl mx-auto space-y-6">

@@ -12,7 +12,6 @@ import {
   Zap,
   Send,
   Sliders,
-  RotateCcw,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
