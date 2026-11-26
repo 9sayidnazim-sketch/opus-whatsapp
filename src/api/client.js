@@ -2,16 +2,16 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-const isSupabaseConfigured = Boolean(
+export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
   typeof supabaseUrl === 'string' &&
   supabaseUrl.startsWith('http') &&
   supabaseKey
 );
 
-export const whatsappURL = /^\d{8,15}$/.test(import.meta.env.VITE_WHATSAPP_NUMBER || '')
-  ? `https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER}`
-  : 'https://wa.me/15557969980';
+export const whatsappURL = (import.meta.env.VITE_WHATSAPP_NUMBER && import.meta.env.VITE_WHATSAPP_NUMBER !== '15557969980')
+  ? `https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER.replace(/\D/g, '')}`
+  : '';
 
 /* -------------------------------------------------------------
  * Local Storage Mock Provider for Instant Local Development
@@ -170,9 +170,6 @@ function createLocalMockSupabase() {
       },
     },
     async rpc(funcName) {
-      if (funcName === 'opus_open_whatsapp') {
-        return { data: '7829104921', error: null };
-      }
       return { data: { status: 'ok' }, error: null };
     },
   };
@@ -282,18 +279,29 @@ export async function askAssistant(messages) {
   return (await response.json()).reply;
 }
 
-export async function openWhatsAppChat(windowHandle) {
+export async function getWhatsAppStatus() {
   try {
-    const chatId = unwrap(await supabase.rpc('opus_open_whatsapp'));
-    const url = `${whatsappURL}?text=${encodeURIComponent(`Hi Octapus ${chatId}`)}`;
-    if (windowHandle) {
-      windowHandle.opener = null;
-      windowHandle.location.replace(url);
-    } else {
-      window.location.assign(url);
+    const res = await fetch('/api/evolution/status');
+    if (res.ok) return await res.json();
+  } catch {}
+  return { connected: false };
+}
+
+export async function openWhatsAppChat() {
+  const status = await getWhatsAppStatus();
+  const phone = status.display_phone_number || status.phone;
+  if (phone) {
+    const clean = phone.replace(/\D/g, '');
+    if (clean && clean !== '15557969980') {
+      window.open(`https://wa.me/${clean}`, '_blank');
+      return { ok: true, phone: clean };
     }
-  } catch (error) {
-    windowHandle?.close();
-    throw error;
   }
+  const envNum = import.meta.env.VITE_WHATSAPP_NUMBER;
+  if (envNum && envNum !== '15557969980') {
+    const clean = envNum.replace(/\D/g, '');
+    window.open(`https://wa.me/${clean}`, '_blank');
+    return { ok: true, phone: clean };
+  }
+  throw new Error('Evolution WhatsApp instance is not linked yet. Open Settings to scan the QR code.');
 }

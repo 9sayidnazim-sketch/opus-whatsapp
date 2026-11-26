@@ -213,6 +213,85 @@ export async function getEvolutionQrCode() {
 }
 
 /**
+ * Request phone pairing code from Evolution-Go via POST /instance/pair
+ * Schema: PairStruct { phone, subscribe? }
+ */
+export async function pairEvolutionInstance({ phone }) {
+  if (!phone) throw new Error('Phone number is required for pairing');
+  const { apiUrl, apiKey, configured } = evolutionConfig();
+  if (!configured) return { ok: false, error: NOT_CONFIGURED };
+
+  const cleanPhone = String(phone).replace(/\D/g, '');
+  const headers = getAuthHeaders(apiKey);
+
+  try {
+    const res = await fetch(`${apiUrl}/instance/pair`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(10000),
+      headers,
+      body: JSON.stringify({ phone: cleanPhone }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      return {
+        ok: true,
+        code: data.code || data.pairingCode || data.codePairing || data.data?.code,
+        data,
+      };
+    }
+    return {
+      ok: false,
+      error: data.message || data.error || `HTTP ${res.status}: ${res.statusText}`,
+    };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+/**
+ * Force reconnect Evolution API instance via POST /instance/reconnect
+ */
+export async function reconnectEvolutionInstance() {
+  const { apiUrl, apiKey, configured } = evolutionConfig();
+  if (!configured) return { ok: false, error: NOT_CONFIGURED };
+
+  const headers = getAuthHeaders(apiKey);
+  try {
+    const res = await fetch(`${apiUrl}/instance/reconnect`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(10000),
+      headers,
+    });
+    const data = await res.json().catch(() => ({}));
+    return { ok: res.ok, data };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+/**
+ * Disconnect Evolution API instance via POST /instance/disconnect
+ */
+export async function disconnectEvolutionInstance() {
+  const { apiUrl, apiKey, configured } = evolutionConfig();
+  if (!configured) return { ok: false, error: NOT_CONFIGURED };
+
+  const headers = getAuthHeaders(apiKey);
+  try {
+    const res = await fetch(`${apiUrl}/instance/disconnect`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(10000),
+      headers,
+    });
+    const data = await res.json().catch(() => ({}));
+    return { ok: res.ok, data };
+  } catch (err) {
+    return { ok: false, error: err.message };
+  }
+}
+
+/**
  * Send text message via Evolution-Go POST /send/text
  * Schema: TextStruct { number, text, delay? }
  */

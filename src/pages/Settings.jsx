@@ -1,4 +1,4 @@
-import { db, whatsappURL } from "@/api/client";
+import { db } from "@/api/client";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -137,8 +137,8 @@ export default function SettingsPage() {
         </button>
       </div>
 
-      {/* WhatsApp Integration */}
-      <WhatsAppConnection whatsappURL={whatsappURL} />
+      {/* Evolution API WhatsApp Hub */}
+      <WhatsAppConnection />
 
       {/* Browser Web Push Notifications */}
       <Card className="rounded-2xl border-border bg-card">

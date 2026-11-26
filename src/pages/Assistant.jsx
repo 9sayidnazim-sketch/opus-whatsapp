@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { ExternalLink, Plus, Send, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { db, askAssistant, whatsappURL, openWhatsAppChat } from '@/api/client';
+import { db, askAssistant, openWhatsAppChat } from '@/api/client';
 import { FulooziMark } from '@/components/FulooziBrand';
 
 const SUGGESTIONS = [
@@ -22,6 +22,7 @@ export default function Assistant() {
   const [selected, setSelected] = useState(null);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
+  const [openingWhatsApp, setOpeningWhatsApp] = useState(false);
   const [error, setError] = useState('');
 
   const thread = threads.find(item => item.id === selected);
@@ -68,22 +69,26 @@ export default function Assistant() {
           </p>
         </div>
 
-        {whatsappURL && (
-          <button
-            type="button"
-            onClick={() => {
-              setError('');
-              // Opens synchronously (avoids popup blockers), then loads this
-              // user's own chat code before pointing the tab at WhatsApp.
-              openWhatsAppChat(window.open('about:blank', '_blank')).catch(() => setError('Could not open WhatsApp. Try again.'));
-            }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#25D366]/15 hover:bg-[#25D366]/25 text-[#25D366] border border-[#25D366]/30 text-xs sm:text-sm font-semibold transition-all"
-          >
-            <MessageSquare className="w-4 h-4" />
-            Chat on WhatsApp
-            <ExternalLink className="h-3.5 w-3.5 opacity-70" />
-          </button>
-        )}
+        <button
+          type="button"
+          disabled={openingWhatsApp}
+          onClick={async () => {
+            setError('');
+            setOpeningWhatsApp(true);
+            try {
+              await openWhatsAppChat();
+            } catch (err) {
+              setError(err.message || 'Open Settings → WhatsApp to link your Evolution API instance.');
+            } finally {
+              setOpeningWhatsApp(false);
+            }
+          }}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#25D366]/15 hover:bg-[#25D366]/25 text-[#25D366] border border-[#25D366]/30 text-xs sm:text-sm font-semibold transition-all"
+        >
+          <MessageSquare className="w-4 h-4" />
+          {openingWhatsApp ? 'Opening WhatsApp…' : 'Chat on WhatsApp'}
+          <ExternalLink className="h-3.5 w-3.5 opacity-70" />
+        </button>
       </header>
 
       {/* Main chat layout */}

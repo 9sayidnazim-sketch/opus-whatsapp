@@ -5,6 +5,9 @@ import {
   handleWhatsAppInbound,
   getEvolutionStatus,
   getEvolutionQrCode,
+  pairEvolutionInstance,
+  reconnectEvolutionInstance,
+  disconnectEvolutionInstance,
   sendWhatsAppMessage,
   extractEvolutionMessage,
 } from './server/evolutionAgent.js';
@@ -157,10 +160,38 @@ function fulooziDevApi() {
         }
 
         // 8. Evolution API QR / Connect Endpoint
-        if (req.url?.startsWith('/api/evolution/connect') && req.method === 'GET') {
+        if ((req.url?.startsWith('/api/evolution/connect') || req.url?.startsWith('/api/evolution/qr')) && req.method === 'GET') {
           const qr = await getEvolutionQrCode();
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify(qr));
+          return;
+        }
+
+        // 8b. Evolution API Phone Pairing Code Endpoint
+        if (req.url?.startsWith('/api/evolution/pair') && req.method === 'POST') {
+          const buffers = [];
+          for await (const chunk of req) buffers.push(chunk);
+          let body = {};
+          try { body = JSON.parse(Buffer.concat(buffers).toString('utf-8') || '{}'); } catch {}
+          const result = await pairEvolutionInstance({ phone: body.phone });
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(result));
+          return;
+        }
+
+        // 8c. Evolution API Reconnect Endpoint
+        if (req.url?.startsWith('/api/evolution/reconnect') && req.method === 'POST') {
+          const result = await reconnectEvolutionInstance();
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(result));
+          return;
+        }
+
+        // 8d. Evolution API Disconnect Endpoint
+        if (req.url?.startsWith('/api/evolution/disconnect') && req.method === 'POST') {
+          const result = await disconnectEvolutionInstance();
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(result));
           return;
         }
 
