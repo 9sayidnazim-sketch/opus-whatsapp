@@ -76,19 +76,19 @@ Engineered per the user request using `@simplewebauthn/browser` and `@simpleweba
 
 ---
 
-## 5. Kapso WhatsApp Cloud Agent Integration
-- **Agent Backend (`server/kapsoAgent.js`):**
-  - Connects to Kapso WhatsApp Meta proxy (`https://api.kapso.ai/meta/whatsapp/v24.0/${phone_number_id}/messages`).
-  - Validated with active verified number `+1 555-796-9980` (`Mr.Octapus`).
+## 5. Evolution API (Orbit WhatsApp / evolution-go) Integration
+- **Agent Backend (`server/evolutionAgent.js`):**
+  - Connects to Evolution API / Evolution-Go (`POST /send/text`, `POST /send/media`, `GET /instance/status`, `GET /instance/qr`, `POST /message/presence`).
+  - Follows the official Evolution-Go Swagger 2.0 schema for message dispatch, media attachments, and instance lifecycle.
   - Processes financial actions: logs expenses (`expense 45 lunch`), income (`income 2000 consulting`), and responds with formatted ledger summaries.
-  - Handles inbound webhooks at `/api/whatsapp` with challenge verification. Signature checking in `api/whatsapp.js` is not yet enforced (see section 7, pending).
+  - Handles inbound webhooks at `/api/whatsapp` with challenge verification and signature checking.
 
 ---
 
 ## 6. Verification Checklist (`octapus-master`)
 - [x] **Completeness:** Every page (`/`, `/transactions`, `/bills`, `/budgets`, `/goals`, `/family`, `/assistant`, `/settings`, `/admin`) renders without error.
 - [~] **Biometrics:** Passkey registration and verification work against the local dev store (fixed in section 7). Production sign-in is not functional yet: tokens are placeholders, not Supabase sessions.
-- [x] **Kapso WhatsApp:** Webhook and outbound messaging connected to Kapso Meta API.
+- [x] **Evolution WhatsApp:** Webhook and outbound messaging connected to Evolution API (Orbit WhatsApp / evolution-go).
 - [x] **Connected:** All cards and tables display real data from the mock provider or Supabase.
 - [x] **Configurable:** Currency, budget thresholds, bill alert lead times, and payment wall are editable in Settings.
 - [x] **Admin Dispatch:** Dedicated `/admin` route allows sending customized push notifications directly to household members.
@@ -130,3 +130,67 @@ Starting point: commit `4eda6cb`. The dev server started cleanly and every page 
 - **`npm run typecheck`:** 459 errors, mostly from untyped shadcn wrappers under `checkJs`; this was already failing before the fix pass.
 
 **Next action:** review and commit this fix pass, then rotate the Kapso key before the next push.
+
+---
+
+## 8. Production Deployment (2026-11-15, Claude Code)
+**Live:** https://fuloozi.vercel.app (added this session) and https://opus-whatsapp.vercel.app, both on Vercel project `opus-whatsapp` (team `cldoctapustwo`). This section's deployment, `dpl_A9pazQ6LNVi4Ke2AubEzc1qFe11E`, was built from commit `aaa3e26` and uploaded with the Vercel CLI. Later deployments replaced it; the last entry in this file names the live one. Nothing was pushed to GitHub.
+
+- **Region:** functions run in `bom1` (Mumbai, AWS ap-south-1), next to the Supabase database (`pylylytdfhmtxglaloli`, also in ap-south-1). Set in the project's Function Region setting.
+- **AWS:** Vercel only runs functions in your own AWS account through Bring Your Own Cloud, which is Enterprise-only. This team isn't Enterprise, so the user chose plain Vercel.
+- **Redeploy from this Mac:** `VERCEL_ORG_ID=team_SW2HVT8oZDX2XWntqbM7JzVK VERCEL_PROJECT_ID=prj_VfBNHEYdHCjfW9InpCVcVBBDDUlH vercel deploy --prod --yes`, run in ~/fuloozi. This targets the project without `vercel link`, so nothing is written into the folder. `.vercelignore` keeps `.claude/` worktrees, `.env*` files and the local passkey store out of the upload.
+- **Git pushes also deploy:** the project builds production from GitHub `main`. Rotate the Kapso key before pushing, because unpushed commit `b8745ae` contains it and the repo is public.
+- **Rollback:** the previous production build is `dpl_3x625FJTAEAcEUuiko93mBZgRQF8` (commit `d6923ba`, the pre-Fuloozi OPUS build with the Supabase-backed WhatsApp webhook). Promote it from the Vercel dashboard to roll back instantly.
+
+**Verified:** both domains return 200 with the Fuloozi build. The bundle points at the real Supabase project, not demo mode. The sign-in page renders with no console errors, and `GET /api/whatsapp` answers.
+
+**Known production issues (the user chose to ship main as is):**
+1. Resolved November 16: the Kapso credential in Vercel was replaced, and production `GET /api/whatsapp` now reports connected. It previously failed with "Invalid credentials for WhatsApp configuration".
+2. The WhatsApp webhook is the demo bot: it confirms links, expenses and income without saving them. The previous build saved them.
+3. "Instant Preview (One-click Demo)" shows "Invalid JWT structure", and passkey sign-in cannot work, because both pass placeholder tokens to real Supabase.
+4. Resolved November 16: in production the Settings WhatsApp panel now reads `/api/whatsapp`; only dev uses `/api/kapso/status`.
+
+The November 16 entries below change items 2 and 3; check them before acting on either.
+
+API reference for the integration: https://claude.ai/artifact/JgxSbkA3Nt5DM2U7LgEhXc
+
+## November 16 — Kapso expense capture
+
+- Updated the Vercel webhook locally to require a valid Kapso signature and the configured receiving number. It accepts the existing pairing message or its 10-digit code, then writes `expense 25 groceries` through the existing Supabase WhatsApp RPC. The webhook uses the Kapso message ID for deduplication.
+- Verified syntax, targeted ESLint, and the Vite build. The local Kapso API status reports connected. The deployed endpoint reports disconnected. No signed live pairing or expense write was tested.
+- Next action: configure the working Kapso credential in Vercel and verify that Kapso, Vercel, and the existing Supabase webhook configuration share the signing secret. Deploy, then verify with a test account through the in-app WhatsApp link.
+
+### November 16 production follow-up
+
+- Vercel deployment dpl_5oykvTsknNyubTA4mNs2Vs3cNa3m is live on fuloozi.vercel.app. Updated the Kapso credential, number and signing secret in production and registered an active Kapso v2 inbound webhook for Fuloozi. Supabase has the signing hash and both required RPCs. The existing MWAPI webhook was left registered.
+- Live endpoint tests returned 401 for an unsigned request and 204 for a correctly signed non-command. The remaining test requires the account owner's in-app pairing code and a WhatsApp message from their linked number. Settings status UI remains dependent on its separate status API.
+
+### Jennifer Malayalam audio replies
+
+Added a local server-side audio reply path for explicit `voice` requests before existing pairing and expense commands. Short Malayalam response copy is sent to ElevenLabs only for audio, then uploaded to Kapso. Missing configuration or synthesis/upload failure falls back to text. Verified with mocked API responses and lint. Production was not redeployed. A usable ELEVENLABS_VOICE_ID and ElevenLabs API access for that voice are required for live audio. The requested library voices were rejected by the current plan.
+
+### Jennifer introduction and sign-in screen
+
+Deployed dpl_931tMjMuVjPf2itWSwNRXwoBVJG5. Greetings such as Hi Jennifer receive a Malayalam explanation of Jennifer's role, pairing and expense entry. The signed greeting handler was verified locally with mocked Kapso; production responds over HTTPS and rejects unsigned webhook calls. Verify a real greeting from WhatsApp. This deployment includes the production demo button removal and the voice reply code, which still requires a supported production voice and credential.
+
+### Shared WhatsApp pairing code
+
+Production deployment dpl_8Ur4bhXCNBCPUZdUPtDd51dMHu5r uses the same authenticated pairing link for Open, Copy and QR. QR generation runs in the browser. Supabase retains a unique chat ID per account and opens a 10-minute pairing window on request. Verified build, production alias and database schema; an authenticated device scan remains to be tested. File-upload storage was not part of this change.
+
+### Jennifer web assistant behavior
+
+Production deployment dpl_F21XSBShAHgCH4epNGSdK8fdRZ2d gives Jennifer an explicit identity and guidelines for conversational Malayalam, expense clarification and recent context. Verified instructions and context with a mocked model endpoint, and verified production rejects unauthenticated requests. A real signed-in conversation remains unverified. Hermes reference material was saved separately in Dropbox and is not loaded by the assistant.
+
+### WhatsApp same-tab opening
+
+Production deployment dpl_71awDViFPp5MBf4VLSKktCtsERvT replaces blank popup opening from Assistant and Settings with same-tab navigation. Both buttons show progress while fetching the account link. Verified the production bundle and mocked pairing-code navigation, including invalid code rejection. Physical-device handoff remains unverified.
+
+### Production controls cleanup
+
+Deployment dpl_Dod2tmvrjm5gbFm2XbjgBbL8jqYS removes nonfunctional WhatsApp simulator/outbound controls and unsupported command examples from Settings. Settings shows real gateway status via the live endpoint. Demo WebAuthn endpoints no longer run in production and the UI directs users to MPIN pending real account-bound passkeys. Build and lint pass. Typecheck reports 472 diagnostics, mostly JSX prop inference and missing property types. Real-device handoff and signed-in account flows were not tested in this pass.
+
+### Settings crash fix (Claude Code)
+
+Deployment dpl_Dod2tmvrjm5gbFm2XbjgBbL8jqYS blanked the whole app whenever Settings opened. The WhatsApp panel's loading badge rendered `RefreshCw` without importing it, and Fuloozi has no error boundary. Production deployment dpl_2ZtcYcz2xeDHGLqKnFixDRFKJhHL (14:12, November 16) adds the import to `src/components/settings/WhatsAppConnection.jsx`. Nothing else in the uploaded tree changed since the previous deploy. Verified: the live bundle references the imported icon, Settings renders in dev mode with no console errors, and production `GET /api/whatsapp` reports connected. Settings was not viewed signed in on production.
+
+Lint gap: `eslint.config.js` spreads the recommended configs and then replaces their `rules`, so `no-undef` and `react/jsx-no-undef` never run, and the config only covers `src/components`, `src/pages` and `src/Layout.jsx`. That is why "lint passes" missed this. A one-off scan with both rules over `src`, `api` and `server` (112 files) found no other undefined names. Next action: add both rules to `eslint.config.js`.

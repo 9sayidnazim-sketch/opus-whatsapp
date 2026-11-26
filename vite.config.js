@@ -1,7 +1,13 @@
 import { fileURLToPath, URL } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
-import { handleWhatsAppInbound, getKapsoStatus, sendWhatsAppMessage } from './server/kapsoAgent.js';
+import {
+  handleWhatsAppInbound,
+  getEvolutionStatus,
+  getEvolutionQrCode,
+  sendWhatsAppMessage,
+  extractEvolutionMessage,
+} from './server/evolutionAgent.js';
 import {
   getRegistrationOptions,
   verifyRegistration,
@@ -142,16 +148,24 @@ function fulooziDevApi() {
           return;
         }
 
-        // 7. Kapso Agent Status Endpoint
-        if (req.url?.startsWith('/api/kapso/status') && req.method === 'GET') {
-          const status = await getKapsoStatus();
+        // 7. Evolution API Status Endpoint
+        if (req.url?.startsWith('/api/evolution/status') && req.method === 'GET') {
+          const status = await getEvolutionStatus();
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify(status));
           return;
         }
 
-        // 8. Kapso Direct WhatsApp Send Endpoint
-        if (req.url?.startsWith('/api/kapso/send') && req.method === 'POST') {
+        // 8. Evolution API QR / Connect Endpoint
+        if (req.url?.startsWith('/api/evolution/connect') && req.method === 'GET') {
+          const qr = await getEvolutionQrCode();
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(qr));
+          return;
+        }
+
+        // 9. Evolution API Direct WhatsApp Send Endpoint
+        if (req.url?.startsWith('/api/evolution/send') && req.method === 'POST') {
           const buffers = [];
           for await (const chunk of req) buffers.push(chunk);
           let body = {};
@@ -162,8 +176,8 @@ function fulooziDevApi() {
           return;
         }
 
-        // 9. Kapso Agent Simulation Endpoint
-        if (req.url?.startsWith('/api/kapso/simulate') && req.method === 'POST') {
+        // 10. WhatsApp Agent Simulation Endpoint
+        if (req.url?.startsWith('/api/evolution/simulate') && req.method === 'POST') {
           const buffers = [];
           for await (const chunk of req) buffers.push(chunk);
           let body = {};
@@ -178,7 +192,7 @@ function fulooziDevApi() {
           return;
         }
 
-        // 10. WhatsApp Webhook Inbound Handler (/api/whatsapp)
+        // 11. WhatsApp Webhook Inbound Handler (/api/whatsapp)
         if (req.url?.startsWith('/api/whatsapp')) {
           if (req.method === 'GET') {
             const urlObj = new URL(req.url, 'http://localhost');
@@ -189,7 +203,7 @@ function fulooziDevApi() {
               res.end(challenge);
               return;
             }
-            const status = await getKapsoStatus();
+            const status = await getEvolutionStatus();
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify(status));
             return;
@@ -203,30 +217,24 @@ function fulooziDevApi() {
               event = JSON.parse(Buffer.concat(buffers).toString('utf-8') || '{}');
             } catch {}
 
-            let sender = null;
-            let text = '';
-            let contactName = '';
+            // Extract using Evolution API helper or fallback
+            const parsed = extractEvolutionMessage(event);
+            let sender = parsed?.sender;
+            let text = parsed?.body;
+            let contactName = parsed?.contactName;
 
-            if (event.message && event.conversation) {
-              sender = event.conversation.phone_number?.replace(/^\+/, '');
-              contactName = event.conversation.contact_name || '';
-              text = event.message.text?.body || event.message.kapso?.content || '';
-            } else if (Array.isArray(event.entry)) {
-              const val = event.entry[0]?.changes?.[0]?.value;
-              const msg = val?.messages?.[0];
-              sender = msg?.from;
-              text = msg?.text?.body || '';
-              contactName = val?.contacts?.[0]?.profile?.name || '';
-            } else if (event.text || event.prompt) {
-              sender = event.sender || event.to || '15557969980';
-              text = event.text || event.prompt || '';
-              contactName = event.contactName || '';
+            if (!sender) {
+              if (event.text || event.prompt) {
+                sender = event.sender || event.to || '15557969980';
+                text = event.text || event.prompt || '';
+                contactName = event.contactName || '';
+              }
             }
 
             const result = await handleWhatsAppInbound({
               sender: sender || '15557969980',
               text: text || '',
-              contactName,
+              contactName: contactName || 'Household Member',
             });
 
             res.setHeader('Content-Type', 'application/json');
