@@ -29,14 +29,14 @@ export default function WhatsAppConnection() {
     loading: true,
     state: 'checking',
     instanceName: 'fuloozi',
-    apiUrl: 'http://localhost:8080',
+    apiUrl: 'http://localhost:8088',
     display_phone_number: '',
     error: null,
   });
 
   // Server & Instance Configuration State
   const [config, setConfig] = useState({
-    apiUrl: 'http://localhost:8080',
+    apiUrl: 'http://localhost:8088',
     apiKey: '',
     apiKeySet: false,
     instanceName: 'fuloozi',
@@ -84,7 +84,7 @@ export default function WhatsAppConnection() {
         loading: false,
         state: data.state || (isConn ? 'open' : 'close'),
         instanceName: data.instanceName || config.instanceName || 'fuloozi',
-        apiUrl: data.apiUrl || config.apiUrl || 'http://localhost:8080',
+        apiUrl: data.apiUrl || config.apiUrl || 'http://localhost:8088',
         display_phone_number: data.display_phone_number || '',
         error: data.error || null,
       });
@@ -97,16 +97,18 @@ export default function WhatsAppConnection() {
       if (isConn && data.display_phone_number && !sendPhone) {
         setSendPhone(data.display_phone_number.replace(/\D/g, ''));
       }
+      return isConn;
     } catch {
       setStatus({
         connected: false,
         loading: false,
         state: 'error',
         instanceName: config.instanceName || 'fuloozi',
-        apiUrl: config.apiUrl || 'http://localhost:8080',
+        apiUrl: config.apiUrl || 'http://localhost:8088',
         display_phone_number: '',
         error: 'Could not connect to Evolution API server',
       });
+      return false;
     }
   };
 
@@ -117,7 +119,7 @@ export default function WhatsAppConnection() {
       const data = await res.json();
       if (data) {
         setConfig({
-          apiUrl: data.apiUrl || 'http://localhost:8080',
+          apiUrl: data.apiUrl || 'http://localhost:8088',
           apiKey: data.apiKey || '',
           apiKeySet: Boolean(data.apiKeySet),
           instanceName: data.instanceName || 'fuloozi',
@@ -128,8 +130,18 @@ export default function WhatsAppConnection() {
 
   useEffect(() => {
     fetchConfig();
-    fetchStatus();
+    fetchStatus().then((isConn) => {
+      if (!isConn) {
+        fetchQrCode();
+      }
+    });
   }, []);
+
+  useEffect(() => {
+    if (activePairMethod === 'qr' && !status.connected && !qrCodeData && !qrLoading) {
+      fetchQrCode();
+    }
+  }, [activePairMethod, status.connected]);
 
   // Save Gateway Configuration
   const handleSaveConfig = async (e) => {
@@ -353,7 +365,7 @@ export default function WhatsAppConnection() {
   };
 
   const copyDockerCommand = () => {
-    const cmd = 'docker run -d --name evolution-go -p 8080:8080 evolutionapi/evolution-go:latest';
+    const cmd = 'docker run -d --name evolution-api -p 8088:8080 evoapicloud/evolution-api:latest';
     navigator.clipboard.writeText(cmd);
     setCopiedDocker(true);
     toast.success('Docker command copied to clipboard');
@@ -501,7 +513,7 @@ export default function WhatsAppConnection() {
                     type="url"
                     value={config.apiUrl}
                     onChange={(e) => setConfig({ ...config, apiUrl: e.target.value })}
-                    placeholder="http://localhost:8080 or https://your-evolution-server.com"
+                    placeholder="http://localhost:8088 or https://your-evolution-server.com"
                     className="w-full h-10 px-3 rounded-xl bg-secondary/30 border border-border text-foreground text-xs font-mono focus:outline-none focus:border-[#B5F13E]"
                     required
                   />
@@ -509,9 +521,9 @@ export default function WhatsAppConnection() {
                   <div className="flex flex-wrap items-center gap-2 pt-1">
                     <span className="text-[10px] text-muted-foreground">Quick Presets:</span>
                     {[
+                      'http://localhost:8088',
+                      'http://127.0.0.1:8088',
                       'http://localhost:8080',
-                      'http://localhost:8081',
-                      'http://127.0.0.1:8080',
                     ].map((preset) => (
                       <button
                         key={preset}
@@ -631,11 +643,11 @@ export default function WhatsAppConnection() {
 
             <div className="pt-2 border-t border-amber-800/30 space-y-2">
               <span className="text-[11px] font-semibold text-amber-300 block">
-                How to start your Evolution-Go container:
+                How to start your Evolution API container:
               </span>
               <div className="flex items-center justify-between gap-2 p-2 rounded-lg bg-black/40 border border-amber-900/40 font-mono text-[11px] text-amber-100">
                 <span className="truncate">
-                  docker run -d --name evolution-go -p 8080:8080 evolutionapi/evolution-go:latest
+                  docker run -d --name evolution-api -p 8088:8080 evoapicloud/evolution-api:latest
                 </span>
                 <button
                   type="button"
