@@ -228,3 +228,27 @@ Deployment dpl_Dod2tmvrjm5gbFm2XbjgBbL8jqYS removes nonfunctional WhatsApp simul
 Deployment dpl_Dod2tmvrjm5gbFm2XbjgBbL8jqYS blanked the whole app whenever Settings opened. The WhatsApp panel's loading badge rendered `RefreshCw` without importing it, and Fuloozi has no error boundary. Production deployment dpl_2ZtcYcz2xeDHGLqKnFixDRFKJhHL (14:12, November 16) adds the import to `src/components/settings/WhatsAppConnection.jsx`. Nothing else in the uploaded tree changed since the previous deploy. Verified: the live bundle references the imported icon, Settings renders in dev mode with no console errors, and production `GET /api/whatsapp` reports connected. Settings was not viewed signed in on production.
 
 Lint gap: `eslint.config.js` spreads the recommended configs and then replaces their `rules`, so `no-undef` and `react/jsx-no-undef` never run, and the config only covers `src/components`, `src/pages` and `src/Layout.jsx`. That is why "lint passes" missed this. A one-off scan with both rules over `src`, `api` and `server` (112 files) found no other undefined names. Next action: add both rules to `eslint.config.js`.
+
+---
+
+## November 26 — Evolution API WhatsApp Gateway & Live QR Code Resolution
+
+### Root Cause of QR Generation Failure:
+1. **Container Port Mapping & Service Collision:** The local Docker container running Evolution API v2 (`evolution-api-local-api-1`) was listening on host port `8088` (`127.0.0.1:8088`), whereas the application code and environment defaulted to `http://localhost:8080` (where a Frappe/ERPNext container was listening).
+2. **Dynamic Configuration Reading:** In Node dev API middleware, environment variables from `.env.local` were not re-read dynamically when configuration changed, leaving the running process stuck on the stale `8080` port.
+3. **Evolution API v2 Contract:** Evolution API v2 uses `GET /instance/connect/{instanceName}` and returns `{ pairingCode: null, code: "2@..." }`. In this response format, `base64` is omitted, requiring real-time barcode synthesis via `QRCode.toDataURL(code)`.
+
+### Implemented Fixes:
+1. **Dynamic Environment Loader (`server/evolutionAgent.js`):**
+   - Implemented `readEnvLocal()` inside `evolutionConfig()` to inspect `.env.local` on each call with seamless fallback to `http://localhost:8088`.
+   - Updated `testEvolutionConnection()` to probe Evolution API v2 endpoints (`GET /instance/connectionState/{instanceName}` and `GET /instance/fetchInstances`) before falling back to legacy v1 endpoints.
+   - Enhanced `getEvolutionQrCode()` to generate clean PNG data URLs (`data:image/png;base64,...`) from Evolution API pairing strings with `QRCode.toDataURL`.
+2. **Admin Gateway Component (`src/components/settings/WhatsAppConnection.jsx`):**
+   - Updated default URL and quick presets to `http://localhost:8088` and `http://127.0.0.1:8088`.
+   - Added automatic QR code retrieval on mount so users see the pairing barcode immediately without clicking a manual button.
+   - Preserved full settings separation: All technical gateway controls (Evolution API, AI Agent keys, Biometrics policies, Payment wall) reside in `/admin`, leaving `/settings` purely for user preferences.
+3. **Verification:**
+   - `GET /api/evolution/config` verified: `apiUrl: http://localhost:8088`, `apiKeySet: true`.
+   - `GET /api/evolution/status` verified: `state: connecting`, latency: 4ms.
+   - `GET /api/evolution/qr` verified: generates live WhatsApp QR barcode (`ok: true`, base64 length: 13,242 chars).
+   - `npm run build` verified: zero errors. Dev server running on `http://localhost:5173/`.
