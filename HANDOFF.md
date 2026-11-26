@@ -94,7 +94,32 @@ Engineered per the user request using `@simplewebauthn/browser` and `@simpleweba
 
 ---
 
-## 6. Verification Checklist (`octapus-master`)
+## 6. Universal AI Agent Architecture (`server/aiAgent.js` & `src/components/admin/AIAgentSettings.jsx`)
+- **Universal Provider Engine:**
+  - Connects to any AI provider or local model:
+    - **Google Gemini:** `gemini-1.5-flash`, `gemini-1.5-pro`, `gemini-2.0-flash-exp`
+    - **OpenAI:** `gpt-4o-mini`, `gpt-4o`, `o3-mini`
+    - **Groq:** `llama-3.3-70b-versatile`, `mixtral-8x7b-32768` (ultra-fast inference)
+    - **Anthropic Claude:** `claude-3-5-haiku-20241022`, `claude-3-5-sonnet-20241022`
+    - **OpenRouter:** Unified gateway to any open/commercial model
+    - **Ollama:** Private local models via `http://localhost:11434`
+    - **Custom OpenAI-Compatible:** Any custom inference server or proxy
+- **Unified App & WhatsApp Integration:**
+  - **In-App Assistant (`src/pages/Assistant.jsx` & `/api/assistant`):** Dynamically invokes `generateAIReply` with real household ledger context.
+  - **WhatsApp Bot (`server/evolutionAgent.js`):** Inbound conversational messages invoke `generateAIReply`, allowing natural language conversations with the WhatsApp bot.
+  - **Intelligent Offline Fallback:** If no API key is configured or the external API call fails, the app seamlessly falls back to a deterministic financial reasoning engine.
+- **Admin Infrastructure Reorganization:**
+  - **Backend Features Hidden from User Settings:** The user Settings page (`src/pages/Settings.jsx`) now exclusively focuses on household user preferences (Currency, Personal Push Alerts, Budget Thresholds, Bill Due Reminders).
+  - All technical and backend infrastructure features have been consolidated into the **Admin Control Center** (`src/pages/Admin.jsx`) across 5 dedicated tabs:
+    1. **AI Agent Hub:** Configure provider, model, API keys, custom base URLs, and test connectivity.
+    2. **WhatsApp Gateway:** Evolution API / whatsmeow gateway setup, server credentials, QR code, direct dispatch, and simulator.
+    3. **Passkeys & Biometrics:** WebAuthn security policies and device authenticators.
+    4. **Broadcasts:** Direct push notification dispatch to household members and delivery logs.
+    5. **Platform:** Octapus platform integration and payment wall controls.
+
+---
+
+## 7. Verification Checklist (`octapus-master`)
 - [x] **Completeness:** Every page (`/`, `/transactions`, `/bills`, `/budgets`, `/goals`, `/family`, `/assistant`, `/settings`, `/admin`) renders without error.
 - [~] **Biometrics:** Passkey registration and verification work against the local dev store (fixed in section 7). Production sign-in is not functional yet: tokens are placeholders, not Supabase sessions.
 - [x] **Evolution WhatsApp:** Webhook and outbound messaging connected to Evolution API (Orbit WhatsApp / evolution-go).

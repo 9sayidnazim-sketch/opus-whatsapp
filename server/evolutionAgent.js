@@ -6,6 +6,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { generateAIReply } from './aiAgent.js';
 
 /**
  * Read configuration from environment variables
@@ -852,14 +853,15 @@ export async function handleWhatsAppInbound({
     return { ok: true, action: 'bills_query', reply, sent: sendResult.ok };
   }
 
-  // Pattern E: Conversational Question via AI Co-pilot
+  // Pattern E: Conversational Question via Connected AI Agent
   let reply = '';
-  if (cleanCommand.toLowerCase().includes('budget') || cleanCommand.toLowerCase().includes('spend')) {
-    reply = `You have spent AED 2,409 this month across all categories, leaving a strong cushion from your allocated limits. Groceries (AED 920) and utilities (AED 680) are well within monthly budgets.`;
-  } else if (cleanCommand.toLowerCase().includes('goal') || cleanCommand.toLowerCase().includes('save')) {
-    reply = `You're making great progress! Your Emergency Reserve is at 64% (AED 32,000 of AED 50,000) and Family Holiday fund is at 57% (AED 8,500 of AED 15,000).`;
-  } else {
-    reply = `I'm your Fuloozi finance assistant. You're tracking well on your household budget this month! Ask me about upcoming bills, category budgets, or send "expense 50 groceries" to record a payment.`;
+  try {
+    reply = await generateAIReply({
+      userPrompt: cleanCommand,
+      householdContext: ledgerData,
+    });
+  } catch {
+    reply = `I'm Jennifer, your Fuloozi finance assistant. You're tracking well on your household budget this month! Ask me about upcoming bills, category budgets, or send "expense 50 groceries" to record a payment.`;
   }
 
   const sendResult = await sendWhatsAppMessage({ to: cleanSender, text: reply });

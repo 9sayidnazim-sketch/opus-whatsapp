@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { generateAIReply } from '../server/aiAgent.js';
 
 const jenniferInstructions = [
   'You are Jennifer, the Fuloozi finance assistant. Help users organize expenses, bills, and savings.',
@@ -59,7 +60,12 @@ export default async function handler(req, res) {
     if (current.role !== 'user' || !current.content.trim()) return res.status(400).json({ error: 'Enter a message' });
     const memory = await client.from('opus_chat_memory').select('question,answer').order('id',{ascending:false}).limit(10);
     if (memory.error) throw memory.error;
-    const reply = (await askClaude(buildContext(memory.data.reverse(), current.content, data.user.user_metadata?.full_name))).slice(0,2000);
+    let reply = '';
+    try {
+      reply = (await generateAIReply({ messages, userPrompt: current.content })).slice(0, 2000);
+    } catch {
+      reply = (await askClaude(buildContext(memory.data.reverse(), current.content, data.user.user_metadata?.full_name))).slice(0, 2000);
+    }
     const saved = await client.from('opus_chat_memory').insert({ channel:'web', question:current.content, answer:reply });
     if (saved.error) throw saved.error;
     return res.json({ reply });

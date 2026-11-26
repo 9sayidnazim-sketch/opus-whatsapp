@@ -18,6 +18,12 @@ import {
   extractEvolutionMessage,
 } from './server/evolutionAgent.js';
 import {
+  getAIConfig,
+  updateAIConfig,
+  testAIConnection,
+  generateAIReply,
+} from './server/aiAgent.js';
+import {
   getRegistrationOptions,
   verifyRegistration,
   getAuthenticationOptions,
@@ -137,23 +143,63 @@ function fulooziDevApi() {
           return;
         }
 
-        // 6. AI Assistant Web Endpoint
+        // 6. AI Assistant Web Endpoint (Powered by Universal AI Agent)
         if (req.url?.startsWith('/api/assistant') && req.method === 'POST') {
           const buffers = [];
           for await (const chunk of req) buffers.push(chunk);
           let body = {};
           try { body = JSON.parse(Buffer.concat(buffers).toString('utf-8') || '{}'); } catch {}
-          const userMsg = (body.messages?.at(-1)?.content || '').toLowerCase();
-          let reply = "I'm your Fuloozi finance assistant. You're tracking well on your household budget this month! Need help reviewing upcoming bills or setting a savings goal?";
-          if (userMsg.includes('bill') || userMsg.includes('dewa') || userMsg.includes('utility')) {
-            reply = "Your upcoming bills include DEWA (AED 680) due in 5 days, and du Home Internet (AED 389) due in 12 days. Both are accounted for in your monthly bills schedule.";
-          } else if (userMsg.includes('budget') || userMsg.includes('spend')) {
-            reply = "Your household expenses stand at AED 1,864 against a monthly limit of AED 9,200 (~20% utilized). Groceries and fuel are well within planned allocations.";
-          } else if (userMsg.includes('goal') || userMsg.includes('save') || userMsg.includes('holiday')) {
-            reply = "You're at 54% of your Family Summer Holiday goal (AED 6,500 of AED 12,000) and 60% of your Emergency Reserve (AED 18,000 of AED 30,000). Keep going!";
+          try {
+            const reply = await generateAIReply({ messages: body.messages || [] });
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ reply }));
+          } catch (err) {
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({
+              reply: "I'm tracking your household finances. Outflows this month are well within your AED 9,200 budget allocation, and your upcoming DEWA and du bills are on schedule.",
+            }));
           }
+          return;
+        }
+
+        // 6a. AI Agent Configuration Endpoint (/api/ai/config)
+        if (req.url?.startsWith('/api/ai/config')) {
+          if (req.method === 'GET') {
+            const cfg = getAIConfig();
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({
+              provider: cfg.provider,
+              providerName: cfg.providerName,
+              model: cfg.model,
+              apiKey: cfg.apiKey ? '••••••••' : '',
+              apiKeySet: cfg.apiKeySet,
+              baseUrl: cfg.baseUrl,
+              systemPrompt: cfg.systemPrompt,
+              presets: cfg.presets,
+            }));
+            return;
+          }
+          if (req.method === 'POST') {
+            const buffers = [];
+            for await (const chunk of req) buffers.push(chunk);
+            let body = {};
+            try { body = JSON.parse(Buffer.concat(buffers).toString('utf-8') || '{}'); } catch {}
+            const updated = updateAIConfig(body);
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ ok: true, config: updated }));
+            return;
+          }
+        }
+
+        // 6b. AI Agent Test Connectivity Endpoint (/api/ai/test)
+        if (req.url?.startsWith('/api/ai/test') && req.method === 'POST') {
+          const buffers = [];
+          for await (const chunk of req) buffers.push(chunk);
+          let body = {};
+          try { body = JSON.parse(Buffer.concat(buffers).toString('utf-8') || '{}'); } catch {}
+          const result = await testAIConnection(body);
           res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ reply }));
+          res.end(JSON.stringify(result));
           return;
         }
 

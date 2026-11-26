@@ -1,13 +1,13 @@
 import { db } from "@/api/client";
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Bell, Save, ShieldCheck, Key, Sliders, Send } from "lucide-react";
+import { Bell, Save, ShieldCheck, Sliders, Send, ArrowRight } from "lucide-react";
 import toast from "react-hot-toast";
 
 import NotificationToggle from "../components/settings/NotificationToggle";
 import NotificationThreshold from "../components/settings/NotificationThreshold";
-import WhatsAppConnection from "../components/settings/WhatsAppConnection";
 import {
   getNotificationPermission,
   requestNotificationPermission,
@@ -29,8 +29,6 @@ const defaultSettings = {
   weekly_summary_day: "sunday",
   monthly_summary_enabled: true,
   monthly_summary_day: 1,
-  // Octapus platform standard layer
-  octapus_payment_wall_enabled: false,
 };
 
 export default function SettingsPage() {
@@ -121,10 +119,10 @@ export default function SettingsPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-heading text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-            Settings & Integrations
+            Settings & Preferences
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-            Configure currency, automated alert thresholds, and bot connections
+            Configure currency, notification thresholds, and reminders for your household
           </p>
         </div>
         <button
@@ -137,8 +135,37 @@ export default function SettingsPage() {
         </button>
       </div>
 
-      {/* Evolution API WhatsApp Hub */}
-      <WhatsAppConnection />
+      {/* Ledger Preferences */}
+      <Card className="rounded-2xl border-border bg-card">
+        <CardHeader className="p-5 border-b border-border/80 flex flex-row items-center gap-3">
+          <div className="p-2.5 bg-secondary rounded-xl text-foreground">
+            <Sliders className="w-4 h-4" />
+          </div>
+          <div>
+            <CardTitle className="text-base font-semibold">Ledger & Currency Preferences</CardTitle>
+            <CardDescription className="text-xs">Base currency for records and reports</CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent className="p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <p className="text-sm font-medium text-foreground">Base Currency</p>
+              <p className="text-xs text-muted-foreground">Default currency used across all household ledgers</p>
+            </div>
+            <select
+              value={settings.currency || "AED"}
+              onChange={(e) => handleChange("currency", e.target.value)}
+              className="h-10 px-3 rounded-xl bg-secondary border border-border text-xs sm:text-sm font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-[#B5F13E]"
+            >
+              <option value="AED">AED — United Arab Emirates Dirham (د.إ)</option>
+              <option value="USD">USD — US Dollar ($)</option>
+              <option value="EUR">EUR — Euro (€)</option>
+              <option value="SAR">SAR — Saudi Riyal (ر.س)</option>
+              <option value="GBP">GBP — British Pound (£)</option>
+            </select>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Browser Web Push Notifications */}
       <Card className="rounded-2xl border-border bg-card">
@@ -161,7 +188,7 @@ export default function SettingsPage() {
                 </span>
               </div>
               <CardDescription className="text-xs">
-                Real-time native desktop and mobile notifications for due bills and budget alerts
+                Real-time native notifications for due bills, budget limits, and financial milestones
               </CardDescription>
             </div>
           </div>
@@ -171,12 +198,12 @@ export default function SettingsPage() {
             <div>
               <p className="text-sm font-semibold text-foreground">
                 {browserPermission === 'granted'
-                  ? 'Push notifications are enabled'
+                  ? 'Push notifications are enabled on this device'
                   : 'Enable instant browser push'}
               </p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {browserPermission === 'granted'
-                  ? 'You will receive alerts on this device even when the tab is backgrounded.'
+                  ? 'You will receive reminders for utility bills & monthly limits even when this tab is closed.'
                   : 'Grant browser permission to receive timely reminders for utility bills & monthly limits.'}
               </p>
             </div>
@@ -215,38 +242,6 @@ export default function SettingsPage() {
               <span className="w-2 h-2 rounded-full bg-sky-400" />
               <span>Savings Milestone Updates</span>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Ledger Preferences */}
-      <Card className="rounded-2xl border-border bg-card">
-        <CardHeader className="p-5 border-b border-border/80 flex flex-row items-center gap-3">
-          <div className="p-2.5 bg-secondary rounded-xl text-foreground">
-            <Sliders className="w-4 h-4" />
-          </div>
-          <div>
-            <CardTitle className="text-base font-semibold">Ledger & Currency Preferences</CardTitle>
-            <CardDescription className="text-xs">Base currency for records and reports</CardDescription>
-          </div>
-        </CardHeader>
-        <CardContent className="p-5 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <p className="text-sm font-medium text-foreground">Base Currency</p>
-              <p className="text-xs text-muted-foreground">Default currency used across all household ledgers</p>
-            </div>
-            <select
-              value={settings.currency || "AED"}
-              onChange={(e) => handleChange("currency", e.target.value)}
-              className="h-10 px-3 rounded-xl bg-secondary border border-border text-xs sm:text-sm font-semibold text-foreground focus:outline-none focus:ring-1 focus:ring-[#B5F13E]"
-            >
-              <option value="AED">AED — United Arab Emirates Dirham (د.إ)</option>
-              <option value="USD">USD — US Dollar ($)</option>
-              <option value="EUR">EUR — Euro (€)</option>
-              <option value="SAR">SAR — Saudi Riyal (ر.س)</option>
-              <option value="GBP">GBP — British Pound (£)</option>
-            </select>
           </div>
         </CardContent>
       </Card>
@@ -342,54 +337,26 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Octapus Platform Layer */}
-      <Card className="rounded-2xl border-border bg-card">
-        <CardHeader className="p-5 border-b border-border/80 flex flex-row items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-[#B5F13E]/15 rounded-xl text-[#B5F13E]">
-              <ShieldCheck className="w-4 h-4" />
-            </div>
-            <div>
-              <CardTitle className="text-base font-semibold">Octapus Platform Integration</CardTitle>
-              <CardDescription className="text-xs">Standard platform connection layer & payment wall</CardDescription>
-            </div>
+      {/* Admin Infrastructure Gateway Notice (Hides backend features into Admin) */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-secondary/30 border border-border/70 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-start gap-3">
+          <div className="p-2.5 rounded-xl bg-[#B5F13E]/10 text-[#B5F13E] shrink-0">
+            <ShieldCheck className="w-5 h-5" />
           </div>
-          <span className="px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold uppercase tracking-wider">
-            Connected
-          </span>
-        </CardHeader>
-        <CardContent className="p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-foreground">Premium Payment Wall</p>
-              <p className="text-xs text-muted-foreground">Toggle access gating for premium financial features</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => handleChange('octapus_payment_wall_enabled', !settings.octapus_payment_wall_enabled)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                settings.octapus_payment_wall_enabled ? 'bg-[#B5F13E]' : 'bg-secondary'
-              }`}
-            >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-background transition-transform ${
-                  settings.octapus_payment_wall_enabled ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
-            </button>
+          <div>
+            <p className="text-sm font-semibold text-foreground">Backend & Infrastructure Controls</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Technical settings (AI Agent Models & Keys, WhatsApp Evolution Gateway, Biometrics Policies, and Platform Integrations) are organized inside the Admin Center.
+            </p>
           </div>
-
-          <div className="p-3.5 rounded-xl bg-secondary/40 border border-border/60 flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Key className="w-3.5 h-3.5 text-[#B5F13E]" />
-              <span>Platform Webhook Endpoint:</span>
-            </div>
-            <code className="text-[11px] text-[#B5F13E] font-mono bg-card px-2 py-0.5 rounded-md border border-border">
-              /api/whatsapp
-            </code>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+        <Link
+          to="/admin"
+          className="fuloozi-btn-primary px-4 py-2 text-xs font-semibold shadow-lime inline-flex items-center gap-1.5 shrink-0"
+        >
+          Open Admin Center <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
 
       {/* Save Button */}
       <div className="flex justify-end pt-2">
