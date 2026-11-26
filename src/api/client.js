@@ -2,10 +2,13 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const isDeadSupabase = Boolean(supabaseUrl && supabaseUrl.includes('pylylytdfhmtxglaloli'));
+
 export const isSupabaseConfigured = Boolean(
   supabaseUrl &&
   typeof supabaseUrl === 'string' &&
   supabaseUrl.startsWith('http') &&
+  !isDeadSupabase &&
   supabaseKey
 );
 
@@ -144,7 +147,7 @@ function createLocalMockSupabase() {
         };
         try {
           localStorage.setItem(DEV_STORAGE_PREFIX + 'session', JSON.stringify(normalized));
-        } catch {}
+        } catch { }
         authListeners.forEach(listener => listener('SIGNED_IN', normalized));
         return { data: { session: normalized }, error: null };
       },
@@ -154,7 +157,7 @@ function createLocalMockSupabase() {
           // only falls back to the zero-config demo session on a first visit,
           // so a reload after signing out stays signed out.
           localStorage.setItem(DEV_STORAGE_PREFIX + 'session', 'null');
-        } catch {}
+        } catch { }
         authListeners.forEach(listener => listener('SIGNED_OUT', null));
         return { error: null };
       },
@@ -190,24 +193,45 @@ const unwrap = ({ data, error }) => {
 
 function liveEntity(kind) {
   const rows = () => supabase.from('opus_records');
+  const local = localEntity(kind);
   return {
     async list(order = '-created_date') {
-      const field = order.replace(/^-/, '');
-      return unwrap(await rows().select('*').eq('kind', kind).order(
-        field === 'created_date' ? 'created_at' : `data->>${field}`,
-        { ascending: !order.startsWith('-'), nullsFirst: false }
-      )).map(flatten);
+      try {
+        const field = order.replace(/^-/, '');
+        return unwrap(await rows().select('*').eq('kind', kind).order(
+          field === 'created_date' ? 'created_at' : `data->>${field}`,
+          { ascending: !order.startsWith('-'), nullsFirst: false }
+        )).map(flatten);
+      } catch (err) {
+        console.warn(`[Supabase list fallback for ${kind}]:`, err.message);
+        return local.list(order);
+      }
     },
     async create({ id, created_date, ...data }) {
-      return flatten(unwrap(await rows().insert({ kind, data }).select().single()));
+      try {
+        return flatten(unwrap(await rows().insert({ kind, data }).select().single()));
+      } catch (err) {
+        console.warn(`[Supabase create fallback for ${kind}]:`, err.message);
+        return local.create({ id, created_date, ...data });
+      }
     },
     async update(id, patch) {
-      const row = unwrap(await rows().select('data').eq('kind', kind).eq('id', id).single());
-      const { id: ignored, created_date, ...data } = { ...row.data, ...patch };
-      return flatten(unwrap(await rows().update({ data }).eq('kind', kind).eq('id', id).select().single()));
+      try {
+        const row = unwrap(await rows().select('data').eq('kind', kind).eq('id', id).single());
+        const { id: ignored, created_date, ...data } = { ...row.data, ...patch };
+        return flatten(unwrap(await rows().update({ data }).eq('kind', kind).eq('id', id).select().single()));
+      } catch (err) {
+        console.warn(`[Supabase update fallback for ${kind}]:`, err.message);
+        return local.update(id, patch);
+      }
     },
     async delete(id) {
-      unwrap(await rows().delete().eq('kind', kind).eq('id', id));
+      try {
+        unwrap(await rows().delete().eq('kind', kind).eq('id', id));
+      } catch (err) {
+        console.warn(`[Supabase delete fallback for ${kind}]:`, err.message);
+        return local.delete(id);
+      }
     },
   };
 }
@@ -283,7 +307,7 @@ export async function getWhatsAppStatus() {
   try {
     const res = await fetch('/api/evolution/status');
     if (res.ok) return await res.json();
-  } catch {}
+  } catch { }
   return { connected: false };
 }
 
@@ -297,7 +321,7 @@ export async function openWhatsAppChat() {
         const cfg = await cfgRes.json();
         phone = cfg.whatsappNumber;
       }
-    } catch {}
+    } catch { }
   }
   if (!phone) {
     phone = import.meta.env.VITE_WHATSAPP_NUMBER;
