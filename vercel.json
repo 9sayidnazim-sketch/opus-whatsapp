@@ -1,1 +1,9 @@
-{"framework":"vite","rewrites":[{"source":"/((?!api/).*)","destination":"/index.html"}]}
+{
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/api/ai/:action*", "destination": "/api/ai?action=:action*" },
+    { "source": "/api/evolution/:action*", "destination": "/api/evolution?action=:action*" },
+    { "source": "/api/webauthn/:action*", "destination": "/api/webauthn?action=:action*" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
+  ]
+}

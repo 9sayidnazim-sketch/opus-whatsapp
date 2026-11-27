@@ -8,7 +8,10 @@ import {
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
-  const originHeader = req.headers.origin || req.headers.referer;
+  const originHeader =
+    req.headers.origin ||
+    req.headers.referer ||
+    (req.headers.host ? `https://${req.headers.host}` : undefined);
   const action = req.query?.action || req.url?.split('?')[0]?.split('/').pop();
 
   try {

@@ -83,17 +83,47 @@ export const AI_PRESETS = {
 };
 
 /**
+ * Helper to dynamically load .env.local variables
+ */
+function readEnvLocal() {
+  const envObj = {};
+  try {
+    const envPath = path.resolve(process.cwd(), '.env.local');
+    if (fs.existsSync(envPath)) {
+      const raw = fs.readFileSync(envPath, 'utf8');
+      for (const line of raw.split('\n')) {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) continue;
+        const eqIdx = trimmed.indexOf('=');
+        if (eqIdx > 0) {
+          const key = trimmed.slice(0, eqIdx).trim();
+          let val = trimmed.slice(eqIdx + 1).trim();
+          if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+            val = val.slice(1, -1);
+          }
+          envObj[key] = val;
+        }
+      }
+    }
+  } catch {}
+  return envObj;
+}
+
+/**
  * Retrieve current AI Agent configuration from environment
  */
 export function getAIConfig() {
+  const fileEnv = readEnvLocal();
+  const getEnv = (key) => fileEnv[key] || process.env[key] || '';
+
   // Detect provider from existing env keys if not explicitly set
-  let detectedProvider = process.env.AI_PROVIDER;
+  let detectedProvider = getEnv('AI_PROVIDER');
   if (!detectedProvider) {
-    if (process.env.GEMINI_API_KEY) detectedProvider = 'gemini';
-    else if (process.env.OPENAI_API_KEY) detectedProvider = 'openai';
-    else if (process.env.GROQ_API_KEY) detectedProvider = 'groq';
-    else if (process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN) detectedProvider = 'anthropic';
-    else if (process.env.OPENROUTER_API_KEY) detectedProvider = 'openrouter';
+    if (getEnv('GEMINI_API_KEY')) detectedProvider = 'gemini';
+    else if (getEnv('OPENAI_API_KEY')) detectedProvider = 'openai';
+    else if (getEnv('GROQ_API_KEY')) detectedProvider = 'groq';
+    else if (getEnv('ANTHROPIC_API_KEY') || getEnv('SUB2API_API_KEY') || getEnv('ANTHROPIC_AUTH_TOKEN')) detectedProvider = 'anthropic';
+    else if (getEnv('OPENROUTER_API_KEY')) detectedProvider = 'openrouter';
     else detectedProvider = 'gemini';
   }
 
@@ -101,27 +131,27 @@ export function getAIConfig() {
   const preset = AI_PRESETS[provider] || AI_PRESETS.gemini;
 
   // Resolve API key based on provider or explicit AI_API_KEY
-  let apiKey = process.env.AI_API_KEY || '';
+  let apiKey = getEnv('AI_API_KEY');
   if (!apiKey) {
-    if (provider === 'gemini') apiKey = process.env.GEMINI_API_KEY || '';
-    else if (provider === 'openai') apiKey = process.env.OPENAI_API_KEY || '';
-    else if (provider === 'groq') apiKey = process.env.GROQ_API_KEY || '';
-    else if (provider === 'anthropic') apiKey = process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN || '';
-    else if (provider === 'openrouter') apiKey = process.env.OPENROUTER_API_KEY || '';
+    if (provider === 'gemini') apiKey = getEnv('GEMINI_API_KEY');
+    else if (provider === 'openai') apiKey = getEnv('OPENAI_API_KEY');
+    else if (provider === 'groq') apiKey = getEnv('GROQ_API_KEY');
+    else if (provider === 'anthropic') apiKey = getEnv('ANTHROPIC_API_KEY') || getEnv('SUB2API_API_KEY') || getEnv('ANTHROPIC_AUTH_TOKEN');
+    else if (provider === 'openrouter') apiKey = getEnv('OPENROUTER_API_KEY');
   }
 
   // Base URL
-  let baseUrl = process.env.AI_BASE_URL || '';
+  let baseUrl = getEnv('AI_BASE_URL');
   if (!baseUrl) {
-    if (provider === 'anthropic' && process.env.ANTHROPIC_BASE_URL) {
-      baseUrl = process.env.ANTHROPIC_BASE_URL;
+    if (provider === 'anthropic' && getEnv('ANTHROPIC_BASE_URL')) {
+      baseUrl = getEnv('ANTHROPIC_BASE_URL');
     } else {
       baseUrl = preset.baseUrl;
     }
   }
 
-  const model = process.env.AI_MODEL || preset.defaultModel;
-  const systemPrompt = process.env.AI_SYSTEM_PROMPT || DEFAULT_FINANCE_PERSONA;
+  const model = getEnv('AI_MODEL') || preset.defaultModel;
+  const systemPrompt = getEnv('AI_SYSTEM_PROMPT') || DEFAULT_FINANCE_PERSONA;
 
   return {
     provider,
@@ -355,7 +385,10 @@ export async function testAIConnection({ provider, model, apiKey, baseUrl } = {}
   const current = getAIConfig();
   const targetProvider = (provider || current.provider).toLowerCase();
   const targetModel = model || current.model;
-  const targetKey = apiKey !== undefined && apiKey !== '••••••••' ? apiKey : current.apiKey;
+  const targetKey =
+    apiKey !== undefined && apiKey !== '••••••••' && apiKey !== ''
+      ? apiKey
+      : current.apiKey;
   const targetBaseUrl = baseUrl || current.baseUrl;
   const startTime = Date.now();
 

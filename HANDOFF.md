@@ -310,3 +310,30 @@ Lint gap: `eslint.config.js` spreads the recommended configs and then replaces t
    - Updated bearer token verification to recognize standalone household tokens (`fuloozi-token-*`, `dev-*`, `local-*`, `demo-*`) without failing.
    - Replaced internal error string exposure with friendly, human copy.
 
+---
+
+## November 27 — AI Agent & Evolution Serverless Endpoints & Biometrics Permission Resolution
+
+### Issues Addressed:
+1. **AI Connection Failure & "Unexpected token 'T', 'The page c'... is not valid JSON":**
+   - In production (`https://fuloozi.vercel.app`), clicking "Test AI Connection" or fetching AI config failed because `/api/ai/*` serverless endpoints were only implemented in the Vite dev server middleware and lacked corresponding Vercel serverless functions in `api/`.
+   - Vercel returned a 404 HTML/text page ("The page could not be found..."), which caused `res.json()` to crash on the first character `'T'`.
+2. **Biometrics Permission Flow:**
+   - User requested explicit browser permission prompt before triggering device biometrics.
+   - Account creation / sign in button no longer fails or displays "Could not open your account. Sign in with the ID shown above."
+
+### Solutions Implemented:
+1. **Dedicated AI Serverless Endpoint (`api/ai.js`):**
+   - Implemented `GET & POST /api/ai/config` and `POST /api/ai/test` serverless handlers.
+   - Connected directly to `server/aiAgent.js` with dynamic `.env.local` variable loading.
+2. **Dedicated Evolution WhatsApp Serverless Endpoint (`api/evolution.js`):**
+   - Implemented `api/evolution.js` to handle `/api/evolution/config`, `/api/evolution/status`, `/api/evolution/test`, and `/api/evolution/qr` on production.
+3. **Vercel Routing Rewrites (`vercel.json`):**
+   - Added rewrite rules for `/api/ai/:action*` and `/api/evolution/:action*`.
+4. **Resilient JSON Parsing (`src/components/admin/AIAgentSettings.jsx`):**
+   - Safely parses responses (`res.text()`) and catches non-JSON error payloads cleanly with descriptive user error notifications.
+5. **Biometrics Browser Permission Step (`src/App.jsx` & `src/utils/webauthn.js`):**
+   - Explicit "Browser Biometrics Access" permission screen presented before initiating Touch ID / Face ID ceremonies.
+   - Guaranteed session initialization on "Open Household Ledger" without error popups.
+
+

@@ -7,6 +7,27 @@ import {
 
 const STORAGE_KEY = 'fuloozi_webauthn_credentials';
 const CURRENT_CHALLENGE_KEY = 'fuloozi_webauthn_current_challenge';
+const PERMISSION_KEY = 'fuloozi_biometric_browser_permission';
+
+/**
+ * Check if the user has explicitly granted browser permission for biometrics
+ */
+export function hasBiometricPermission() {
+  try {
+    return localStorage.getItem(PERMISSION_KEY) === 'granted';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Save user browser permission decision
+ */
+export function setBiometricPermission(granted = true) {
+  try {
+    localStorage.setItem(PERMISSION_KEY, granted ? 'granted' : 'denied');
+  } catch {}
+}
 
 /**
  * Check if the current browser and device support biometric WebAuthn (Touch ID, Face ID, Windows Hello)
@@ -102,7 +123,7 @@ export async function registerBiometrics({ username, displayName }) {
   const userFull = displayName || username || 'Household Member';
 
   // 1. Fetch registration options from server
-  const optRes = await fetch('/api/webauthn/registration-options', {
+  const optRes = await fetch('/api/webauthn?action=registration-options', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -133,7 +154,7 @@ export async function registerBiometrics({ username, displayName }) {
   }
 
   // 3. Verify response with server
-  const verRes = await fetch('/api/webauthn/verify-registration', {
+  const verRes = await fetch('/api/webauthn?action=verify-registration', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -179,7 +200,7 @@ export async function authenticateWithBiometrics(targetUsername = '') {
   }
 
   // 1. Request authentication options
-  const optRes = await fetch('/api/webauthn/authentication-options', {
+  const optRes = await fetch('/api/webauthn?action=authentication-options', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: targetUsername }),
@@ -205,7 +226,7 @@ export async function authenticateWithBiometrics(targetUsername = '') {
   }
 
   // 3. Verify authentication response
-  const verRes = await fetch('/api/webauthn/verify-authentication', {
+  const verRes = await fetch('/api/webauthn?action=verify-authentication', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

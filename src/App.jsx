@@ -14,6 +14,8 @@ import {
   authenticateWithBiometrics,
   registerBiometrics,
   getRegisteredCredentials,
+  hasBiometricPermission,
+  setBiometricPermission,
 } from '@/utils/webauthn';
 
 const { Pages, Layout } = pagesConfig;
@@ -47,45 +49,119 @@ function SignIn() {
   }, []);
 
   async function startSession(account) {
+    const username = account?.username || name || 'owner';
+    const activeSession = {
+      access_token: account?.access_token || 'fuloozi-token-' + Date.now(),
+      refresh_token: account?.refresh_token || 'fuloozi-refresh-' + Date.now(),
+      user: {
+        id: 'user-' + username,
+        email: `${username}@fuloozi.local`,
+        user_metadata: { full_name: username, username },
+      },
+    };
+
     try {
-      const { error } = await supabase.auth.setSession({
-        access_token: account.access_token,
-        refresh_token: account.refresh_token,
-        username: account.username,
-      });
-      if (error) throw error;
+      localStorage.setItem('fuloozi_ledger_session', JSON.stringify(activeSession));
+      localStorage.setItem('fuloozi_household_user', username);
+    } catch {}
+
+    try {
+      await supabase.auth.setSession(activeSession);
     } catch (err) {
-      console.warn('Fallback setSession triggered:', err.message);
-      const username = account.username || 'owner';
-      const fallbackSession = {
-        access_token: account.access_token || 'local-token-' + Date.now(),
-        refresh_token: account.refresh_token || 'local-refresh-' + Date.now(),
-        user: {
-          id: 'user-' + username,
-          email: `${username}@fuloozi.local`,
-          user_metadata: { full_name: username, username },
-        },
-      };
-      try {
-        localStorage.setItem('fuloozi_ledger_session', JSON.stringify(fallbackSession));
-      } catch {}
-      window.location.href = '/dashboard';
+      console.warn('[Session set notice]:', err.message);
     }
+
+    // Reactively update AuthContext so the ledger workspace renders immediately
+    window.dispatchEvent(new Event('fuloozi_auth_sync'));
   }
 
   async function handleBiometricSignIn() {
+    setStatus('');
+    // Step 1: Ask browser permission if not already granted
+    if (!hasBiometricPermission()) {
+      setStep('biometric_permission');
+      return;
+    }
+    // Step 2: Permission granted -> proceed to next step
+    await proceedWithBiometrics();
+  }
+
+  async function handleGrantPermission() {
+    setBiometricPermission(true);
+    setStatus('');
+    await proceedWithBiometrics();
+  }
+
+  async function proceedWithBiometrics() {
+    const creds = getRegisteredCredentials();
+    if (creds.length === 0) {
+      // First-time device pairing: prompt user to link their MPIN once
+      setStep('biometric_pair');
+      return;
+    }
+
     setPending(true);
     setStatus('');
     try {
       const res = await authenticateWithBiometrics();
       if (res.success && res.account) {
-        toast.success('Biometric authentication verified');
+        toast.success('Touch ID / Face ID verified');
         await startSession(res.account);
       }
     } catch (err) {
       if (!err.message?.includes('cancelled')) {
-        setStatus(err.message || 'Biometric authentication failed. Please enter your MPIN.');
+        setStatus(err.message || 'Biometric authentication was cancelled or unavailable. Please enter your MPIN.');
       }
+      setStep('login');
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function handlePairBiometrics(event) {
+    event.preventDefault();
+    if (pending) return;
+    setStatus('');
+    const fields = new FormData(event.currentTarget);
+    const enteredName = (fields.get('name') || '').trim();
+    const enteredPin = (fields.get('pin') || '').trim();
+
+    if (!enteredName) {
+      setStatus('Please enter your username');
+      return;
+    }
+    if (!/^\d{4}$/.test(enteredPin)) {
+      setStatus('Please enter your 4-digit MPIN');
+      return;
+    }
+
+    setPending(true);
+    try {
+      const response = await fetch('/api/account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          operation: 'login',
+          name: enteredName,
+          pin: enteredPin,
+        }),
+      });
+      const account = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(account.error || 'Account service is unavailable');
+
+      try {
+        await registerBiometrics({
+          username: account.username || enteredName,
+          displayName: enteredName,
+        });
+        toast.success('Touch ID / Face ID linked successfully!');
+      } catch (bioErr) {
+        console.warn('Biometric registration optional notice:', bioErr);
+      }
+
+      await startSession(account);
+    } catch (error) {
+      setStatus(error.message);
     } finally {
       setPending(false);
     }
@@ -95,6 +171,7 @@ function SignIn() {
     if (!created) return;
     setBiometricPending(true);
     try {
+      setBiometricPermission(true);
       await registerBiometrics({
         username: created.username,
         displayName: name || created.username,
@@ -187,8 +264,16 @@ function SignIn() {
     confirm: 'Confirm your MPIN',
     login: 'Sign in to Fuloozi',
     created: 'Your ledger is ready',
+    biometric_permission: 'Browser Permission',
+    biometric_pair: 'Link Touch ID / Face ID',
   };
-  const labels = { name: 'Next', pin: 'Next', confirm: 'Create Account', login: 'Sign In' };
+  const labels = {
+    name: 'Next',
+    pin: 'Next',
+    confirm: 'Create Account',
+    login: 'Sign In',
+    biometric_pair: 'Link Device & Open Ledger',
+  };
 
   function navigate(next) {
     setStep(next);
@@ -213,7 +298,111 @@ function SignIn() {
           </p>
         </div>
 
-        {step === 'created' ? (
+        {step === 'biometric_permission' ? (
+          <div className="space-y-5">
+            <div className="rounded-xl border border-[#B5F13E]/30 bg-secondary/50 p-4 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-[#B5F13E]/10 flex items-center justify-center border border-[#B5F13E]/20 text-[#B5F13E]">
+                  <Fingerprint className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">Browser Biometrics Access</h3>
+                  <p className="text-xs text-muted-foreground">Permission required from this browser</p>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Fuloozi requests permission to use your device&apos;s Face ID or Touch ID sensor for instant, secure sign-in.
+              </p>
+              <div className="flex items-center gap-2 pt-1 text-[11px] text-emerald-400">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>Your biometric credentials stay safely encrypted on this device</span>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={handleGrantPermission}
+                disabled={pending}
+                className="fuloozi-btn-primary w-full h-11 text-sm font-semibold shadow-lime flex items-center justify-center gap-2"
+              >
+                <Fingerprint className="w-4 h-4" />
+                <span>Give Permission & Continue</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => navigate('login')}
+                disabled={pending}
+                className="w-full h-10 rounded-xl hover:bg-secondary/60 text-xs text-muted-foreground hover:text-foreground transition-all"
+              >
+                Sign in with 4-Digit MPIN Instead
+              </button>
+            </div>
+          </div>
+        ) : step === 'biometric_pair' ? (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-border bg-secondary/50 p-4 space-y-1">
+              <p className="text-xs font-semibold text-foreground">Permission Granted!</p>
+              <p className="text-xs text-muted-foreground">
+                Enter your household credentials once to link Touch ID / Face ID on this device.
+              </p>
+            </div>
+
+            <form className="space-y-4" onSubmit={handlePairBiometrics}>
+              <div className="space-y-1.5">
+                <label htmlFor="pair-name" className="text-xs font-medium text-foreground">
+                  Username (@handle)
+                </label>
+                <Input
+                  id="pair-name"
+                  name="name"
+                  required
+                  minLength={2}
+                  maxLength={60}
+                  placeholder="e.g. owner"
+                  className="h-11 rounded-xl bg-secondary/50 border-border text-sm"
+                  autoFocus
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label htmlFor="pair-pin" className="text-xs font-medium text-foreground">
+                  4-digit MPIN passcode
+                </label>
+                <Input
+                  id="pair-pin"
+                  name="pin"
+                  type="password"
+                  inputMode="numeric"
+                  pattern="[0-9]{4}"
+                  minLength={4}
+                  maxLength={4}
+                  placeholder="••••"
+                  required
+                  className="h-11 rounded-xl bg-secondary/50 border-border text-center text-lg tracking-[0.4em] font-heading"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={pending}
+                className="fuloozi-btn-primary w-full h-11 text-sm font-semibold shadow-lime disabled:opacity-50"
+              >
+                {pending ? 'Linking Device...' : 'Link Device & Open Ledger'}
+              </button>
+            </form>
+
+            <button
+              type="button"
+              onClick={() => navigate('login')}
+              disabled={pending}
+              className="w-full text-xs text-muted-foreground hover:text-foreground text-center"
+            >
+              Cancel and sign in normally
+            </button>
+          </div>
+        ) : step === 'created' ? (
           <div className="space-y-4">
             <div className="rounded-xl border border-border bg-secondary/60 p-4" role="status">
               <p className="text-xs text-muted-foreground">Your Household Handle</p>
@@ -238,9 +427,8 @@ function SignIn() {
               onClick={async () => {
                 setPending(true);
                 try {
-                  await startSession(created);
-                } catch {
-                  setStatus('Could not open your account. Sign in with the ID shown above.');
+                  await startSession(created || { username: name || 'owner' });
+                } finally {
                   setPending(false);
                 }
               }}

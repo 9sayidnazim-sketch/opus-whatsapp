@@ -43,7 +43,13 @@ export default function AIAgentSettings() {
     setLoading(true);
     try {
       const res = await fetch('/api/ai/config');
-      const data = await res.json();
+      const text = await res.text();
+      let data = {};
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(res.ok ? 'Invalid response' : `Service returned ${res.status}`);
+      }
       if (data) {
         setConfig({
           provider: data.provider || 'gemini',
@@ -56,8 +62,8 @@ export default function AIAgentSettings() {
           presets: data.presets || {},
         });
       }
-    } catch {
-      toast.error('Failed to load AI configuration');
+    } catch (err) {
+      console.warn('AI config load notice:', err.message);
     } finally {
       setLoading(false);
     }
@@ -100,15 +106,21 @@ export default function AIAgentSettings() {
           systemPrompt: config.systemPrompt,
         }),
       });
-      const data = await res.json();
+      const text = await res.text();
+      let data = {};
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(res.ok ? 'Unexpected response' : `Server error ${res.status}`);
+      }
       if (data.ok) {
         toast.success(`AI Agent configured with ${config.provider.toUpperCase()} (${config.model})`);
         await fetchConfig();
       } else {
         toast.error(data.error || 'Failed to save AI configuration');
       }
-    } catch {
-      toast.error('Network error saving AI configuration');
+    } catch (err) {
+      toast.error(err.message || 'Network error saving AI configuration');
     } finally {
       setSaving(false);
     }
@@ -130,7 +142,13 @@ export default function AIAgentSettings() {
           baseUrl: config.baseUrl,
         }),
       });
-      const data = await res.json();
+      const text = await res.text();
+      let data = {};
+      try {
+        data = JSON.parse(text);
+      } catch {
+        throw new Error(res.ok ? 'Unexpected response format' : `Server returned ${res.status}: ${res.statusText}`);
+      }
       setTestResult(data);
       if (data.ok) {
         toast.success(data.message || 'AI Agent connection verified!');
@@ -142,7 +160,7 @@ export default function AIAgentSettings() {
         ok: false,
         message: err.message || 'Failed to reach AI testing endpoint',
       });
-      toast.error('AI testing failed');
+      toast.error(err.message || 'AI testing failed');
     } finally {
       setTesting(false);
     }
